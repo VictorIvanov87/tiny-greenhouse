@@ -1,6 +1,6 @@
 import { Button, Card } from 'flowbite-react'
 import { alpha, palette } from '../../theme/palette'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../auth/hooks/useAuth'
 
 const HomePage = () => {
   const { signOut } = useAuth()
@@ -22,7 +22,9 @@ const HomePage = () => {
         </p>
         <Button
           color="light"
-          onClick={signOut}
+          onClick={() => {
+            void signOut()
+          }}
           className="w-full sm:w-auto !border-none !text-white !shadow-[0_18px_45px_var(--color-evergreen-shadow)] hover:!-translate-y-0.5 hover:!shadow-[0_24px_55px_var(--color-evergreen-shadow)] hover:!bg-[color:var(--color-evergreen-dark)] focus-visible:!ring-4 focus-visible:!ring-[color:var(--color-moss-soft)] focus-visible:!outline-none"
           style={{ backgroundColor: palette.evergreen }}
         >

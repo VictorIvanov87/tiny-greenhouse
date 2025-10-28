@@ -1,12 +1,12 @@
 import { Navigate } from 'react-router-dom'
 import { alpha, palette } from '../../theme/palette'
 import { AuthCard } from './components/AuthCard'
-import { useAuth } from './AuthProvider'
+import { useAuth } from './hooks/useAuth'
 
 const LoginPage = () => {
-  const { isAuthenticated } = useAuth()
+  const { user } = useAuth()
 
-  if (isAuthenticated) {
+  if (user) {
     return <Navigate to="/" replace />
   }
 
