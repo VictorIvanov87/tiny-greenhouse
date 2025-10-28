@@ -1,7 +1,7 @@
 import type { UserCredential } from 'firebase/auth'
 import { GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { auth } from './firebase'
+import { auth, authReady } from './firebase'
 
 export class AuthError extends Error {
   code: string
@@ -38,6 +38,7 @@ const mapFirebaseError = (error: unknown) => {
 
 export const signInWithEmail = async (email: string, password: string): Promise<UserCredential> => {
   try {
+    await authReady
     return await signInWithEmailAndPassword(auth, email, password)
   } catch (error) {
     throw mapFirebaseError(error)
@@ -46,6 +47,7 @@ export const signInWithEmail = async (email: string, password: string): Promise<
 
 export const signUpWithEmail = async (email: string, password: string): Promise<UserCredential> => {
   try {
+    await authReady
     return await createUserWithEmailAndPassword(auth, email, password)
   } catch (error) {
     throw mapFirebaseError(error)
@@ -54,6 +56,7 @@ export const signUpWithEmail = async (email: string, password: string): Promise<
 
 export const signInWithGoogle = async (): Promise<UserCredential> => {
   try {
+    await authReady
     return await signInWithPopup(auth, provider)
   } catch (error) {
     throw mapFirebaseError(error)
@@ -62,6 +65,7 @@ export const signInWithGoogle = async (): Promise<UserCredential> => {
 
 export const signOutUser = async (): Promise<void> => {
   try {
+    await authReady
     await signOut(auth)
   } catch (error) {
     throw mapFirebaseError(error)

@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import type { User } from 'firebase/auth'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from './firebase'
+import { auth, authReady } from './firebase'
 import { signOutUser } from './api'
 
 export type AuthContextValue = {
@@ -19,12 +19,31 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser)
-      setLoading(false)
-    })
+    let unsubscribe = () => {}
+    let cancelled = false
 
-    return unsubscribe
+    authReady
+      .then(() => {
+        if (cancelled) {
+          return
+        }
+
+        unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+          setUser(nextUser)
+          setLoading(false)
+        })
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error('Failed to initialise Firebase Auth persistence', error)
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
   }, [])
 
   const handleSignOut = useCallback(async () => {
