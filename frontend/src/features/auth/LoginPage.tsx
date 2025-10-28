@@ -1,24 +1,44 @@
-import { Navigate } from 'react-router-dom'
-import { alpha, palette } from '../../theme/palette'
-import { AuthCard } from './components/AuthCard'
-import { useAuth } from './hooks/useAuth'
+import { Navigate } from 'react-router-dom';
+import { alpha, palette } from '../../theme/palette';
+import { AuthCard } from './components/AuthCard';
+import { useAuth } from './hooks/useAuth';
 
 const LoginPage = () => {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   if (user) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/" replace />;
   }
+
+  const featureItems = [
+    {
+      id: 'insights',
+      accent: palette.moss,
+      copy: 'Realtime vitals tuned to your greenhouse microclimate with signal-based recommendations.',
+    },
+    {
+      id: 'balance',
+      accent: palette.sunlight,
+      copy: 'Adaptive lighting and irrigation cues that balance sunlight, humidity, and nutrient delivery.',
+    },
+    {
+      id: 'alerts',
+      accent: palette.chili,
+      copy: 'Early alerts before conditions slip so you can respond with confidence and keep crops thriving.',
+    },
+  ];
 
   const heroBackground = [
     `radial-gradient(circle at 12% 18%, ${alpha(palette.sunlight, 0.18)} 0%, transparent 50%)`,
     `radial-gradient(circle at 88% 12%, ${alpha(palette.moss, 0.2)} 0%, transparent 55%)`,
-    `linear-gradient(135deg, ${palette.night} 0%, ${alpha(palette.soil, 0.45)} 65%, ${palette.soil} 100%)`,
-  ].join(', ')
+    `linear-gradient(135deg, ${palette.night} 0%, ${alpha(palette.soil, 0.45)} 65%, ${
+      palette.soil
+    } 100%)`,
+  ].join(', ');
 
   return (
     <div
-      className="relative flex min-h-screen flex-col overflow-hidden"
+      className="relative flex min-h-screen h-screen flex-col overflow-hidden"
       style={{
         background: heroBackground,
       }}
@@ -38,8 +58,8 @@ const LoginPage = () => {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-16 px-6 py-16 md:px-10 lg:py-24">
-        <div className="w-full max-w-3xl space-y-6 text-center">
+      <div className="relative z-10 flex min-h-screen w-full items-center justify-center px-6 md:px-10">
+        <div className="flex w-full max-w-5xl flex-col items-center gap-12 text-center lg:gap-16">
           <span
             className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium uppercase tracking-wide text-[color:var(--color-sage)] shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
             style={{
@@ -52,46 +72,37 @@ const LoginPage = () => {
             Grow smarter with a live greenhouse companion
           </h1>
           <p className="text-lg text-[color:var(--color-sage)]/85 md:max-w-xl">
-            Keep every bed in balance and stay ahead of shifts in your environment with guided insights rooted in
-            horticultural best practices.
+            Keep every bed in balance and stay ahead of shifts in your environment with guided
+            insights rooted in horticultural best practices.
           </p>
-        </div>
+          <div className="w-full max-w-xl">
+            <AuthCard />
+          </div>
 
-        <div className="mx-auto w-full max-w-xl">
-          <AuthCard />
-        </div>
-
-        <div className="w-full max-w-4xl space-y-6 text-[color:var(--color-sage)]/85">
-          <ul className="grid gap-4 text-left sm:grid-cols-3 sm:gap-6">
-            <li className="flex h-full flex-col gap-3 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(13,26,20,0.4)] p-5 shadow-[0_12px_35px_rgba(8,16,12,0.25)] backdrop-blur">
-              <span
-                className="mt-1 h-2.5 w-2.5 flex-none rounded-full"
-                style={{ backgroundColor: palette.moss }}
-              />
-              <span>Realtime vitals tuned to your greenhouse microclimate with signal-based recommendations.</span>
-            </li>
-            <li className="flex h-full flex-col gap-3 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(13,26,20,0.4)] p-5 shadow-[0_12px_35px_rgba(8,16,12,0.25)] backdrop-blur">
-              <span
-                className="mt-1 h-2.5 w-2.5 flex-none rounded-full"
-                style={{ backgroundColor: palette.sunlight }}
-              />
-              <span>Adaptive lighting and irrigation cues that balance sunlight, humidity, and nutrient delivery.</span>
-            </li>
-            <li className="flex h-full flex-col gap-3 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(13,26,20,0.4)] p-5 shadow-[0_12px_35px_rgba(8,16,12,0.25)] backdrop-blur sm:col-span-3 md:col-span-3">
-              <span
-                className="mt-1 h-2.5 w-2.5 flex-none rounded-full"
-                style={{ backgroundColor: palette.chili }}
-              />
-              <span>Early alerts before conditions slip so you can respond with confidence and keep crops thriving.</span>
-            </li>
-          </ul>
-          <p className="text-sm text-[color:var(--color-sage)]/70">
-            Sign in above to explore the dashboard experience while we finish connecting live sensor data.
-          </p>
+          <div className="w-full max-w-4xl space-y-6 text-[color:var(--color-sage)]/85">
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featureItems.map((feature) => (
+                <li
+                  key={feature.id}
+                  className="flex h-full flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-5 text-sm leading-relaxed text-[color:var(--color-sage)]/90 shadow-[0_12px_35px_rgba(8,16,12,0.25)] backdrop-blur"
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: feature.accent }}
+                  />
+                  <span>{feature.copy}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-[color:var(--color-sage)]/70">
+              Sign in above to explore the dashboard experience while we finish connecting live
+              sensor data.
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

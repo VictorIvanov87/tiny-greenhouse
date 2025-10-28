@@ -47,6 +47,10 @@
 		min-height: 100%;
 	}
 
+	a {
+		cursor: pointer;
+	}
+
 	#root {
 		display: flex;
 		flex-direction: column;
