@@ -1,4 +1,5 @@
 import { Navigate, useNavigate } from 'react-router-dom'
+import { Card } from 'flowbite-react'
 import { alpha, palette } from '../../theme/palette'
 import { useAuth } from '../auth/hooks/useAuth'
 import { SetupWizard } from './components/SetupWizard'
@@ -58,17 +59,19 @@ const SetupPage = () => {
       </div>
 
       <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-10 text-center text-[color:var(--color-sage)]">
-        <div className="space-y-3">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
-            First-time setup
-          </span>
-          <h1 className="text-3xl font-semibold text-[color:var(--color-sage)] sm:text-4xl">
-            Let’s tune Tiny Greenhouse for your crops
-          </h1>
-          <p className="text-sm text-[color:var(--color-sage)]/85 sm:text-base">
-            We’ll ask a few quick questions to shape insights and alerts around your greenhouse goals.
-          </p>
-        </div>
+        <Card className="w-full rounded-3xl border border-white/20 bg-white/10 text-left shadow-[0_28px_80px_rgba(8,16,12,0.28)] backdrop-blur">
+          <div className="space-y-3">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
+              First-time setup
+            </span>
+            <h1 className="text-3xl font-semibold text-[color:var(--color-evergreen)] sm:text-4xl">
+              Let’s tune Tiny Greenhouse for your crops
+            </h1>
+            <p className="text-sm text-[color:var(--color-soil-60)] sm:text-base">
+              We’ll ask a few quick questions to shape insights and alerts around your greenhouse goals.
+            </p>
+          </div>
+        </Card>
 
         <SetupWizard
           uid={user.uid}

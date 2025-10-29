@@ -142,3 +142,27 @@ src/
 ---
 
 _If structure or rules change, update this file’s CODEMAP and relevant sections to keep agents aligned._
+
+## 13) LLM context sources for Flowbite React (read these before generating UI)
+
+- LLM-optimized endpoints (short vs. full):
+  • https://flowbite-react.com/llms.txt — concise, token-friendly summary of docs.
+  • https://flowbite-react.com/llms-full.txt — full docs dump for richer context.
+
+- Markdown versions of component docs:
+  • Append .md to any docs URL to get pure markdown. Examples:
+  • https://flowbite-react.com/docs/getting-started/introduction.md
+  • https://flowbite-react.com/docs/components/button.md
+  • https://flowbite-react.com/docs/components/table.md
+  • https://flowbite-react.com/docs/components/card.md
+  • https://flowbite-react.com/docs/components/navbar.md
+  • https://flowbite-react.com/docs/customize/theme.md
+
+- When generating or refactoring UI:
+  1. Fetch llms.txt (or the specific .md pages for the components you’ll use) and ground code to that API/props surface.
+  2. Prefer Flowbite React components (Button, Card, Table, Navbar, Sidebar, Modal, Alert) and add Tailwind classes only for layout/spacing.
+  3. Respect our layout rules (full-height shell): render pages inside <main> of AppShell, use min-h-screen flex flex-col on the root, and center forms with flex items-center justify-center.
+  4. Use the project palette: evergreen (primary), moss (secondary), sage (bg), soil (text/accents), sunlight (warn), chili (error).
+  5. Mobile first: no horizontal scroll at sm/md/lg; use container mx-auto px-4 and sensible max-w-\* on forms/cards.
+
+⸻
