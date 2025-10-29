@@ -1,9 +1,15 @@
 import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom'
 import LoginPage from '../features/auth/LoginPage'
-import HomePage from '../features/home/HomePage'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import { useUserProfile } from '../features/setup/hooks/useUserProfile'
 import SetupPage from '../features/setup/SetupPage'
+import { AppShell } from './AppShell'
+import DashboardPage from '../features/dashboard/DashboardPage'
+import type { SetupProfile } from '../features/setup/state'
+
+type ProtectedOutletContext = {
+  profile: SetupProfile
+}
 
 // eslint-disable-next-line react-refresh/only-export-components
 const ProtectedRoute = () => {
@@ -27,7 +33,11 @@ const ProtectedRoute = () => {
     return <Navigate to="/setup" replace />
   }
 
-  return <Outlet />
+  return (
+    <AppShell profile={profile}>
+      <Outlet context={{ profile } satisfies ProtectedOutletContext} />
+    </AppShell>
+  )
 }
 
 export const router = createBrowserRouter([
@@ -48,7 +58,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/dashboard',
-        element: <HomePage />,
+        element: <DashboardPage />,
       },
       {
         path: '*',
