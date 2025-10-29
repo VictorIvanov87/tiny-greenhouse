@@ -59,7 +59,7 @@ export function AuthCard() {
 
     try {
       await signInWithEmail(signInForm.email, signInForm.password)
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(resolveErrorMessage(err))
     } finally {
@@ -78,7 +78,7 @@ export function AuthCard() {
 
     try {
       await signUpWithEmail(signUpForm.email, signUpForm.password)
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(resolveErrorMessage(err))
     } finally {
@@ -92,7 +92,7 @@ export function AuthCard() {
 
     try {
       await signInWithGoogle()
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       if (
         err instanceof AuthError &&

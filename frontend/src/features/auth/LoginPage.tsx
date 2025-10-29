@@ -1,13 +1,27 @@
-import { Navigate } from 'react-router-dom';
-import { alpha, palette } from '../../theme/palette';
-import { AuthCard } from './components/AuthCard';
-import { useAuth } from './hooks/useAuth';
+import { Navigate } from 'react-router-dom'
+import { alpha, palette } from '../../theme/palette'
+import { AuthCard } from './components/AuthCard'
+import { useAuth } from './hooks/useAuth'
+import { useUserProfile } from '../setup/hooks/useUserProfile'
 
 const LoginPage = () => {
-  const { user } = useAuth();
+  const { user } = useAuth()
+  const { profile, loading: profileLoading } = useUserProfile(user ? user.uid : null)
 
-  if (user) {
-    return <Navigate to="/" replace />;
+  if (user && profileLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[color:var(--color-night)] text-[color:var(--color-sage)]">
+        <span className="text-sm opacity-80">Preparing your dashboard...</span>
+      </div>
+    )
+  }
+
+  if (user && profile?.setupCompleted) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (user && !profile?.setupCompleted) {
+    return <Navigate to="/setup" replace />
   }
 
   const featureItems = [
@@ -26,19 +40,17 @@ const LoginPage = () => {
       accent: palette.chili,
       copy: 'Early alerts before conditions slip so you can respond with confidence and keep crops thriving.',
     },
-  ];
+  ]
 
   const heroBackground = [
     `radial-gradient(circle at 12% 18%, ${alpha(palette.sunlight, 0.18)} 0%, transparent 50%)`,
     `radial-gradient(circle at 88% 12%, ${alpha(palette.moss, 0.2)} 0%, transparent 55%)`,
-    `linear-gradient(135deg, ${palette.night} 0%, ${alpha(palette.soil, 0.45)} 65%, ${
-      palette.soil
-    } 100%)`,
-  ].join(', ');
+    `linear-gradient(135deg, ${palette.night} 0%, ${alpha(palette.soil, 0.45)} 65%, ${palette.soil} 100%)`,
+  ].join(', ')
 
   return (
     <div
-      className="relative flex min-h-screen h-screen flex-col overflow-hidden"
+      className="relative flex min-h-screen flex-col overflow-hidden"
       style={{
         background: heroBackground,
       }}
@@ -72,8 +84,8 @@ const LoginPage = () => {
             Grow smarter with a live greenhouse companion
           </h1>
           <p className="text-lg text-[color:var(--color-sage)]/85 md:max-w-xl">
-            Keep every bed in balance and stay ahead of shifts in your environment with guided
-            insights rooted in horticultural best practices.
+            Keep every bed in balance and stay ahead of shifts in your environment with guided insights rooted in
+            horticultural best practices.
           </p>
           <div className="w-full max-w-xl">
             <AuthCard />
@@ -95,14 +107,13 @@ const LoginPage = () => {
               ))}
             </ul>
             <p className="text-sm text-[color:var(--color-sage)]/70">
-              Sign in above to explore the dashboard experience while we finish connecting live
-              sensor data.
+              Sign in above to explore the dashboard experience while we finish connecting live sensor data.
             </p>
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage
