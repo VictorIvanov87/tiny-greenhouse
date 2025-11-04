@@ -14,10 +14,11 @@ Minimal Fastify backend scaffold for Tiny Greenhouse.
 
 Copy `.env.example` to `.env` and adjust values as needed.
 
-## Health Check
+## Available Endpoints
 
-Once running, `GET /api/health` responds:
-
-```json
-{ "ok": true, "data": { "status": "ok" } }
-```
+- `GET /api/health`
+- `GET /api/telemetry?from&to&limit&sensor`
+- `GET /api/timelapse?limit`
+- `GET /api/greenhouses/current`
+- `GET /api/notifications`
+- `PUT /api/notifications`

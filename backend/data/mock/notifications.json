@@ -1,0 +1,8 @@
+{
+  "email": true,
+  "push": false,
+  "thresholds": {
+    "soilMoistureLow": 25,
+    "tempHigh": 32
+  }
+}

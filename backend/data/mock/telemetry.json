@@ -1,0 +1,578 @@
+[
+  {
+    "timestamp": "2025-10-01T00:00:00.000Z",
+    "temperature": 22,
+    "humidity": 53,
+    "soilMoisture": 30,
+    "lightHours": 12,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T01:00:00.000Z",
+    "temperature": 22.5,
+    "humidity": 52.84,
+    "soilMoisture": 30.71,
+    "lightHours": 12.52,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T02:00:00.000Z",
+    "temperature": 22.98,
+    "humidity": 52.37,
+    "soilMoisture": 31.41,
+    "lightHours": 13,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T03:00:00.000Z",
+    "temperature": 23.44,
+    "humidity": 51.6,
+    "soilMoisture": 32.08,
+    "lightHours": 13.41,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T04:00:00.000Z",
+    "temperature": 23.86,
+    "humidity": 50.57,
+    "soilMoisture": 32.7,
+    "lightHours": 13.73,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T05:00:00.000Z",
+    "temperature": 24.22,
+    "humidity": 49.32,
+    "soilMoisture": 33.28,
+    "lightHours": 13.93,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T06:00:00.000Z",
+    "temperature": 24.52,
+    "humidity": 47.9,
+    "soilMoisture": 33.78,
+    "lightHours": 14,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T07:00:00.000Z",
+    "temperature": 24.76,
+    "humidity": 46.36,
+    "soilMoisture": 34.21,
+    "lightHours": 13.93,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T08:00:00.000Z",
+    "temperature": 24.92,
+    "humidity": 44.77,
+    "soilMoisture": 34.55,
+    "lightHours": 13.73,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T09:00:00.000Z",
+    "temperature": 24.99,
+    "humidity": 43.18,
+    "soilMoisture": 34.8,
+    "lightHours": 13.41,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T10:00:00.000Z",
+    "temperature": 24.99,
+    "humidity": 41.67,
+    "soilMoisture": 34.95,
+    "lightHours": 13,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T11:00:00.000Z",
+    "temperature": 24.9,
+    "humidity": 40.29,
+    "soilMoisture": 35,
+    "lightHours": 12.52,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T12:00:00.000Z",
+    "temperature": 24.73,
+    "humidity": 39.1,
+    "soilMoisture": 34.95,
+    "lightHours": 12,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T13:00:00.000Z",
+    "temperature": 24.48,
+    "humidity": 38.14,
+    "soilMoisture": 34.8,
+    "lightHours": 11.48,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T14:00:00.000Z",
+    "temperature": 24.17,
+    "humidity": 37.46,
+    "soilMoisture": 34.55,
+    "lightHours": 11,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T15:00:00.000Z",
+    "temperature": 23.8,
+    "humidity": 37.08,
+    "soilMoisture": 34.2,
+    "lightHours": 10.59,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T16:00:00.000Z",
+    "temperature": 23.37,
+    "humidity": 37.01,
+    "soilMoisture": 33.78,
+    "lightHours": 10.27,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T17:00:00.000Z",
+    "temperature": 22.91,
+    "humidity": 37.27,
+    "soilMoisture": 33.27,
+    "lightHours": 10.07,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T18:00:00.000Z",
+    "temperature": 22.42,
+    "humidity": 37.83,
+    "soilMoisture": 32.7,
+    "lightHours": 10,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T19:00:00.000Z",
+    "temperature": 21.92,
+    "humidity": 38.67,
+    "soilMoisture": 32.07,
+    "lightHours": 10.07,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T20:00:00.000Z",
+    "temperature": 21.43,
+    "humidity": 39.77,
+    "soilMoisture": 31.4,
+    "lightHours": 10.27,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T21:00:00.000Z",
+    "temperature": 20.95,
+    "humidity": 41.08,
+    "soilMoisture": 30.71,
+    "lightHours": 10.59,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-01T22:00:00.000Z",
+    "temperature": 20.5,
+    "humidity": 42.54,
+    "soilMoisture": 29.99,
+    "lightHours": 11,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-01T23:00:00.000Z",
+    "temperature": 20.09,
+    "humidity": 44.1,
+    "soilMoisture": 29.28,
+    "lightHours": 11.48,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T00:00:00.000Z",
+    "temperature": 19.73,
+    "humidity": 45.7,
+    "soilMoisture": 28.58,
+    "lightHours": 12,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T01:00:00.000Z",
+    "temperature": 19.44,
+    "humidity": 47.27,
+    "soilMoisture": 27.92,
+    "lightHours": 12.52,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T02:00:00.000Z",
+    "temperature": 19.21,
+    "humidity": 48.75,
+    "soilMoisture": 27.29,
+    "lightHours": 13,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T03:00:00.000Z",
+    "temperature": 19.07,
+    "humidity": 50.08,
+    "soilMoisture": 26.72,
+    "lightHours": 13.41,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T04:00:00.000Z",
+    "temperature": 19,
+    "humidity": 51.2,
+    "soilMoisture": 26.22,
+    "lightHours": 13.73,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T05:00:00.000Z",
+    "temperature": 19.02,
+    "humidity": 52.08,
+    "soilMoisture": 25.79,
+    "lightHours": 13.93,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T06:00:00.000Z",
+    "temperature": 19.12,
+    "humidity": 52.68,
+    "soilMoisture": 25.45,
+    "lightHours": 14,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T07:00:00.000Z",
+    "temperature": 19.3,
+    "humidity": 52.97,
+    "soilMoisture": 25.2,
+    "lightHours": 13.93,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T08:00:00.000Z",
+    "temperature": 19.56,
+    "humidity": 52.95,
+    "soilMoisture": 25.05,
+    "lightHours": 13.73,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T09:00:00.000Z",
+    "temperature": 19.88,
+    "humidity": 52.6,
+    "soilMoisture": 25,
+    "lightHours": 13.41,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T10:00:00.000Z",
+    "temperature": 20.27,
+    "humidity": 51.96,
+    "soilMoisture": 25.05,
+    "lightHours": 13,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T11:00:00.000Z",
+    "temperature": 20.7,
+    "humidity": 51.03,
+    "soilMoisture": 25.21,
+    "lightHours": 12.52,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T12:00:00.000Z",
+    "temperature": 21.16,
+    "humidity": 49.87,
+    "soilMoisture": 25.46,
+    "lightHours": 12,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T13:00:00.000Z",
+    "temperature": 21.65,
+    "humidity": 48.51,
+    "soilMoisture": 25.8,
+    "lightHours": 11.48,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T14:00:00.000Z",
+    "temperature": 22.15,
+    "humidity": 47.01,
+    "soilMoisture": 26.23,
+    "lightHours": 11,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T15:00:00.000Z",
+    "temperature": 22.65,
+    "humidity": 45.43,
+    "soilMoisture": 26.73,
+    "lightHours": 10.59,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T16:00:00.000Z",
+    "temperature": 23.12,
+    "humidity": 43.84,
+    "soilMoisture": 27.31,
+    "lightHours": 10.27,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T17:00:00.000Z",
+    "temperature": 23.57,
+    "humidity": 42.29,
+    "soilMoisture": 27.93,
+    "lightHours": 10.07,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T18:00:00.000Z",
+    "temperature": 23.97,
+    "humidity": 40.85,
+    "soilMoisture": 28.6,
+    "lightHours": 10,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T19:00:00.000Z",
+    "temperature": 24.32,
+    "humidity": 39.57,
+    "soilMoisture": 29.3,
+    "lightHours": 10.07,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T20:00:00.000Z",
+    "temperature": 24.6,
+    "humidity": 38.51,
+    "soilMoisture": 30.01,
+    "lightHours": 10.27,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T21:00:00.000Z",
+    "temperature": 24.81,
+    "humidity": 37.71,
+    "soilMoisture": 30.72,
+    "lightHours": 10.59,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-02T22:00:00.000Z",
+    "temperature": 24.95,
+    "humidity": 37.2,
+    "soilMoisture": 31.42,
+    "lightHours": 11,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-02T23:00:00.000Z",
+    "temperature": 25,
+    "humidity": 37,
+    "soilMoisture": 32.09,
+    "lightHours": 11.48,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T00:00:00.000Z",
+    "temperature": 24.97,
+    "humidity": 37.12,
+    "soilMoisture": 32.71,
+    "lightHours": 12,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T01:00:00.000Z",
+    "temperature": 24.85,
+    "humidity": 37.56,
+    "soilMoisture": 33.28,
+    "lightHours": 12.52,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T02:00:00.000Z",
+    "temperature": 24.66,
+    "humidity": 38.29,
+    "soilMoisture": 33.79,
+    "lightHours": 13,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T03:00:00.000Z",
+    "temperature": 24.4,
+    "humidity": 39.29,
+    "soilMoisture": 34.21,
+    "lightHours": 13.41,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T04:00:00.000Z",
+    "temperature": 24.06,
+    "humidity": 40.51,
+    "soilMoisture": 34.55,
+    "lightHours": 13.73,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T05:00:00.000Z",
+    "temperature": 23.67,
+    "humidity": 41.92,
+    "soilMoisture": 34.8,
+    "lightHours": 13.93,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T06:00:00.000Z",
+    "temperature": 23.24,
+    "humidity": 43.45,
+    "soilMoisture": 34.95,
+    "lightHours": 14,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T07:00:00.000Z",
+    "temperature": 22.77,
+    "humidity": 45.04,
+    "soilMoisture": 35,
+    "lightHours": 13.93,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T08:00:00.000Z",
+    "temperature": 22.27,
+    "humidity": 46.62,
+    "soilMoisture": 34.95,
+    "lightHours": 13.73,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T09:00:00.000Z",
+    "temperature": 21.77,
+    "humidity": 48.15,
+    "soilMoisture": 34.79,
+    "lightHours": 13.41,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T10:00:00.000Z",
+    "temperature": 21.28,
+    "humidity": 49.55,
+    "soilMoisture": 34.54,
+    "lightHours": 13,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T11:00:00.000Z",
+    "temperature": 20.81,
+    "humidity": 50.76,
+    "soilMoisture": 34.2,
+    "lightHours": 12.52,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T12:00:00.000Z",
+    "temperature": 20.37,
+    "humidity": 51.75,
+    "soilMoisture": 33.77,
+    "lightHours": 12,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T13:00:00.000Z",
+    "temperature": 19.97,
+    "humidity": 52.47,
+    "soilMoisture": 33.26,
+    "lightHours": 11.48,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T14:00:00.000Z",
+    "temperature": 19.63,
+    "humidity": 52.89,
+    "soilMoisture": 32.69,
+    "lightHours": 11,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T15:00:00.000Z",
+    "temperature": 19.36,
+    "humidity": 53,
+    "soilMoisture": 32.06,
+    "lightHours": 10.59,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T16:00:00.000Z",
+    "temperature": 19.16,
+    "humidity": 52.78,
+    "soilMoisture": 31.39,
+    "lightHours": 10.27,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T17:00:00.000Z",
+    "temperature": 19.04,
+    "humidity": 52.26,
+    "soilMoisture": 30.69,
+    "lightHours": 10.07,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T18:00:00.000Z",
+    "temperature": 19,
+    "humidity": 51.45,
+    "soilMoisture": 29.98,
+    "lightHours": 10,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T19:00:00.000Z",
+    "temperature": 19.04,
+    "humidity": 50.38,
+    "soilMoisture": 29.27,
+    "lightHours": 10.07,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T20:00:00.000Z",
+    "temperature": 19.17,
+    "humidity": 49.09,
+    "soilMoisture": 28.57,
+    "lightHours": 10.27,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T21:00:00.000Z",
+    "temperature": 19.37,
+    "humidity": 47.65,
+    "soilMoisture": 27.9,
+    "lightHours": 10.59,
+    "sensor": "gh-2"
+  },
+  {
+    "timestamp": "2025-10-03T22:00:00.000Z",
+    "temperature": 19.65,
+    "humidity": 46.09,
+    "soilMoisture": 27.28,
+    "lightHours": 11,
+    "sensor": "gh-1"
+  },
+  {
+    "timestamp": "2025-10-03T23:00:00.000Z",
+    "temperature": 19.99,
+    "humidity": 44.5,
+    "soilMoisture": 26.71,
+    "lightHours": 11.48,
+    "sensor": "gh-2"
+  }
+]

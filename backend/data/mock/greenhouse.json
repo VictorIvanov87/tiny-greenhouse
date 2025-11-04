@@ -1,0 +1,11 @@
+{
+  "id": "gh-1",
+  "name": "Tiny Greenhouse #1",
+  "method": "soil",
+  "plantType": "basket-of-fire",
+  "language": "en",
+  "timelapse": {
+    "enabled": true,
+    "hour": 9
+  }
+}
