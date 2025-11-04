@@ -55,8 +55,16 @@ const mockTelemetry = (): TelemetryRow[] => [
 ];
 
 const statusBadge: Record<TelemetryRow['status'], JSX.Element> = {
-  ok: <Badge color="success">Stable</Badge>,
-  warning: <Badge color="warning">Check levels</Badge>,
+  ok: (
+    <Badge className="border border-emerald-400/30 bg-emerald-500/10 text-emerald-300">
+      Stable
+    </Badge>
+  ),
+  warning: (
+    <Badge className="border border-orange-400/30 bg-orange-500/10 text-orange-300">
+      Check levels
+    </Badge>
+  ),
 };
 
 export const RecentTelemetry = () => {
@@ -67,13 +75,13 @@ export const RecentTelemetry = () => {
 
   if (loading) {
     return (
-      <div className="space-y-3 rounded-3xl border border-[color:var(--color-evergreen-soft)] bg-white/70 p-6">
-        <div className="h-5 w-32 animate-pulse rounded-full bg-[color:var(--color-evergreen-soft)]" />
+      <div className="space-y-3 rounded-3xl border border-[#1f2a3d] bg-[#111c2d] p-6">
+        <div className="h-5 w-32 animate-pulse rounded-full bg-[#1b2842]" />
         <div className="flex flex-col gap-3">
           {[...Array(4)].map((_, index) => (
             <div
               key={index}
-              className="h-10 animate-pulse rounded-2xl bg-[color:var(--color-evergreen-soft)]"
+              className="h-10 animate-pulse rounded-2xl bg-[#1b2842]"
             />
           ))}
         </div>
@@ -83,10 +91,7 @@ export const RecentTelemetry = () => {
 
   if (error) {
     return (
-      <Alert
-        color="failure"
-        className="rounded-3xl border border-red-200 bg-red-50 text-sm text-red-700"
-      >
+      <Alert className="rounded-3xl border border-red-500/40 bg-red-500/10 text-sm text-red-300">
         Unable to load telemetry right now. Please retry later.
       </Alert>
     );
@@ -94,26 +99,26 @@ export const RecentTelemetry = () => {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-[color:var(--color-evergreen-soft)] bg-white/60 p-6 text-center text-sm text-[color:var(--color-soil-60)]">
+      <div className="rounded-3xl border border-dashed border-[#1f2a3d] bg-[#0f1729] p-6 text-center text-sm text-slate-400">
         No telemetry samples yet. Connect your greenhouse sensors to start tracking vitals.
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-[color:var(--color-evergreen-soft)] bg-white/80 shadow-[0_18px_45px_rgba(31,111,74,0.12)]">
-      <div className="flex items-center justify-between border-b border-[color:var(--color-evergreen-soft)] px-6 py-4">
+    <div className="overflow-hidden rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
+      <div className="flex items-center justify-between border-b border-[#1f2a3d] px-6 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-[color:var(--color-evergreen)]">
+          <h2 className="text-lg font-semibold text-slate-100">
             Recent telemetry
           </h2>
-          <p className="text-sm text-[color:var(--color-soil-60)]">
+          <p className="text-sm text-slate-400">
             Latest samples from your greenhouse sensors.
           </p>
         </div>
       </div>
       <Table>
-        <TableHead className="bg-[rgba(31,111,74,0.06)] text-xs uppercase tracking-wide text-[color:var(--color-soil-60)]">
+        <TableHead className="bg-[#19253c] text-xs uppercase tracking-wide text-slate-400">
           <TableRow>
             <TableHeadCell>Timestamp</TableHeadCell>
             <TableHeadCell>Temperature</TableHeadCell>
@@ -122,10 +127,10 @@ export const RecentTelemetry = () => {
             <TableHeadCell>Status</TableHeadCell>
           </TableRow>
         </TableHead>
-        <TableBody className="divide-y">
+        <TableBody className="divide-y divide-[#1f2a3d]">
           {rows.map((row) => (
-            <TableRow key={row.id} className="bg-white/60">
-              <TableCell className="whitespace-nowrap font-medium text-[color:var(--color-soil)]">
+            <TableRow key={row.id} className="bg-[#111c2d] text-slate-200">
+              <TableCell className="whitespace-nowrap font-medium text-slate-200">
                 {row.timestamp}
               </TableCell>
               <TableCell>{row.temperature}</TableCell>

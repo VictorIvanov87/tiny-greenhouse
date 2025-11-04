@@ -1,5 +1,4 @@
 import { Card } from 'flowbite-react'
-import { alpha, palette } from '../../../theme/palette'
 
 type Kpi = {
   id: string
@@ -51,9 +50,9 @@ const kpis: Kpi[] = [
 ]
 
 const trendStyles: Record<Kpi['trend'], string> = {
-  up: 'text-emerald-600',
-  down: 'text-amber-600',
-  stable: 'text-gray-500',
+  up: 'text-emerald-400',
+  down: 'text-orange-400',
+  stable: 'text-slate-400',
 }
 
 export const KpiCards = () => {
@@ -62,22 +61,22 @@ export const KpiCards = () => {
       {kpis.map((kpi) => (
         <Card
           key={kpi.id}
-          className="rounded-3xl border border-[color:var(--color-evergreen-soft)] bg-white/80 shadow-[0_18px_45px_rgba(31,111,74,0.12)] backdrop-blur"
+          className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)]"
         >
           <div className="flex items-start justify-between">
             <div>
-              <span className="text-sm font-medium uppercase tracking-[0.2em] text-[color:var(--color-soil-60)]">
+              <span className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">
                 {kpi.label}
               </span>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-semibold text-[color:var(--color-evergreen)]">{kpi.value}</span>
-                {kpi.unit ? <span className="text-sm font-medium text-[color:var(--color-soil-60)]">{kpi.unit}</span> : null}
+                <span className="text-3xl font-semibold text-slate-100">{kpi.value}</span>
+                {kpi.unit ? <span className="text-sm font-medium text-slate-400">{kpi.unit}</span> : null}
               </div>
               <p className={`mt-2 text-sm font-medium ${trendStyles[kpi.trend]}`}>{kpi.change}</p>
             </div>
             <span
-              className="flex h-12 w-12 items-center justify-center rounded-2xl text-xl shadow-[0_12px_32px_rgba(31,111,74,0.18)]"
-              style={{ background: alpha(palette.evergreen, 0.12) }}
+              className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1a2740] text-xl shadow-[0_16px_36px_rgba(8,20,38,0.4)]"
+              style={{ color: '#38bdf8' }}
               aria-hidden="true"
             >
               {kpi.icon}

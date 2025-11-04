@@ -22,12 +22,12 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-10">
-      <Card className="rounded-3xl border border-[color:var(--color-evergreen-soft)] bg-white shadow-[0_18px_45px_rgba(31,111,74,0.12)]">
+      <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-[color:var(--color-evergreen)] sm:text-4xl">
+          <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">
             {greetingByPlant(profile.plantType)}
           </h1>
-          <p className="text-sm text-[color:var(--color-soil-60)]">
+          <p className="text-sm text-slate-400">
             Here’s the latest snapshot of your greenhouse performance and captured moments.
           </p>
         </div>

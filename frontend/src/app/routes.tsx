@@ -5,6 +5,11 @@ import { useUserProfile } from '../features/setup/hooks/useUserProfile'
 import SetupPage from '../features/setup/SetupPage'
 import { AppShell } from './AppShell'
 import DashboardPage from '../features/dashboard/DashboardPage'
+import NotificationsPage from '../features/notifications/NotificationsPage'
+import SensorDataPage from '../features/sensor-data/SensorDataPage'
+import SettingsPage from '../features/settings/SettingsPage'
+import AssistantPage from '../features/assistant/AssistantPage'
+import Logout from '../features/auth/Logout'
 import type { SetupProfile } from '../features/setup/state'
 
 type ProtectedOutletContext = {
@@ -59,6 +64,26 @@ export const router = createBrowserRouter([
       {
         path: '/dashboard',
         element: <DashboardPage />,
+      },
+      {
+        path: '/notifications',
+        element: <NotificationsPage />,
+      },
+      {
+        path: '/sensor-data',
+        element: <SensorDataPage />,
+      },
+      {
+        path: '/settings',
+        element: <SettingsPage />,
+      },
+      {
+        path: '/assistant',
+        element: <AssistantPage />,
+      },
+      {
+        path: '/logout',
+        element: <Logout />,
       },
       {
         path: '*',
