@@ -14,6 +14,11 @@ Minimal Fastify backend scaffold for Tiny Greenhouse.
 
 Copy `.env.example` to `.env` and adjust values as needed.
 
+Key variables:
+
+- `AUTH_MODE=mock` for local development (synthetic `uid` via `x-user-id` header)
+- `AUTH_MODE=firebase` with `FIREBASE_*` credentials for real token verification
+
 ## Available Endpoints
 
 - `GET /api/health`
@@ -26,3 +31,5 @@ Copy `.env.example` to `.env` and adjust values as needed.
 ## API Documentation
 
 When running `npm run dev`, visit `http://localhost:3000/docs` for interactive Swagger UI (OpenAPI 3).
+
+In mock mode you may scope state per user by setting `X-User-Id` (and optional `X-User-Email`) headers.

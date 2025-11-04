@@ -75,6 +75,13 @@ FIREBASE_PRIVATE_KEY=
 ```
 > Private key must be loaded safely (escaped newlines handled). Do not commit `.env`.
 
+## 5) Protected Routes
+
+- Register `plugins/auth.ts` before any routes that need auth.
+- Use `preHandler: app.auth` in route options to enforce authentication.
+- Access the user via `req.user` (`uid` is always present once authenticated).
+- Keep state scoped by `uid` (in-memory maps for now).
+
 ---
 
 ## 5) API Surface (MVP)

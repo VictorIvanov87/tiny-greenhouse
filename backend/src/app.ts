@@ -4,6 +4,7 @@ import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import 'dotenv/config';
+import authPlugin from './plugins/auth';
 import healthRoutes from './routes/health';
 import telemetryRoutes from './routes/telemetry';
 import timelapseRoutes from './routes/timelapse';
@@ -35,6 +36,8 @@ export function buildServer() {
     },
     staticCSP: true,
   });
+
+  app.register(authPlugin);
 
   app.register(healthRoutes);
   app.register(telemetryRoutes);

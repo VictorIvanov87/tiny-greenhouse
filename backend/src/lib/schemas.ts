@@ -145,6 +145,7 @@ const greenhouseConfigDataSchema = {
 
 export const GreenhouseConfigResponseSchema = okEnvelope(greenhouseConfigDataSchema);
 export const GreenhouseConfigDataSchema = greenhouseConfigDataSchema;
+export type GreenhouseConfigType = z.infer<typeof GreenhouseConfig>;
 
 export const NotificationPrefs = z.object({
   email: z.boolean(),
