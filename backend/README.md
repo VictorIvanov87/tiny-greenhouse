@@ -22,3 +22,7 @@ Copy `.env.example` to `.env` and adjust values as needed.
 - `GET /api/greenhouses/current`
 - `GET /api/notifications`
 - `PUT /api/notifications`
+
+## API Documentation
+
+When running `npm run dev`, visit `http://localhost:3000/docs` for interactive Swagger UI (OpenAPI 3).

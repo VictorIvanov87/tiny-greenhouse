@@ -7,6 +7,7 @@
 ## 1) Runtime & Stack
 - **Runtime:** Node.js ≥ 20.x (ESM), TypeScript strict
 - **Web framework:** Fastify (`@fastify/cors`, `@fastify/helmet`)
+- **Docs:** `@fastify/swagger` + `@fastify/swagger-ui` (OpenAPI 3 under `/docs`)
 - **Validation:** Zod (input & output schemas)
 - **Logging:** Pino (Pretty in dev)
 - **Build & dev:** `tsup` (build), `tsx` (dev watcher)

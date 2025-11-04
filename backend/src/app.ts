@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import swagger from '@fastify/swagger';
+import swaggerUI from '@fastify/swagger-ui';
 import 'dotenv/config';
 import healthRoutes from './routes/health';
 import telemetryRoutes from './routes/telemetry';
@@ -13,6 +15,26 @@ export function buildServer() {
 
   app.register(cors, { origin: process.env.CORS_ORIGIN ?? true });
   app.register(helmet);
+
+  app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Tiny Greenhouse API',
+        description: 'Mock API for Tiny Greenhouse frontend development.',
+        version: '0.1.0',
+      },
+      servers: [{ url: 'http://localhost:3000' }],
+    },
+  });
+
+  app.register(swaggerUI, {
+    routePrefix: '/docs',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: false,
+    },
+    staticCSP: true,
+  });
 
   app.register(healthRoutes);
   app.register(telemetryRoutes);
