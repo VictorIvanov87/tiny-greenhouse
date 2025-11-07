@@ -6,9 +6,7 @@ import {
   NotificationPrefsType,
 } from '../lib/schemas';
 import { ok } from '../lib/respond';
-import { readMock } from '../lib/file';
-
-const cacheByUser: Record<string, NotificationPrefsType> = {};
+import { getUserPrefs, setUserPrefs } from '../services/prefs';
 
 const notificationRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -19,12 +17,8 @@ const notificationRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const uid = req.user!.uid;
-      if (!cacheByUser[uid]) {
-        cacheByUser[uid] = NotificationPrefs.parse(
-          await readMock<unknown>('notifications.json'),
-        );
-      }
-      return ok(cacheByUser[uid]);
+      const prefs = await getUserPrefs(uid);
+      return ok(prefs);
     },
   );
 
@@ -40,8 +34,8 @@ const notificationRoutes: FastifyPluginAsync = async (app) => {
     async (req) => {
       const prefs = NotificationPrefs.parse(req.body);
       const uid = req.user!.uid;
-      cacheByUser[uid] = prefs;
-      return ok(cacheByUser[uid]);
+      setUserPrefs(uid, prefs);
+      return ok(prefs);
     },
   );
 };

@@ -178,3 +178,57 @@ const notificationPrefsDataSchema = {
 export const NotificationPrefsResponseSchema = okEnvelope(notificationPrefsDataSchema);
 export const NotificationPrefsDataSchema = notificationPrefsDataSchema;
 export type NotificationPrefsType = z.infer<typeof NotificationPrefs>;
+
+export const AlertType = z.enum(['SOIL_MOISTURE_LOW', 'TEMP_HIGH', 'SENSOR_STALE']);
+export type AlertType = z.infer<typeof AlertType>;
+
+export const AlertSeverity = z.enum(['info', 'warn', 'critical']);
+export type AlertSeverity = z.infer<typeof AlertSeverity>;
+
+export const AlertSchema = z.object({
+  id: z.string(),
+  type: AlertType,
+  severity: AlertSeverity,
+  message: z.string(),
+  startedAt: ISODate,
+  resolvedAt: ISODate.optional(),
+  acknowledged: z.boolean(),
+  sensor: z.string().optional(),
+  value: z.number().optional(),
+  threshold: z.number().optional(),
+});
+export type Alert = z.infer<typeof AlertSchema>;
+
+const alertJsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['id', 'type', 'severity', 'message', 'startedAt', 'acknowledged'],
+  properties: {
+    id: { type: 'string' },
+    type: { enum: ['SOIL_MOISTURE_LOW', 'TEMP_HIGH', 'SENSOR_STALE'] },
+    severity: { enum: ['info', 'warn', 'critical'] },
+    message: { type: 'string' },
+    startedAt: isoDateJsonSchema,
+    resolvedAt: isoDateJsonSchema,
+    acknowledged: { type: 'boolean' },
+    sensor: { type: 'string' },
+    value: { type: 'number' },
+    threshold: { type: 'number' },
+  },
+} as const;
+
+const alertListDataSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['items', 'total'],
+  properties: {
+    items: {
+      type: 'array',
+      items: alertJsonSchema,
+    },
+    total: { type: 'number' },
+  },
+} as const;
+
+export const AlertListResponseSchema = okEnvelope(alertListDataSchema);
+export const AlertListDataSchema = alertListDataSchema;

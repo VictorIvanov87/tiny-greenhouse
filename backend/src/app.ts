@@ -10,6 +10,7 @@ import telemetryRoutes from './routes/telemetry';
 import timelapseRoutes from './routes/timelapse';
 import notificationsRoutes from './routes/notifications';
 import greenhouseRoutes from './routes/greenhouse';
+import alertsRoutes from './routes/alerts';
 
 export function buildServer() {
   const app = Fastify({ logger: true });
@@ -46,6 +47,7 @@ export function buildServer() {
   app.register(telemetryRoutes);
   app.register(timelapseRoutes);
   app.register(notificationsRoutes);
+  app.register(alertsRoutes);
   app.register(greenhouseRoutes);
 
   return app;
