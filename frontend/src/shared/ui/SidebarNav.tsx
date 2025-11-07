@@ -1,4 +1,4 @@
-import type { MouseEvent, SVGProps, ReactElement } from 'react';
+import type { MouseEvent, SVGProps, ReactElement, ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import type { SetupProfile } from '../../features/setup/state';
 import { Brand } from './Brand';
+import { useAlerts } from '../../features/alerts/AlertsProvider';
 
 type SidebarNavProps = {
   profile: SetupProfile;
@@ -24,7 +25,7 @@ type IconProps = SVGProps<SVGSVGElement>;
 
 type NavItem = {
   to: string;
-  label: string;
+  label: ReactNode;
   icon: (props: IconProps) => ReactElement;
 };
 
@@ -90,6 +91,7 @@ const ChatIcon = (props: IconProps) => (
 
 const navItems: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
+  { to: '/alerts', label: 'Alerts', icon: BellIcon },
   { to: '/notifications', label: 'Notifications', icon: BellIcon },
   { to: '/timelapse', label: 'Timelapse', icon: CameraIcon },
   { to: '/sensor-data', label: 'Sensor Data', icon: TableIcon },
@@ -111,6 +113,7 @@ const getInitials = (displayName?: string | null, email?: string | null) => {
 
 export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) => {
   const { user } = useAuth();
+  const { active } = useAlerts();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -154,6 +157,7 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
               const isActive =
                 location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
 
+              const alertCount = item.to === '/alerts' ? active.length : 0
               return (
                 <SidebarItem
                   key={item.to}
@@ -162,7 +166,18 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
                   className="flex asdasd"
                   icon={item.icon}
                   active={isActive}
-                  label={item.label}
+                  label={
+                    alertCount > 0 ? (
+                      <span className="flex items-center gap-2">
+                        {item.label}
+                        <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
+                          {alertCount}
+                        </span>
+                      </span>
+                    ) : (
+                      item.label
+                    )
+                  }
                 />
               );
             })}

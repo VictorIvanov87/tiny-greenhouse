@@ -7,6 +7,7 @@ import { AppShell } from './AppShell'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import NotificationsPage from '../features/notifications/NotificationsPage'
 import SensorDataPage from '../features/telemetry/SensorDataPage'
+import AlertsPage from '../features/alerts/AlertsPage'
 import SettingsPage from '../features/settings/SettingsPage'
 import AssistantPage from '../features/assistant/AssistantPage'
 import Logout from '../features/auth/Logout'
@@ -69,6 +70,10 @@ export const router = createBrowserRouter([
       {
         path: '/notifications',
         element: <NotificationsPage />,
+      },
+      {
+        path: '/alerts',
+        element: <AlertsPage />,
       },
       {
         path: '/timelapse',

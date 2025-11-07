@@ -19,7 +19,7 @@ export const ChartCard = ({
   emptyMessage = 'No data',
 }: ChartCardProps) => {
   return (
-    <Card className="rounded-3xl border border-slate-200 shadow-sm">
+    <Card className="min-w-0 rounded-3xl border border-slate-200 shadow-sm">
       <div className="mb-2 flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-slate-900">{title}</p>
@@ -27,7 +27,7 @@ export const ChartCard = ({
         </div>
         {footer}
       </div>
-      <div className="h-36 md:h-40">
+      <div className="h-36 min-w-0 md:h-40">
         {isEmpty ? (
           <div className="flex h-full items-center justify-center text-sm text-slate-500">
             {emptyMessage}

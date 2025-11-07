@@ -1,82 +1,83 @@
-import { Alert, Button, Card, Spinner } from 'flowbite-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ChartCard } from '../../shared/ui/ChartCard'
+import { Alert, Button, Card, Spinner } from 'flowbite-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ChartCard } from '../../shared/ui/ChartCard';
+import { AlertPanel } from '../alerts/AlertPanel';
 import {
   bucketByMinute,
   filterByWindow,
   sortByTimestamp,
   type WindowKey,
-} from '../telemetry/transforms'
-import { getTelemetry, type TelemetrySample } from '../telemetry/api'
-import type { SetupProfile } from '../setup/state'
-import { KpiCards, type TelemetryMetrics } from './components/KpiCards'
-import { RecentTelemetry } from './components/RecentTelemetry'
+} from '../telemetry/transforms';
+import { getTelemetry, type TelemetrySample } from '../telemetry/api';
+import type { SetupProfile } from '../setup/state';
+import { KpiCards, type TelemetryMetrics } from './components/KpiCards';
+import { RecentTelemetry } from './components/RecentTelemetry';
 
 type DashboardContext = {
-  profile: SetupProfile
-}
+  profile: SetupProfile;
+};
 
-const WINDOW_OPTIONS: WindowKey[] = ['1h', '6h', '24h']
+const WINDOW_OPTIONS: WindowKey[] = ['1h', '6h', '24h'];
 
 const greetingByPlant = (plantType?: string) => {
   if (!plantType) {
-    return 'Welcome back'
+    return 'Welcome back';
   }
 
-  return `Welcome back, ${plantType.replace(/-/g, ' ')} caretaker`
-}
+  return `Welcome back, ${plantType.replace(/-/g, ' ')} caretaker`;
+};
 
 const formatTick = (value: number) =>
-  new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const DashboardPage = () => {
-  const { profile } = useOutletContext<DashboardContext>()
-  const [samples, setSamples] = useState<TelemetrySample[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [timeWindow, setTimeWindow] = useState<WindowKey>('6h')
-  const isMounted = useRef(false)
+  const { profile } = useOutletContext<DashboardContext>();
+  const [samples, setSamples] = useState<TelemetrySample[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [timeWindow, setTimeWindow] = useState<WindowKey>('6h');
+  const isMounted = useRef(false);
 
   const fetchTelemetry = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      const result = await getTelemetry({ limit: 100 })
+      const result = await getTelemetry({ limit: 100 });
 
       if (!isMounted.current) {
-        return
+        return;
       }
 
-      setSamples(result.items)
-      setTotal(result.total)
+      setSamples(result.items);
+      setTotal(result.total);
     } catch (err) {
       if (!isMounted.current) {
-        return
+        return;
       }
 
-      const message = err instanceof Error ? err.message : 'Failed to load telemetry'
-      setError(message)
+      const message = err instanceof Error ? err.message : 'Failed to load telemetry';
+      setError(message);
     } finally {
       if (isMounted.current) {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    isMounted.current = true
-    fetchTelemetry()
+    isMounted.current = true;
+    fetchTelemetry();
 
     return () => {
-      isMounted.current = false
-    }
-  }, [fetchTelemetry])
+      isMounted.current = false;
+    };
+  }, [fetchTelemetry]);
 
-  const sortedSamples = useMemo(() => sortByTimestamp(samples), [samples])
+  const sortedSamples = useMemo(() => sortByTimestamp(samples), [samples]);
 
   const metrics = useMemo<TelemetryMetrics>(() => {
     if (!sortedSamples.length) {
@@ -84,52 +85,52 @@ const DashboardPage = () => {
         avgTemperature: null,
         avgHumidity: null,
         latestSoilMoisture: null,
-      }
+      };
     }
 
     const average = (values: number[]) => {
       if (!values.length) {
-        return null
+        return null;
       }
 
-      const sum = values.reduce((acc, value) => acc + value, 0)
-      return sum / values.length
-    }
+      const sum = values.reduce((acc, value) => acc + value, 0);
+      return sum / values.length;
+    };
 
-    const latest = sortedSamples.at(-1)
+    const latest = sortedSamples.at(-1);
 
     return {
       avgTemperature: average(sortedSamples.map((sample) => sample.temperature)),
       avgHumidity: average(sortedSamples.map((sample) => sample.humidity)),
       latestSoilMoisture: latest?.soilMoisture ?? null,
-    }
-  }, [sortedSamples])
+    };
+  }, [sortedSamples]);
 
-  const recentSamples = useMemo(() => sortedSamples.slice(-25), [sortedSamples])
+  const recentSamples = useMemo(() => sortedSamples.slice(-25), [sortedSamples]);
   const windowedSamples = useMemo(
     () => filterByWindow(sortedSamples, timeWindow),
-    [sortedSamples, timeWindow],
-  )
+    [sortedSamples, timeWindow]
+  );
 
   const chartSeries = useMemo(() => {
-    const temperature = bucketByMinute(windowedSamples, (sample) => sample.temperature)
-    const humidity = bucketByMinute(windowedSamples, (sample) => sample.humidity)
-    const soilMoisture = bucketByMinute(windowedSamples, (sample) => sample.soilMoisture)
-    return { temperature, humidity, soilMoisture }
-  }, [windowedSamples])
+    const temperature = bucketByMinute(windowedSamples, (sample) => sample.temperature);
+    const humidity = bucketByMinute(windowedSamples, (sample) => sample.humidity);
+    const soilMoisture = bucketByMinute(windowedSamples, (sample) => sample.soilMoisture);
+    return { temperature, humidity, soilMoisture };
+  }, [windowedSamples]);
 
   const renderAreaChart = (
     data: Array<{ timestamp: number; value: number }>,
     stroke: string,
-    fill: string,
+    fill: string
   ) => {
     if (data.length === 0) {
-      return null
+      return null;
     }
 
     return (
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
+      <ResponsiveContainer width="100%" height={140}>
+        <AreaChart data={data} responsive>
           <XAxis dataKey="timestamp" tickFormatter={formatTick} hide />
           <YAxis hide domain={['auto', 'auto']} />
           <Tooltip
@@ -147,8 +148,8 @@ const DashboardPage = () => {
           />
         </AreaChart>
       </ResponsiveContainer>
-    )
-  }
+    );
+  };
 
   const TimeWindowSwitch = () => (
     <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold shadow-sm">
@@ -167,7 +168,7 @@ const DashboardPage = () => {
         </button>
       ))}
     </div>
-  )
+  );
 
   const chartGrid = (
     <section className="space-y-3">
@@ -190,7 +191,7 @@ const DashboardPage = () => {
         </ChartCard>
       </div>
     </section>
-  )
+  );
 
   const renderContent = () => {
     if (loading) {
@@ -198,7 +199,7 @@ const DashboardPage = () => {
         <Card className="flex min-h-[280px] items-center justify-center rounded-3xl border border-slate-200 shadow-sm">
           <Spinner size="xl" />
         </Card>
-      )
+      );
     }
 
     if (error) {
@@ -213,17 +214,22 @@ const DashboardPage = () => {
             </Button>
           </div>
         </Card>
-      )
+      );
     }
 
     return (
       <div className="space-y-6">
         {chartGrid}
-        <KpiCards metrics={metrics} />
-        <RecentTelemetry items={recentSamples} total={total} />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,_3fr)_minmax(0,_2fr)]">
+          <div className="space-y-6">
+            <KpiCards metrics={metrics} />
+            <RecentTelemetry items={recentSamples} total={total} />
+          </div>
+          <AlertPanel />
+        </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-10">
@@ -240,7 +246,7 @@ const DashboardPage = () => {
 
       {renderContent()}
     </div>
-  )
-}
+  );
+};
 
-export default DashboardPage
+export default DashboardPage;
