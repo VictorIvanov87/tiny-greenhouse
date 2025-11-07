@@ -1,6 +1,14 @@
 import { Alert, Button, Card, Spinner } from 'flowbite-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { ChartCard } from '../../shared/ui/ChartCard'
+import {
+  bucketByMinute,
+  filterByWindow,
+  sortByTimestamp,
+  type WindowKey,
+} from '../telemetry/transforms'
 import { getTelemetry, type TelemetrySample } from '../telemetry/api'
 import type { SetupProfile } from '../setup/state'
 import { KpiCards, type TelemetryMetrics } from './components/KpiCards'
@@ -10,6 +18,8 @@ type DashboardContext = {
   profile: SetupProfile
 }
 
+const WINDOW_OPTIONS: WindowKey[] = ['1h', '6h', '24h']
+
 const greetingByPlant = (plantType?: string) => {
   if (!plantType) {
     return 'Welcome back'
@@ -18,12 +28,16 @@ const greetingByPlant = (plantType?: string) => {
   return `Welcome back, ${plantType.replace(/-/g, ' ')} caretaker`
 }
 
+const formatTick = (value: number) =>
+  new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
 const DashboardPage = () => {
   const { profile } = useOutletContext<DashboardContext>()
   const [samples, setSamples] = useState<TelemetrySample[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [timeWindow, setTimeWindow] = useState<WindowKey>('6h')
   const isMounted = useRef(false)
 
   const fetchTelemetry = useCallback(async () => {
@@ -31,7 +45,7 @@ const DashboardPage = () => {
     setError(null)
 
     try {
-      const result = await getTelemetry({ limit: 25 })
+      const result = await getTelemetry({ limit: 100 })
 
       if (!isMounted.current) {
         return
@@ -62,8 +76,10 @@ const DashboardPage = () => {
     }
   }, [fetchTelemetry])
 
+  const sortedSamples = useMemo(() => sortByTimestamp(samples), [samples])
+
   const metrics = useMemo<TelemetryMetrics>(() => {
-    if (!samples.length) {
+    if (!sortedSamples.length) {
       return {
         avgTemperature: null,
         avgHumidity: null,
@@ -80,16 +96,101 @@ const DashboardPage = () => {
       return sum / values.length
     }
 
-    const latest = [...samples].sort(
-      (a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp),
-    )[0]
+    const latest = sortedSamples.at(-1)
 
     return {
-      avgTemperature: average(samples.map((sample) => sample.temperature)),
-      avgHumidity: average(samples.map((sample) => sample.humidity)),
+      avgTemperature: average(sortedSamples.map((sample) => sample.temperature)),
+      avgHumidity: average(sortedSamples.map((sample) => sample.humidity)),
       latestSoilMoisture: latest?.soilMoisture ?? null,
     }
-  }, [samples])
+  }, [sortedSamples])
+
+  const recentSamples = useMemo(() => sortedSamples.slice(-25), [sortedSamples])
+  const windowedSamples = useMemo(
+    () => filterByWindow(sortedSamples, timeWindow),
+    [sortedSamples, timeWindow],
+  )
+
+  const chartSeries = useMemo(() => {
+    const temperature = bucketByMinute(windowedSamples, (sample) => sample.temperature)
+    const humidity = bucketByMinute(windowedSamples, (sample) => sample.humidity)
+    const soilMoisture = bucketByMinute(windowedSamples, (sample) => sample.soilMoisture)
+    return { temperature, humidity, soilMoisture }
+  }, [windowedSamples])
+
+  const renderAreaChart = (
+    data: Array<{ timestamp: number; value: number }>,
+    stroke: string,
+    fill: string,
+  ) => {
+    if (data.length === 0) {
+      return null
+    }
+
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data}>
+          <XAxis dataKey="timestamp" tickFormatter={formatTick} hide />
+          <YAxis hide domain={['auto', 'auto']} />
+          <Tooltip
+            contentStyle={{ fontSize: '0.75rem' }}
+            labelFormatter={(value) => new Date(value as number).toLocaleString()}
+          />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={stroke}
+            strokeWidth={2}
+            fill={fill}
+            fillOpacity={1}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    )
+  }
+
+  const TimeWindowSwitch = () => (
+    <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold shadow-sm">
+      {WINDOW_OPTIONS.map((window) => (
+        <button
+          key={window}
+          type="button"
+          onClick={() => setTimeWindow(window)}
+          className={`rounded-full px-3 py-1 transition ${
+            window === timeWindow
+              ? 'bg-emerald-500 text-white shadow'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          {window}
+        </button>
+      ))}
+    </div>
+  )
+
+  const chartGrid = (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Environment trends</h2>
+          <p className="text-xs text-slate-500">Filtered to the past {timeWindow}</p>
+        </div>
+        <TimeWindowSwitch />
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <ChartCard title="Temperature (°C)" isEmpty={chartSeries.temperature.length === 0}>
+          {renderAreaChart(chartSeries.temperature, '#f97316', 'rgba(249,115,22,0.25)')}
+        </ChartCard>
+        <ChartCard title="Humidity (%)" isEmpty={chartSeries.humidity.length === 0}>
+          {renderAreaChart(chartSeries.humidity, '#3b82f6', 'rgba(59,130,246,0.25)')}
+        </ChartCard>
+        <ChartCard title="Soil moisture (%)" isEmpty={chartSeries.soilMoisture.length === 0}>
+          {renderAreaChart(chartSeries.soilMoisture, '#10b981', 'rgba(16,185,129,0.25)')}
+        </ChartCard>
+      </div>
+    </section>
+  )
 
   const renderContent = () => {
     if (loading) {
@@ -117,8 +218,9 @@ const DashboardPage = () => {
 
     return (
       <div className="space-y-6">
+        {chartGrid}
         <KpiCards metrics={metrics} />
-        <RecentTelemetry items={samples} total={total} />
+        <RecentTelemetry items={recentSamples} total={total} />
       </div>
     )
   }
