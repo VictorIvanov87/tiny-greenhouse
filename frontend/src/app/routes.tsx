@@ -11,6 +11,7 @@ import SettingsPage from '../features/settings/SettingsPage'
 import AssistantPage from '../features/assistant/AssistantPage'
 import Logout from '../features/auth/Logout'
 import type { SetupProfile } from '../features/setup/state'
+import TimelapsePage from '../features/timelapse/TimelapsePage'
 
 type ProtectedOutletContext = {
   profile: SetupProfile
@@ -68,6 +69,10 @@ export const router = createBrowserRouter([
       {
         path: '/notifications',
         element: <NotificationsPage />,
+      },
+      {
+        path: '/timelapse',
+        element: <TimelapsePage />,
       },
       {
         path: '/sensor-data',

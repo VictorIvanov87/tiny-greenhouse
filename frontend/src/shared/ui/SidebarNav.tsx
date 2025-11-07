@@ -44,6 +44,17 @@ const BellIcon = (props: IconProps) => (
   </svg>
 );
 
+const CameraIcon = (props: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M7 7h-.8A2.2 2.2 0 0 0 4 9.2v7.6A2.2 2.2 0 0 0 6.2 19h11.6A2.2 2.2 0 0 0 20 16.8V9.2A2.2 2.2 0 0 0 17.8 7H17l-1.2-2H8.2Z"
+    />
+    <circle cx={12} cy={13} r={3.25} />
+  </svg>
+);
+
 const TableIcon = (props: IconProps) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
     <rect x={3} y={5} width={18} height={14} rx={1.5} />
@@ -80,6 +91,7 @@ const ChatIcon = (props: IconProps) => (
 const navItems: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { to: '/notifications', label: 'Notifications', icon: BellIcon },
+  { to: '/timelapse', label: 'Timelapse', icon: CameraIcon },
   { to: '/sensor-data', label: 'Sensor Data', icon: TableIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
   { to: '/assistant', label: 'Assistant', icon: ChatIcon },
