@@ -14,7 +14,10 @@ import greenhouseRoutes from './routes/greenhouse';
 export function buildServer() {
   const app = Fastify({ logger: true });
 
-  app.register(cors, { origin: process.env.CORS_ORIGIN ?? true });
+  app.register(cors, {
+    origin: process.env.CORS_ORIGIN ?? true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
   app.register(helmet);
 
   app.register(swagger, {

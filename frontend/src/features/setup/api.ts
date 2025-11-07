@@ -64,3 +64,15 @@ export const completeSetup = async (uid: string, data: SetupCompletionPayload) =
     }),
   ])
 }
+
+export const markSetupCompleted = async (uid: string) => {
+  const userRef = doc(db, USERS_COLLECTION, uid)
+  await setDoc(
+    userRef,
+    {
+      setupCompleted: true,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+}
