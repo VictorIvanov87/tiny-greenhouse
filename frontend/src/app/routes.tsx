@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router
 import LoginPage from '../features/auth/LoginPage'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import { useUserProfile } from '../features/setup/hooks/useUserProfile'
-import SetupPage from '../features/setup/SetupPage'
 import { AppShell } from './AppShell'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import NotificationsPage from '../features/notifications/NotificationsPage'
@@ -13,6 +12,7 @@ import AssistantPage from '../features/assistant/AssistantPage'
 import Logout from '../features/auth/Logout'
 import type { SetupProfile } from '../features/setup/state'
 import TimelapsePage from '../features/timelapse/TimelapsePage'
+import SetupWizard from '../features/setup/wizard/SetupWizard'
 
 type ProtectedOutletContext = {
   profile: SetupProfile
@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/setup',
-    element: <SetupPage />,
+    element: <SetupWizard />,
   },
   {
     element: <ProtectedRoute />,

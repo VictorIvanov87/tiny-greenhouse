@@ -1,10 +1,12 @@
 import { Alert, Button, Card, Spinner } from 'flowbite-react';
 import { useCallback, useEffect, useState, type JSX } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GreenhouseFormFields } from '../greenhouse/components/GreenhouseFormFields';
 import { getCurrentGreenhouse, updateCurrentGreenhouse } from '../greenhouse/api';
 import type { GreenhouseConfig } from '../greenhouse/types';
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const [config, setConfig] = useState<GreenhouseConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +112,19 @@ const SettingsPage = () => {
         </p>
       </div>
       {content}
+      <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Need to rerun the setup wizard?</h2>
+            <p className="text-sm text-slate-500">
+              Restarting clears the local wizard progress and takes you back to the onboarding flow.
+            </p>
+          </div>
+          <Button color="light" onClick={() => navigate('/setup')}>
+            Restart setup
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 };
