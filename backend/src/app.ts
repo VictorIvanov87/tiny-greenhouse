@@ -1,4 +1,9 @@
 import Fastify from 'fastify';
+import {
+  serializerCompiler,
+  validatorCompiler,
+  type ZodTypeProvider,
+} from 'fastify-type-provider-zod';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
@@ -11,9 +16,14 @@ import timelapseRoutes from './routes/timelapse';
 import notificationsRoutes from './routes/notifications';
 import greenhouseRoutes from './routes/greenhouse';
 import alertsRoutes from './routes/alerts';
+import ragRoutes from './routes/rag';
+import assistRoutes from './routes/assist';
 
 export function buildServer() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
+
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
 
   app.register(cors, {
     origin: process.env.CORS_ORIGIN ?? true,
@@ -49,6 +59,8 @@ export function buildServer() {
   app.register(notificationsRoutes);
   app.register(alertsRoutes);
   app.register(greenhouseRoutes);
+  app.register(ragRoutes);
+  app.register(assistRoutes);
 
   return app;
 }

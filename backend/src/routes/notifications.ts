@@ -2,7 +2,6 @@ import type { FastifyPluginAsync } from 'fastify';
 import {
   NotificationPrefs,
   NotificationPrefsResponseSchema,
-  NotificationPrefsDataSchema,
   NotificationPrefsType,
 } from '../lib/schemas';
 import { ok } from '../lib/respond';
@@ -27,7 +26,7 @@ const notificationRoutes: FastifyPluginAsync = async (app) => {
     {
       preHandler: app.auth,
       schema: {
-        body: NotificationPrefsDataSchema,
+        body: NotificationPrefs,
         response: { 200: NotificationPrefsResponseSchema },
       },
     },

@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { Alert, Button, Card } from 'flowbite-react';
-import { useNavigate } from 'react-router-dom';
+import { Alert, Button, Card, Spinner } from 'flowbite-react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
   getNextStep,
   getPreviousStep,
   hydrate,
   isStepValid,
-  markSetupComplete,
   reset,
   save,
   type SetupData,
@@ -19,6 +18,9 @@ import StepPrefs from './steps/StepPrefs';
 import StepReview from './steps/StepReview';
 import { updateCurrentGreenhouse } from '../../greenhouse/api';
 import type { GreenhouseConfig } from '../../greenhouse/types';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { markSetupCompleted } from '../api';
 
 const TITLES = ['Welcome', 'Choose crop', 'Alarms & settings', 'Review'];
 
@@ -46,6 +48,8 @@ const StepContent = ({
 
 const SetupWizard = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading, refresh } = useUserProfile(user ? user.uid : null);
   const [data, setData] = useState<SetupData>(() => hydrate());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +93,11 @@ const SetupWizard = () => {
   };
 
   const handleFinish = async () => {
+    if (!user) {
+      setError('You must be signed in to finish setup.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -106,8 +115,9 @@ const SetupWizard = () => {
 
     try {
       await updateCurrentGreenhouse(payload);
-      markSetupComplete();
+      await markSetupCompleted(user.uid);
       reset();
+      refresh();
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to finish setup';
@@ -116,6 +126,22 @@ const SetupWizard = () => {
       setSaving(false);
     }
   };
+
+  if (authLoading || profileLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <Spinner color="success" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (profile?.setupCompleted) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-8 text-slate-900">

@@ -1,14 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import {
-  GreenhouseConfig,
-  GreenhouseConfigResponseSchema,
-  GreenhouseConfigDataSchema,
-  GreenhouseConfigType,
-} from '../lib/schemas';
+import { GreenhouseConfig, GreenhouseConfigResponseSchema } from '../lib/schemas';
 import { ok } from '../lib/respond';
-import { readMock } from '../lib/file';
-
-const stateByUser: Record<string, GreenhouseConfigType> = {};
+import { getGreenhouseConfig, saveGreenhouseConfig } from '../services/greenhouse';
 
 const greenhouseRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -19,12 +12,8 @@ const greenhouseRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const uid = req.user!.uid;
-      if (!stateByUser[uid]) {
-        stateByUser[uid] = GreenhouseConfig.parse(
-          await readMock<unknown>('greenhouse.json'),
-        );
-      }
-      return ok(stateByUser[uid]);
+      const config = await getGreenhouseConfig(uid);
+      return ok(config);
     },
   );
 
@@ -33,15 +22,15 @@ const greenhouseRoutes: FastifyPluginAsync = async (app) => {
     {
       preHandler: app.auth,
       schema: {
-        body: GreenhouseConfigDataSchema,
+        body: GreenhouseConfig,
         response: { 200: GreenhouseConfigResponseSchema },
       },
     },
     async (req) => {
       const payload = GreenhouseConfig.parse(req.body);
       const uid = req.user!.uid;
-      stateByUser[uid] = payload;
-      return ok(stateByUser[uid]);
+      const updated = saveGreenhouseConfig(uid, payload);
+      return ok(updated);
     },
   );
 };

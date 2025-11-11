@@ -1,0 +1,67 @@
+crop:
+  id: basil
+  variety: genovese
+  lang: en
+  displayName: Genovese Basil
+  defaultStage: vegetative
+overview: |
+  Genovese basil is a compact, high-oil cultivar that prefers consistent warmth
+  and evenly moist substrate. It responds quickly to pruning and will bolt when
+  heat or drought stress persists for more than a few days.
+stages:
+  - id: seedling
+    label: Seedling ramp
+    cues:
+      - Cotyledons fully opened and first true leaves emerging.
+      - Substrate still loose enough that roots can expand without compaction.
+    guidance: |
+      Keep trays under bright but indirect light to avoid leggy stems. Aim for
+      gentle airflow and avoid bottom heat above 26°C. Transplant once roots
+      start circling the plug to prevent stress later.
+  - id: vegetative
+    label: Vegetative push
+    cues:
+      - Plants at least 10 cm tall with 4–6 sets of leaves.
+      - Canopy dense enough that pruning yields a handful of leaves per plant.
+    guidance: |
+      Provide 14–16 hours of light with night temps no lower than 18°C. Pinch
+      the apical tip every 7–10 days to keep new growth flush. Maintain even
+      moisture but allow the top centimeter of substrate to dry before watering.
+  - id: harvest
+    label: Harvest & hold
+    cues:
+      - Lateral branches thick, producing clusters of leaves on each node.
+      - Prefers slightly cooler nights (18–20°C) to slow bolting.
+    guidance: |
+      Rotate harvests so each plant keeps at least two full nodes. A deep prune
+      every third harvest keeps the canopy young. Remove any flower spikes as
+      soon as they appear to preserve flavor.
+defaults:
+  environment:
+    temperature_day: "24°C"
+    temperature_night: "19°C"
+    humidity: "55-65%"
+    light_hours: "16h photoperiod"
+  irrigation:
+    method: "Low-flow drip ring"
+    frequency: "Once daily during vegetative surge, twice in peak heat"
+    nutrient_ec: "1.6 mS/cm"
+  pruning:
+    cadence: "Pinch weekly; deeper cut every 3rd harvest"
+    target_structure: "Two to three main stems with young laterals"
+warnings:
+  - stage: seedling
+    text: "Dry trays stunt roots permanently. Mist lightly if EC climbs above 1.2."
+  - stage: vegetative
+    text: "Temps above 32°C for two days trigger bolting; drop lights or add airflow."
+  - stage: harvest
+    text: "Skipping pruning lets stems lignify, slowing new flushes within a week."
+faq:
+  - q: How do I spot nutrient stress early?
+    a: |
+      Watch for pale new leaves and burnt tips right after irrigation. Both
+      indicate EC creep. Flush with plain water and resume at 80% strength.
+  - q: Can I root cuttings to restart a batch?
+    a: |
+      Yes. Take 8–10 cm cuttings from healthy lateral branches, strip lower leaves,
+      and keep in 0.3 EC water until roots reach 2 cm, usually 7–9 days.

@@ -12,6 +12,7 @@
 - **Logging:** Pino (Pretty in dev)
 - **Build & dev:** `tsup` (build), `tsx` (dev watcher)
 - **Env:** `dotenv` (no secrets in code; use `.env`)
+- **AI/RAG:** `openai` SDK (chat + embeddings) with env-driven providers; pgvector-backed retrieval via `pg`
 
 > Do NOT introduce new runtime libraries without updating this file.
 
@@ -23,6 +24,7 @@
 - **Build:** `npm run build` → outputs ESM to `dist/`
 - **Start:** `npm start` → runs `node dist/app.js`
 - **Lint/Typecheck:** `npm run typecheck` (tsc --noEmit)
+- **Seed RAG data:** `npm run rag:seed` → chunks `data/rag` sources and upserts into pgvector
 
 ---
 

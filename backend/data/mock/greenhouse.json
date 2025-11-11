@@ -3,6 +3,9 @@
   "name": "Tiny Greenhouse #1",
   "method": "soil",
   "plantType": "basket-of-fire",
+  "cropId": "basil",
+  "variety": "genovese",
+  "growthStage": "vegetative",
   "language": "en",
   "timelapse": {
     "enabled": true,

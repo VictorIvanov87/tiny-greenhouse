@@ -27,7 +27,6 @@ export interface SetupData {
 }
 
 const STORAGE_KEY = 'tg.setup.v1';
-const HAS_SETUP_KEY = 'tg.hasSetup';
 const TOTAL_STEPS = 4;
 
 const clampStep = (value: number): WizardStep => {
@@ -80,14 +79,6 @@ export const reset = () => {
   }
 
   window.localStorage.removeItem(STORAGE_KEY);
-};
-
-export const markSetupComplete = () => {
-  if (!hasWindow()) {
-    return;
-  }
-
-  window.localStorage.setItem(HAS_SETUP_KEY, 'true');
 };
 
 export const hydrate = (): SetupData => {
