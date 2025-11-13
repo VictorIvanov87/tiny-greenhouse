@@ -1,0 +1,127 @@
+crop:
+  id: mushrooms
+  variety: shiitake
+  lang: en
+  displayName: "Shiitake (Lentinula edodes)"
+  version: 1
+  defaultStage: spawn-run
+
+overview: |
+  Revered gourmet mushroom with rich umami flavor and beautiful chestnut caps.
+  Suited to small indoor rigs using supplemented hardwood blocks; rewards patience
+  with dense, photogenic clusters when hydration, humidity, and fresh air are right.
+
+growth_timing:
+  colonization_days: "20–45 at 20–24°C (strain/substrate dependent)"
+  browning_maturation_days: "10–30 after full colonization (block surface turns brown)"
+  days_to_pinning: "3–10 after cold-water soak and fresh-air/light trigger"
+  harvest_window: "4–7 days from first pins to first flush harvest"
+  flushes: "Typically 2–4 flushes; re-soak between flushes"
+  notes: "Cool-fruiting strains prefer 12–18°C; warm strains can fruit up to ~24°C with lower quality risk."
+
+stages:
+  - id: spawn-run
+    label: "Spawn run (colonization)"
+    cues:
+      - "Block turns fully white and firm; no uncolonized patches"
+    guidance: |
+      Keep warm (20–24°C), clean, and mostly sealed. Do not disturb or open the bag early;
+      the long colonization increases contamination risk if handled.
+
+  - id: browning
+    label: "Browning / Maturation"
+    cues:
+      - "Surface dries and turns brown; small cracks/veins may appear"
+    guidance: |
+      Allow 10–30 days for proper browning after full colonization. Browning improves yields
+      and reduces bacterial issues. Do not initiate fruiting before this stage.
+
+  - id: primordia
+    label: "Primordia / Pinning"
+    cues:
+      - "After cold-water soak (12–24 h) and exposure to fresh air + diffuse light, tiny pins form"
+    guidance: |
+      Maintain high humidity (~90%) and good fresh-air exchange. Avoid direct, hot airflow that dries the surface.
+
+  - id: fruiting
+    label: "Fruiting"
+    cues:
+      - "Caps expand; edges round out; stems remain modest under good FAE"
+    guidance: |
+      Target 12–18°C (cool-fruiting strains) with 85–95% RH and steady fresh air. Keep the block moist but avoid pooling.
+      Harvest when caps are mostly flat with slight in-roll; do not wait for heavy spore drop.
+
+  - id: rest
+    label: "Rest / Next flush prep"
+    cues:
+      - "After harvest, block rests and rehydrates before the next flush"
+    guidance: |
+      Rest 7–14 days at moderate humidity; then re-soak the block (cold water) to initiate another flush.
+
+defaults:
+  environment:
+    temperature_day_c: [12, 18]
+    temperature_night_c: [10, 16]
+    humidity_pct: [85, 95]
+    light_hours: 8
+    co2_ppm: 1000
+  irrigation:
+    method: "Cold-water soak 12–24 h to initiate flush; maintain high RH with fine mist/fog"
+    substrate: "Sterilized hardwood sawdust supplemented (e.g., oak/beech + bran)"
+    watering_rule: "Keep surface moist/glossy during fruiting; re-soak between flushes as needed"
+  container:
+    bag_volume_l: [3, 5]
+    fruiting_note: "Let block brown inside the bag; remove bag and fruit from the exposed block"
+  operations:
+    timelapse_hour_local: 9
+    airflow_note: "Moderate-to-high FAE during fruiting; exhaust spores with filtration if possible"
+
+safety_bounds:
+  temperature_c: [8, 26]
+  light_hours: [0, 16]
+  humidity_pct: [70, 99]
+
+warnings:
+  - stage: spawn-run
+    text: "Early opening increases contamination risk; wait for full colonization."
+  - stage: browning
+    text: "Immature (unbrowned) blocks fruit poorly and contaminate more easily—allow proper maturation."
+  - stage: primordia
+    text: "Insufficient humidity or an incomplete soak leads to aborted pins; ensure ~90% RH and adequate hydration."
+  - stage: fruiting
+    text: "Heavy spore production—ventilate and filter; avoid breathing concentrated spores."
+  - stage: any
+    text: "Avoid settings outside safety bounds; change gradually and monitor response."
+
+faq:
+  - q: "Do shiitake require a cold-water soak?"
+    a: "Yes—most blocks need a 12–24 h cold soak to trigger a flush, followed by high humidity and fresh air."
+
+  - q: "What temperature should I fruit at?"
+    a: "Cool strains: 12–18°C. Warm strains can fruit nearer 18–22°C, but quality may decline at higher temps."
+
+  - q: "Do they need much light?"
+    a: "Diffuse, low-intensity light (6–12 h/day) is enough for orientation and cap quality—avoid heat from lamps."
+
+  - q: "How do I know the block is ready to fruit?"
+    a: "After full colonization, wait for the **browning** stage (10–30 d). Then soak and introduce FAE + humidity."
+
+  - q: "How many flushes can I expect?"
+    a: "Typically 2–4 flushes with a rest and re-soak between each. Yields depend on strain, substrate, and hydration."
+
+  - q: "My caps crack or dry out—what’s wrong?"
+    a: "RH is too low or airflow too hot/drying. Raise humidity, soften airflow, and avoid direct heat."
+
+  - q: "Stems long and caps small?"
+    a: "CO₂ too high—boost fresh-air exchange and avoid stagnant rooms."
+
+  - q: "Is contamination common?"
+    a: "Long colonization increases risk. Keep tools and surfaces clean; discard green molds; start over if blocks sour."
+
+aliases:
+  - "shiitake"
+  - "lentinula edodes"
+  - "forest mushroom"
+
+sources:
+  - "mushrooms-shiitake-notes"

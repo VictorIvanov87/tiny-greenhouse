@@ -1,0 +1,117 @@
+crop:
+  id: mushrooms
+  variety: oyster
+  lang: en
+  displayName: "Oyster (Pleurotus ostreatus)"
+  version: 1
+  defaultStage: spawn-run
+
+overview: |
+  Fast, forgiving gourmet mushroom with elegant shelves and a clean, mild flavor.
+  Ideal for small indoor rigs using bagged substrate—vigorous colonizer and a showy
+  producer when humidity and fresh air are dialed in.
+
+growth_timing:
+  colonization_days: "10–21 at 20–24°C (spawn run)"
+  days_to_pinning: "3–10 after fresh-air/light trigger once fully colonized"
+  harvest_window: "4–7 days from first pins to first flush harvest"
+  flushes: "Typically 2–3 flushes, spaced 7–14 days apart"
+  notes: "Times vary with strain, substrate, and environment; cooler rooms slow everything."
+
+stages:
+  - id: spawn-run
+    label: "Spawn run (colonization)"
+    cues:
+      - "Substrate is fully white and dense; no bare patches"
+    guidance: |
+      Keep warm (20–24°C), dark/low light, and relatively sealed to retain CO₂ and moisture.
+      Do not open bags early; handle cleanly to avoid contamination.
+
+  - id: primordia
+    label: "Primordia / Pinning"
+    cues:
+      - "Tiny knots and pins form after introducing fresh air and diffuse light"
+    guidance: |
+      Drop CO₂, introduce gentle airflow and high humidity, and provide diffuse light (8–12 h/day).
+      Surface should glisten but never pool water.
+
+  - id: fruiting
+    label: "Fruiting"
+    cues:
+      - "Caps expand; edges curl outward; stems remain short under good FAE"
+    guidance: |
+      Maintain 85–95% RH with frequent fine misting or fog; keep CO₂ low to prevent long stems.
+      Harvest when caps are mostly flat with slightly in-rolled edges.
+
+  - id: rest
+    label: "Rest / Second flush prep"
+    cues:
+      - "After first harvest; substrate rehydrates for the next flush"
+    guidance: |
+      Rest 5–10 days at moderate humidity, then rehydrate the block (as per method) to initiate next flush.
+
+defaults:
+  environment:
+    temperature_day_c: [18, 22]     # fruiting target
+    temperature_night_c: [16, 20]
+    humidity_pct: [85, 95]
+    light_hours: 10
+    co2_ppm: 1000                    # keep ≤ ~1000 ppm during fruiting
+  irrigation:
+    method: "Fine mist / ultrasonic fog; maintain surface glisten"
+    substrate: "Pasteurized straw or sterilized supplemented sawdust (e.g., hardwood + soy hulls)"
+    watering_rule: "Never allow pooling; frequent light misting preferred over heavy soaks during fruiting"
+  container:
+    bag_volume_l: [3, 5]
+    fruiting_note: "Cut X-slits or top opening once fully colonized to initiate pinning"
+  operations:
+    timelapse_hour_local: 9
+    airflow_note: "High fresh-air exchange during fruiting; gentle, constant airflow is ideal"
+
+safety_bounds:
+  temperature_c: [10, 28]
+  light_hours: [0, 16]
+  humidity_pct: [70, 99]
+
+warnings:
+  - stage: spawn-run
+    text: "Opening bags early invites contamination; wait until fully colonized."
+  - stage: primordia
+    text: "Low humidity prevents pin formation; ensure the surface stays lightly moist and glossy."
+  - stage: fruiting
+    text: "High CO₂ causes long stems and small caps; increase airflow/fresh-air exchange."
+  - stage: any
+    text: "Work cleanly; sanitize tools and hands to reduce contamination risk."
+
+faq:
+  - q: "Do oyster mushrooms need light?"
+    a: "Yes—diffuse, low-intensity light (8–12 h/day) helps orient pins and form proper caps. Avoid strong direct heat."
+
+  - q: "What substrate works best?"
+    a: "Common options are pasteurized straw or sterilized hardwood sawdust supplemented with soy hulls. Choose based on your equipment and cleanliness tolerance."
+
+  - q: "Can I fruit at normal room temperature?"
+    a: "Yes; 18–22°C fruits well for many oyster strains. Warmer rooms speed growth but increase contamination risk and drying."
+
+  - q: "How do I trigger pinning?"
+    a: "Once fully colonized, introduce fresh air, high humidity (≈90%), and diffuse light. Cutting slits in the bag provides a pinning microclimate."
+
+  - q: "How often should I mist?"
+    a: "Mist lightly several times a day or use a fogger to keep surfaces glistening—no standing water. Increase airflow if stems elongate."
+
+  - q: "When do I harvest?"
+    a: "Harvest clusters when caps are mostly flat with slightly rolled edges. Twist or cut cleanly; avoid bruising the block."
+
+  - q: "Will I get multiple flushes?"
+    a: "Usually 2–3. After harvesting, rest 5–10 days and rehydrate according to your method to initiate the next flush."
+
+  - q: "How do I avoid pests (e.g., fungus gnats)?"
+    a: "Use intake filters, maintain cleanliness, and avoid exposed standing water. Sticky traps help monitoring."
+
+aliases:
+  - "oyster mushroom"
+  - "pleurotus ostreatus"
+  - "edible oyster"
+
+sources:
+  - "mushrooms-oyster-notes"

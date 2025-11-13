@@ -1,0 +1,132 @@
+crop:
+  id: chillies
+  variety: prairie-fire
+  lang: en
+  displayName: "Prairie Fire"
+  version: 1
+  defaultStage: germination
+
+overview: |
+  Compact ornamental chilli that loads up with jewel-like pods ripening from cream to yellow to orange to red.
+  Bred for containers and tight spaces, it stays neat and productive, delivering continuous flushes with minimal fuss.
+  Perfect for windowsills and mini-greenhouses where you want color, heat, and quick wins.
+
+growth_timing:
+  germination_days: "7–14 (faster at 24–30°C)"
+  days_to_first_true_leaves: "7–10 after sprout"
+  days_to_first_flower: "55–80 from sowing (slower in cool rooms)"
+  days_to_maturity: "85–110 from sowing, depending on light/temp"
+  notes: "Times are indicative; cooler temps or low DLI (daily light) will delay milestones."
+
+stages:
+  - id: germination
+    label: "Germination"
+    cues:
+      - "Seeds sown 5–8 mm deep in a light, well-drained mix"
+      - "Medium warm (24–30°C), evenly moist (not soggy)"
+    guidance: |
+      Use a heat mat if room temp is ≤22°C. Vent gently once/day to prevent damping-off.
+      Provide low-intensity light as soon as seeds crack to prevent legginess.
+
+  - id: seedling
+    label: "Seedling"
+    cues:
+      - "First true leaves present; stems starting to firm"
+      - "Internode length short under adequate light"
+    guidance: |
+      14–16 h light; gentle airflow; avoid cold drafts <18°C at night. Water when the
+      top 1–2 cm of mix is dry. Begin very light feeding once/week after true leaves.
+
+  - id: vegetative
+    label: "Vegetative"
+    cues:
+      - "4–6 leaf sets; branching begins; root mass expands"
+    guidance: |
+      12–14 h light. Keep moisture even; do not overpot too early—step up gradually.
+      Support compact growth by keeping light close (without heat stress) and light pinching if needed.
+
+  - id: flowering
+    label: "Flowering/Fruiting"
+    cues:
+      - "Buds visible; first open flowers; fruit set follows"
+    guidance: |
+      Aim ~12 h light with consistent day temperatures; avoid overwatering—slight dry-back improves set.
+      A slightly leaner feed helps fruiting; support branches if fruit load becomes heavy.
+
+defaults:
+  environment:
+    temperature_day_c: [22, 28]
+    temperature_night_c: [18, 22]
+    humidity_pct: [45, 60]
+    light_hours: 14
+    co2_ppm: 400
+  irrigation:
+    method: "Top watering or simple drip"
+    soil_mix: "Universal:Perlite = 70:30 (well-drained)"
+    watering_rule: "Water when top 1–2 cm are dry; avoid constant saturation"
+  nutrition:
+    ec_mS_cm: [1.0, 1.6]
+    ph: [6.0, 6.8]
+    feed_note: "Balanced mild feed during seedling; slightly leaner at flowering"
+  container:
+    pot_volume_l: [1.5, 3.0]
+    spacing_cm: [20, 25]
+  operations:
+    timelapse_hour_local: 9
+    airflow_note: "Gentle fan reduces disease and strengthens stems"
+
+safety_bounds:
+  temperature_c: [10, 38]
+  light_hours: [6, 20]
+  humidity_pct: [25, 80]
+  ec_mS_cm: [0.6, 2.0]
+
+warnings:
+  - stage: germination
+    text: "Room-temp (~21–22°C) germination is possible but slower; a heat mat speeds sprout and evens emergence."
+  - stage: seedling
+    text: "Insufficient light leads to stretch/legginess; keep light close and increase photoperiod to 16 h."
+  - stage: flowering
+    text: "Chronic overwatering or sudden temp drops can cause blossom drop; allow slight dry-back."
+  - stage: any
+    text: "Do not exceed safety bounds; clamp configuration to safe min/max and adjust gradually."
+
+faq:
+  - q: "Can I start Prairie Fire at room temperature (~21–22°C)?"
+    a: "Yes, but expect slower germination and later first flowers. A heat mat (24–30°C medium) accelerates the early phase."
+
+  - q: "How much light do seedlings need?"
+    a: "Aim for 14–16 h/day with the light source close enough to prevent stretch. Keep leaf temps comfortable (avoid scorching)."
+
+  - q: "What soil mix works best in small containers?"
+    a: "Use a free-draining mix: roughly 70% universal potting soil + 30% perlite. Avoid heavy, waterlogged media."
+
+  - q: "My room is cool. Will fruiting still happen?"
+    a: "Yes, but fruit set and ripening slow below ~22°C. Keep days in the 22–28°C range and avoid big night drops."
+
+  - q: "How often should I water?"
+    a: "Water when the top 1–2 cm are dry. Overwatering causes root issues and blossom drop, especially during flowering."
+
+  - q: "Do I need to prune or pinch?"
+    a: "Light pinching during vegetative can keep plants compact. Avoid heavy pruning right before flowering to prevent delays."
+
+  - q: "When should I up-pot?"
+    a: "Step up gradually as roots fill the pot. Overpotting too early keeps media wet and can slow growth."
+
+  - q: "What about fertilizer?"
+    a: "Start mild once/week after true leaves (EC≈1.0–1.2), keep moderate in vegetative, and slightly leaner at flowering to encourage fruit set."
+
+  - q: "Can I grow it on a windowsill?"
+    a: "Yes, south/south-west exposure helps. If light is weak, extend photoperiod or add supplemental LED to maintain compact growth."
+
+  - q: "Is high humidity a problem?"
+    a: "Sustained >70–75% can encourage disease indoors; maintain airflow and avoid leaf-wetting late in the day."
+
+aliases:
+  - "prairie fire"
+  - "ornamental hot pepper"
+  - "capsicum annuum (prairie fire)"
+
+sources:
+  - "chillies-prairie-fire-notes"
+  - "soil-mix-basics"

@@ -1,0 +1,128 @@
+crop:
+  id: chillies
+  variety: basket-of-fire
+  lang: en
+  displayName: "Basket of Fire"
+  version: 1
+  defaultStage: germination
+
+overview: |
+  Trailing, cascading chilli that turns baskets and window boxes into living fireworks.
+  Hundreds of bite-size pods ripen in waves for a long, showy season—great for both ornamental pop and fresh kitchen heat.
+  Naturally compact and easy to manage, it shines in small indoor rigs and balcony planters.
+
+growth_timing:
+  germination_days: "7–14 (faster at 24–30°C)"
+  days_to_first_true_leaves: "7–10 after sprout"
+  days_to_first_flower: "55–85 from sowing (slower in cool rooms)"
+  days_to_maturity: "90–115 from sowing, depending on light/temp"
+  notes: "Indicative windows; cooler temps or low DLI delay all milestones."
+
+stages:
+  - id: germination
+    label: "Germination"
+    cues:
+      - "Seeds sown 5–8 mm deep in a light, well-drained mix"
+      - "Medium warmed to 24–30°C; evenly moist, not waterlogged"
+    guidance: |
+      Use a heat mat if room temp is ≤22°C. Provide low-intensity light once seeds crack to prevent legginess.
+
+  - id: seedling
+    label: "Seedling"
+    cues:
+      - "First true leaves present; short internodes under adequate light"
+    guidance: |
+      14–16 h light with the lamp close (no leaf scorching). Gentle airflow. Water when the top 1–2 cm
+      are dry. Start very light weekly feeding after true leaves appear.
+
+  - id: vegetative
+    label: "Vegetative"
+    cues:
+      - "4–6 leaf sets; branching and a naturally compact, cascading habit"
+    guidance: |
+      12–14 h light; even moisture. Avoid overpotting too early—step up gradually. Light pinch can
+      encourage bushiness, but avoid heavy pruning right before flowering.
+
+  - id: flowering
+    label: "Flowering/Fruiting"
+    cues:
+      - "Buds visible; first open flowers; heavy fruit set possible"
+    guidance: |
+      Aim ~12 h light with consistent day temperatures. Avoid chronic overwatering—slight dry-back
+      improves fruit set. Harvest regularly to maintain continuous production.
+
+defaults:
+  environment:
+    temperature_day_c: [22, 28]
+    temperature_night_c: [18, 22]
+    humidity_pct: [45, 60]
+    light_hours: 14
+    co2_ppm: 400
+  irrigation:
+    method: "Top watering or simple drip"
+    soil_mix: "Universal:Perlite = 70:30 (free-draining)"
+    watering_rule: "Water when top 1–2 cm are dry; do not keep constantly saturated"
+  nutrition:
+    ec_mS_cm: [1.0, 1.6]
+    ph: [6.0, 6.8]
+    feed_note: "Balanced mild feed in seedling/veg; slightly leaner at flowering to encourage fruit set"
+  container:
+    pot_volume_l: [1.0, 2.5]
+    spacing_cm: [18, 22]
+  operations:
+    timelapse_hour_local: 9
+    airflow_note: "Gentle fan lowers disease pressure and strengthens stems"
+
+safety_bounds:
+  temperature_c: [10, 38]
+  light_hours: [6, 20]
+  humidity_pct: [25, 80]
+  ec_mS_cm: [0.6, 2.0]
+
+warnings:
+  - stage: germination
+    text: "Room-temp (~21–22°C) germination is slower; a heat mat speeds and evens emergence."
+  - stage: seedling
+    text: "Insufficient light causes stretch; keep photoperiod up to 16 h and reduce lamp distance."
+  - stage: flowering
+    text: "Overwatering and sudden cold lead to blossom drop; allow slight dry-back, keep days steady."
+  - stage: any
+    text: "Never recommend beyond safety bounds; clamp to safe min/max and change gradually."
+
+faq:
+  - q: "Can Basket of Fire start at room temperature (~21–22°C)?"
+    a: "Yes, but expect slower sprout and later ripening. Warmer media (24–30°C) accelerates early stages."
+
+  - q: "How much light is needed indoors?"
+    a: "Seedlings 14–16 h/day; vegetative 12–14 h; flowering ~12 h. Keep LEDs close enough to prevent
+        stretch while avoiding scorching. Longer photoperiods can compensate for lower intensity."
+
+  - q: "What pot size and spacing work for a cascading habit?"
+    a: "1.0–2.5 L per plant and 18–22 cm spacing are sufficient for compact growth and good airflow."
+
+  - q: "What soil mix should I use?"
+    a: "A free-draining mix such as 70% universal potting soil + 30% perlite. See ‘soil-mix-basics’ for variations."
+
+  - q: "How do I avoid blossom drop?"
+    a: "Maintain steady temps (avoid big night drops), do not overwater, and keep feeding moderate—slight dry-back helps set."
+
+  - q: "Can I grow it in a window box or hanging basket?"
+    a: "Yes. The trailing, compact habit suits window boxes and baskets; ensure strong light and adequate drainage."
+
+  - q: "Do I need to prune?"
+    a: "Optional light pinching during vegetative can improve bushiness. Avoid heavy pruning just before or during flowering."
+
+  - q: "What about pests like aphids or fungus gnats?"
+    a: "Use sticky traps for monitoring; let the top layer dry more; consider a thin sand/perlite cap; keep airflow gentle and consistent."
+
+  - q: "Will cool rooms still produce fruit?"
+    a: "Yes, but expect slower set and ripening below ~22°C. Target 22–28°C days for better performance."
+
+aliases:
+  - "basket of fire"
+  - "ornamental hot pepper"
+  - "capsicum annuum (basket of fire)"
+
+sources:
+  - "chillies-basket-of-fire-notes"
+  - "soil-mix-basics"
