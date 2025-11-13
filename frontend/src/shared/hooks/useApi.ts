@@ -19,6 +19,18 @@ type ApiResponse<T> = {
   data: T;
 };
 
+export class ApiError extends Error {
+  status?: number;
+  body?: unknown;
+
+  constructor(message: string, status?: number, body?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
+  }
+}
+
 const buildQueryString = (params: Record<string, QueryValue> = {}) => {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -83,13 +95,30 @@ const request = async <T>(
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-  const payload = response.status === 204 ? (null as T) : ((await response.json()) as T);
+  let payload: T | null = null;
+  let parseError: unknown = null;
 
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  if (response.status !== 204) {
+    try {
+      payload = (await response.json()) as T;
+    } catch (error) {
+      parseError = error;
+    }
   }
 
-  return { data: payload };
+  if (!response.ok) {
+    throw new ApiError(
+      `API request failed: ${response.status} ${response.statusText}`,
+      response.status,
+      payload
+    );
+  }
+
+  if (parseError) {
+    throw parseError;
+  }
+
+  return { data: (payload ?? (null as unknown)) as T };
 };
 
 export const api = {

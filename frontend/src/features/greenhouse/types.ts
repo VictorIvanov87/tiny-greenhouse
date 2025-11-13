@@ -6,6 +6,9 @@ export type GreenhouseConfig = {
   name: string
   method: GreenhouseMethod
   plantType: string
+  cropId?: string
+  variety?: string
+  growthStage?: string
   language: Language
   timelapse: {
     enabled: boolean
