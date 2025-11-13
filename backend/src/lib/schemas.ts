@@ -6,6 +6,8 @@ const okResponse = <T extends z.ZodTypeAny>(schema: T) =>
     data: schema,
   });
 
+const ASSIST_INPUT_LIMIT = Number(process.env.ASSIST_INPUT_LIMIT ?? 800);
+
 export const ErrorResponseSchema = z.object({
   ok: z.literal(false),
   error: z.object({
@@ -137,16 +139,37 @@ export const RagSearchResult = z.object({
 });
 export const RagSearchResponseSchema = okResponse(RagSearchResult);
 
+export const AssistRequestSchema = z
+  .object({
+    message: z.string().min(1).max(ASSIST_INPUT_LIMIT),
+    cropId: z.string().min(1).optional(),
+    variety: z.string().min(1).optional(),
+    topK: z.number().int().min(1).max(12).default(6),
+    temperature: z.number().min(0).max(1).default(0.2),
+  })
+  .strict();
+export type AssistRequest = z.infer<typeof AssistRequestSchema>;
+
+export const AssistantMetaSchema = z.object({
+  cropId: z.string(),
+  lang: z.string(),
+  stage: z.string().nullable().optional(),
+  options: z
+    .object({
+      cropId: z.string(),
+      variety: z.string().optional(),
+      topK: z.number(),
+      temperature: z.number(),
+    })
+    .optional(),
+});
+
+export type AssistantMeta = z.infer<typeof AssistantMetaSchema>;
+
 export const AssistantAnswerSchema = z.object({
   message: z.string(),
   sources: z.array(RagChunkSchema),
-  meta: z
-    .object({
-      cropId: z.string(),
-      lang: z.string(),
-      stage: z.string().nullable().optional(),
-    })
-    .optional(),
+  meta: AssistantMetaSchema.optional(),
 });
 export type AssistantAnswer = z.infer<typeof AssistantAnswerSchema>;
 export const AssistantResponseSchema = okResponse(AssistantAnswerSchema);

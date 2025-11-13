@@ -14,7 +14,7 @@ export type EmbeddingProvider = BaseProvider<'openai'> & {
 
 export type ChatProvider = BaseProvider<'openai'> & {
   model: string;
-  complete: (opts: { system: string; user: string }) => Promise<string>;
+  complete: (opts: { system: string; user: string; temperature?: number }) => Promise<string>;
   ping: () => Promise<void>;
 };
 
@@ -86,10 +86,10 @@ export const getChatProvider = (): ChatProvider => {
   chatProvider = {
     kind: 'openai',
     model: OPENAI_CHAT_MODEL,
-    complete: async ({ system, user }) => {
+    complete: async ({ system, user, temperature = 0.2 }) => {
       const response = await client.chat.completions.create({
         model: OPENAI_CHAT_MODEL,
-        temperature: 0.2,
+        temperature,
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },

@@ -42,6 +42,17 @@ const basename = (path: string) => {
   return segments.at(-1) ?? path;
 };
 
+const titleCase = (value: string) =>
+  value
+    .replace(/\.[^.]+$/, '')
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+
+const SMALL_TALK_REPLY =
+  'Ask me about light-hour targets, watering cadence, temperature bands, or growth-stage routines and I will cite the right greenhouse docs.';
+
 const AssistantPage = () => {
   const { profile } = useOutletContext<AssistantContext>();
   const { user } = useAuth();
@@ -290,17 +301,35 @@ const AssistantPage = () => {
       return null;
     }
 
+    const seen = new Set<string>();
+    const uniqueSources = sources.filter((source) => {
+      const key = `${source.sourcePath}:${source.stage ?? ''}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+
     return (
       <div className="mt-3 flex flex-wrap gap-2">
-        {sources.map((source) => (
-          <span
-            key={source.id}
-            className="rounded-full border border-[#22324a] bg-[#0f1729] px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-200"
-          >
-            {basename(source.sourcePath)}
-            {source.stage ? ` (${source.stage})` : ''}
-          </span>
-        ))}
+        {uniqueSources.map((source) => {
+          const citationLabel = titleCase(basename(source.sourcePath));
+          const stageLabel = source.stage ? titleCase(source.stage) : null;
+          return (
+            <span
+              key={`${source.sourcePath}:${source.stage ?? ''}`}
+              className="flex items-center gap-2 rounded-full border border-[#22324a] bg-[#0f1729] px-3 py-1 text-xs font-medium text-slate-200"
+            >
+              <span className="tracking-wide">{citationLabel}</span>
+              {stageLabel ? (
+                <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
+                  {stageLabel}
+                </span>
+              ) : null}
+            </span>
+          );
+        })}
       </div>
     );
   };
@@ -382,7 +411,8 @@ const AssistantPage = () => {
 
                     {message.role === 'assistant' &&
                     message.status === 'ready' &&
-                    !message.sources.length ? (
+                    !message.sources.length &&
+                    message.content.trim() !== SMALL_TALK_REPLY ? (
                       <p className="mt-3 text-xs text-slate-300">I don’t have docs for this crop yet.</p>
                     ) : null}
 

@@ -1,4 +1,4 @@
-import { api, ApiError } from '../../shared/hooks/useApi';
+import { api } from '../../shared/hooks/useApi';
 
 export type AssistantSource = {
   id: string;
@@ -47,8 +47,6 @@ const ensureOk = (payload: AssistantEnvelope): AssistantAnswer => {
   throw new Error(message);
 };
 
-let extendedPayloadRejected = false;
-
 export type AssistRequestPayload = {
   message: string;
   cropId?: string;
@@ -65,52 +63,32 @@ type AssistBody = {
   temperature?: number;
 };
 
-const buildBody = (
-  payload: AssistRequestPayload
-): { body: AssistBody; hasExtras: boolean } => {
+const buildBody = (payload: AssistRequestPayload): AssistBody => {
   const body: AssistBody = {
     message: payload.message,
   };
-  let hasExtras = false;
 
-  if (!extendedPayloadRejected) {
-    if (payload.cropId) {
-      body.cropId = payload.cropId;
-      hasExtras = true;
-    }
-
-    if (payload.variety) {
-      body.variety = payload.variety;
-      hasExtras = true;
-    }
-
-    if (typeof payload.topK === 'number') {
-      body.topK = payload.topK;
-      hasExtras = true;
-    }
-
-    if (typeof payload.temperature === 'number') {
-      body.temperature = payload.temperature;
-      hasExtras = true;
-    }
+  if (payload.cropId) {
+    body.cropId = payload.cropId;
   }
 
-  return { body, hasExtras };
+  if (payload.variety) {
+    body.variety = payload.variety;
+  }
+
+  if (typeof payload.topK === 'number') {
+    body.topK = payload.topK;
+  }
+
+  if (typeof payload.temperature === 'number') {
+    body.temperature = payload.temperature;
+  }
+
+  return body;
 };
 
 export const sendAssistMessage = async (payload: AssistRequestPayload): Promise<AssistantAnswer> => {
-  const { body, hasExtras } = buildBody(payload);
-
-  try {
-    const { data } = await api.post<AssistantEnvelope>('/assist', body);
-    return ensureOk(data);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 400 && hasExtras) {
-      extendedPayloadRejected = true;
-      const { data } = await api.post<AssistantEnvelope>('/assist', { message: payload.message });
-      return ensureOk(data);
-    }
-
-    throw error;
-  }
+  const body = buildBody(payload);
+  const { data } = await api.post<AssistantEnvelope>('/assist', body);
+  return ensureOk(data);
 };

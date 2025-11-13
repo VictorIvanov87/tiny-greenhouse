@@ -1,16 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod';
-import { AssistantResponseSchema, ErrorResponseSchema } from '../lib/schemas';
+import { AssistRequestSchema, AssistantResponseSchema, ErrorResponseSchema } from '../lib/schemas';
 import { ok, errorBody } from '../lib/respond';
 import { buildAssistantAnswer } from '../services/assist';
 import { assertRateLimit, RateLimitError } from '../services/rate-limit';
 import { isVectorStoreEnabled } from '../services/rag';
-
-const MAX_INPUT = Number(process.env.ASSIST_INPUT_LIMIT ?? 800);
-
-const AssistBody = z.object({
-  message: z.string().min(1).max(MAX_INPUT),
-});
 
 const assistRoutes: FastifyPluginAsync = async (app) => {
   app.post(
@@ -18,7 +11,7 @@ const assistRoutes: FastifyPluginAsync = async (app) => {
     {
       preHandler: app.auth,
       schema: {
-        body: AssistBody.strict(),
+        body: AssistRequestSchema,
         response: {
           200: AssistantResponseSchema,
           429: ErrorResponseSchema,
@@ -42,9 +35,13 @@ const assistRoutes: FastifyPluginAsync = async (app) => {
         }
         throw error;
       }
-
-      const body = AssistBody.parse(req.body);
-      const answer = await buildAssistantAnswer(req.user!.uid, body.message);
+      const body = AssistRequestSchema.parse(req.body);
+      const answer = await buildAssistantAnswer(req.user!.uid, body.message, {
+        cropId: body.cropId,
+        variety: body.variety,
+        topK: body.topK,
+        temperature: body.temperature,
+      });
       return ok(answer);
     },
   );
