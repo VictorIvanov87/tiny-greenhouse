@@ -1,13 +1,16 @@
-import type { Dispatch, SetStateAction } from 'react';
-import type { SetupData } from '../state';
+import type { SetupWizardState } from '../../state';
 
 type StepProps = {
-  data: SetupData;
-  onChange: Dispatch<SetStateAction<SetupData>>;
+  data: SetupWizardState;
 };
 
 const StepWelcome = ({ data }: StepProps) => {
-  const hasProgress = Boolean(data.crop.kind || data.prefs.language || data.step > 0);
+  const hasProgress = Boolean(
+    data.selection.cropId ||
+      data.selection.variety ||
+      typeof data.prefs.lightHours === 'number' ||
+      data.step > 0,
+  );
   return (
     <section className="space-y-4">
       <div>

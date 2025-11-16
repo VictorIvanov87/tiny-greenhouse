@@ -1,5 +1,5 @@
 import { Badge } from 'flowbite-react';
-import type { WizardStep } from './state';
+import type { WizardStep } from '../state';
 
 type StepperProps = {
   current: WizardStep;

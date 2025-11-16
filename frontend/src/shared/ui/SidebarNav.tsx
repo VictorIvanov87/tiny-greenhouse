@@ -89,7 +89,7 @@ const ChatIcon = (props: IconProps) => (
   </svg>
 );
 
-const navItems: NavItem[] = [
+const navBlueprint: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { to: '/alerts', label: 'Alerts', icon: BellIcon },
   { to: '/notifications', label: 'Notifications', icon: BellIcon },
@@ -98,6 +98,17 @@ const navItems: NavItem[] = [
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
   { to: '/assistant', label: 'Assistant', icon: ChatIcon },
 ];
+
+const SetupIcon = (props: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 9h16M4 15h16M8 9v10m4-10v10m4-10v10"
+    />
+    <path strokeLinecap="round" d="M6 5h12a1 1 0 0 1 1 1v0H5v0a1 1 0 0 1 1-1Z" />
+  </svg>
+);
 
 const getInitials = (displayName?: string | null, email?: string | null) => {
   const source = displayName || email || '';
@@ -120,6 +131,14 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
   const displayName = user?.displayName?.trim();
   const email = user?.email ?? undefined;
   const initials = useMemo(() => getInitials(displayName, email), [displayName, email]);
+
+  const navItems = useMemo(() => {
+    const items = [...navBlueprint];
+    if (!profile.setupCompleted || !profile.cropId || !profile.variety) {
+      items.unshift({ to: '/setup', label: 'Setup Wizard', icon: SetupIcon });
+    }
+    return items;
+  }, [profile.cropId, profile.variety, profile.setupCompleted]);
 
   const handleNavigate = (path: string) => (event: MouseEvent<HTMLElement>) => {
     event.preventDefault();
@@ -157,28 +176,19 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
               const isActive =
                 location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
 
-              const alertCount = item.to === '/alerts' ? active.length : 0
+              const alertCount = item.to === '/alerts' ? active.length : 0;
               return (
                 <SidebarItem
                   key={item.to}
                   href={item.to}
                   onClick={handleNavigate(item.to)}
-                  className="flex asdasd"
+                  className="flex"
                   icon={item.icon}
                   active={isActive}
-                  label={
-                    alertCount > 0 ? (
-                      <span className="flex items-center gap-2">
-                        {item.label}
-                        <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
-                          {alertCount}
-                        </span>
-                      </span>
-                    ) : (
-                      item.label
-                    )
-                  }
-                />
+                  label={alertCount > 0 ? String(alertCount) : undefined}
+                >
+                  {item.label}
+                </SidebarItem>
               );
             })}
           </SidebarItemGroup>

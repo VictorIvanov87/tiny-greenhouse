@@ -1,28 +1,26 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { Alert, Button, Card, Spinner } from 'flowbite-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import {
   getNextStep,
   getPreviousStep,
-  hydrate,
   isStepValid,
-  reset,
-  save,
-  type SetupData,
+  SetupWizardProvider,
+  useSetupWizard,
+  type SetupWizardState,
   type WizardStep,
-} from './state';
+} from '../state';
 import Stepper from './Stepper';
 import StepWelcome from './steps/StepWelcome';
 import StepCrop from './steps/StepCrop';
 import StepPrefs from './steps/StepPrefs';
 import StepReview from './steps/StepReview';
-import { updateCurrentGreenhouse } from '../../greenhouse/api';
-import type { GreenhouseConfig } from '../../greenhouse/types';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { markSetupCompleted } from '../api';
+import { saveUserSettings, updateGreenhouse } from '../api';
+import type { GreenhouseConfig } from '../../greenhouse/types';
 
-const TITLES = ['Welcome', 'Choose crop', 'Alarms & settings', 'Review'];
+const TITLES = ['Welcome', 'Crop & Variety', 'Alarms & prefs', 'Finish'];
 
 const StepContent = ({
   step,
@@ -30,12 +28,12 @@ const StepContent = ({
   onChange,
 }: {
   step: WizardStep;
-  data: SetupData;
-  onChange: Dispatch<SetStateAction<SetupData>>;
+  data: SetupWizardState;
+  onChange: Dispatch<SetStateAction<SetupWizardState>>;
 }) => {
   switch (step) {
     case 0:
-      return <StepWelcome data={data} onChange={onChange} />;
+      return <StepWelcome data={data} />;
     case 1:
       return <StepCrop data={data} onChange={onChange} />;
     case 2:
@@ -46,48 +44,41 @@ const StepContent = ({
   }
 };
 
-const SetupWizard = () => {
+const WizardViewport = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading, refresh } = useUserProfile(user ? user.uid : null);
-  const [data, setData] = useState<SetupData>(() => hydrate());
+  const { state, setState, reset } = useSetupWizard();
+  const step = state.step ?? 0;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const step = data.step ?? 0;
-  const canProceed = isStepValid(data, step);
+  const canProceed = isStepValid(state, step as WizardStep);
   const isLastStep = step === TITLES.length - 1;
-
-  useEffect(() => {
-    save(data);
-  }, [data]);
-
   const stepLabel = useMemo(() => `Step ${step + 1} of ${TITLES.length}`, [step]);
 
   const handleNext = () => {
     if (!canProceed) {
       return;
     }
-
-    setData((prev) => ({
+    setState((prev) => ({
       ...prev,
       step: getNextStep(prev.step ?? 0),
     }));
   };
 
   const handleBack = () => {
-    setData((prev) => ({
+    setState((prev) => ({
       ...prev,
       step: getPreviousStep(prev.step ?? 0),
     }));
   };
 
   const handleCancel = () => {
-    const confirmed = window.confirm('Cancel setup and head back to the dashboard? Progress will be cleared.');
+    const confirmed = window.confirm('Cancel setup and head back to the dashboard? Progress clears.');
     if (!confirmed) {
       return;
     }
-
     reset();
     navigate('/dashboard', { replace: true });
   };
@@ -98,24 +89,36 @@ const SetupWizard = () => {
       return;
     }
 
+    if (!state.selection.cropId || !state.selection.variety || !state.selection.defaults) {
+      setError('Choose a crop and variety before confirming.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
-    const payload: GreenhouseConfig = {
-      id: 'placeholder',
-      name: 'Tiny Greenhouse',
-      method: data.prefs.method ?? 'soil',
-      plantType: data.crop.kind ?? 'chillies',
-      language: data.prefs.language ?? 'en',
-      timelapse: {
-        enabled: true,
-        hour: data.prefs.timelapseHour ?? 9,
-      },
+    const defaults = state.selection.defaults;
+    const greenhousePayload: GreenhouseConfig = {
+      id: 'gh-1',
+      name: 'Tiny Greenhouse #1',
+      method: 'soil',
+      plantType: state.selection.variety,
+      cropId: state.selection.cropId,
+      variety: state.selection.variety,
+      growthStage: defaults.stages[0]?.id ?? 'germination',
+      language: defaults.lang === 'bg' ? 'bg' : 'en',
+      timelapse: { enabled: true, hour: 9 },
     };
 
     try {
-      await updateCurrentGreenhouse(payload);
-      await markSetupCompleted(user.uid);
+      const updated = await updateGreenhouse(greenhousePayload);
+      await saveUserSettings(user.uid, {
+        cropId: state.selection.cropId,
+        variety: state.selection.variety,
+        language: greenhousePayload.language,
+        notifications: state.prefs.notifications,
+        greenhouseId: updated.id,
+      });
       reset();
       refresh();
       navigate('/dashboard', { replace: true });
@@ -147,14 +150,16 @@ const SetupWizard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-8 text-slate-900">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col gap-6 rounded-[32px] border border-white/10 bg-white/95 p-6 shadow-[0_35px_120px_rgba(15,23,42,0.45)] backdrop-blur">
         <header className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">Setup wizard</p>
-          <Stepper current={step} titles={TITLES} />
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">
+            Setup wizard
+          </p>
+          <Stepper current={step as WizardStep} titles={TITLES} />
         </header>
         <main className="flex-1">
           <Card className="h-full w-full border border-slate-200 shadow-none">
             <div className="space-y-6">
-              {error && <Alert color="failure">{error}</Alert>}
-              <StepContent step={step} data={data} onChange={setData} />
+              {error ? <Alert color="failure">{error}</Alert> : null}
+              <StepContent step={step as WizardStep} data={state} onChange={setState} />
               <footer className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-slate-500">{stepLabel}</div>
                 <div className="flex flex-wrap gap-2">
@@ -169,8 +174,8 @@ const SetupWizard = () => {
                       Next
                     </Button>
                   ) : (
-                    <Button onClick={handleFinish} disabled={saving}>
-                      {saving ? 'Finishing…' : 'Finish'}
+                    <Button onClick={handleFinish} disabled={saving || !canProceed}>
+                      {saving ? 'Finishing…' : 'Confirm'}
                     </Button>
                   )}
                 </div>
@@ -182,5 +187,11 @@ const SetupWizard = () => {
     </div>
   );
 };
+
+const SetupWizard = () => (
+  <SetupWizardProvider>
+    <WizardViewport />
+  </SetupWizardProvider>
+);
 
 export default SetupWizard;

@@ -160,7 +160,9 @@ const AlertsPage = () => {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-slate-900">History</h2>
           <div className="flex items-center gap-2">
-            <Label htmlFor="history-limit" value="Limit" className="text-sm text-slate-500" />
+            <Label htmlFor="history-limit" className="text-sm text-slate-500">
+              Limit
+            </Label>
             <Select
               id="history-limit"
               value={historyLimit.toString()}

@@ -5,6 +5,9 @@ import {
   Card,
   Label,
   Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Select,
   Spinner,
   TextInput,
@@ -190,8 +193,8 @@ const TimelapsePage = () => {
 
     return (
       <Modal show={modalOpen} onClose={handleCloseModal} size="5xl">
-        <Modal.Header>Timelapse player</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Timelapse player</ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             <div className="relative flex w-full items-center justify-center">
               <img
@@ -219,10 +222,12 @@ const TimelapsePage = () => {
               <Button color="light" onClick={handleNext}>
                 Next
               </Button>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="timelapse-speed" value="Speed" className="text-sm" />
-                <Select
-                  id="timelapse-speed"
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="timelapse-speed" className="text-sm">
+                    Speed
+                  </Label>
+                  <Select
+                    id="timelapse-speed"
                   value={String(speed)}
                   onChange={(event) => setSpeed(Number(event.target.value))}
                   className="w-24"
@@ -238,13 +243,13 @@ const TimelapsePage = () => {
                 Frame {activeIndex + 1} of {items.length}
               </span>
             </div>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button color="light" onClick={handleCloseModal}>
-            Close
-          </Button>
-        </Modal.Footer>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="light" onClick={handleCloseModal}>
+              Close
+            </Button>
+          </ModalFooter>
       </Modal>
     )
   }
@@ -266,7 +271,7 @@ const TimelapsePage = () => {
       <Card className="rounded-3xl border border-slate-200 shadow-sm">
         <div className="grid gap-4 md:grid-cols-4">
           <div>
-            <Label htmlFor="limit" value="Limit" />
+            <Label htmlFor="limit">Limit</Label>
             <Select
               id="limit"
               value={form.limit}
@@ -278,7 +283,7 @@ const TimelapsePage = () => {
             </Select>
           </div>
           <div>
-            <Label htmlFor="from" value="From (ISO)" />
+            <Label htmlFor="from">From (ISO)</Label>
             <TextInput
               id="from"
               value={form.from}
@@ -286,7 +291,7 @@ const TimelapsePage = () => {
             />
           </div>
           <div>
-            <Label htmlFor="to" value="To (ISO)" />
+            <Label htmlFor="to">To (ISO)</Label>
             <TextInput
               id="to"
               value={form.to}

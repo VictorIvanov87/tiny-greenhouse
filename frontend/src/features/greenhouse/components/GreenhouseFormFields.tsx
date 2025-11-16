@@ -70,7 +70,7 @@ export const GreenhouseFormFields = ({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="greenhouse-name" value="Greenhouse name" />
+        <Label htmlFor="greenhouse-name">Greenhouse name</Label>
         <TextInput
           id="greenhouse-name"
           value={value.name}
@@ -82,7 +82,7 @@ export const GreenhouseFormFields = ({
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="greenhouse-method" value="Growing method" />
+          <Label htmlFor="greenhouse-method">Growing method</Label>
           <Select
             id="greenhouse-method"
             value={value.method}
@@ -98,7 +98,7 @@ export const GreenhouseFormFields = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="greenhouse-language" value="Language" />
+          <Label htmlFor="greenhouse-language">Language</Label>
           <Select
             id="greenhouse-language"
             value={value.language}
@@ -115,7 +115,7 @@ export const GreenhouseFormFields = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="greenhouse-plant-type" value="Primary plant type" />
+        <Label htmlFor="greenhouse-plant-type">Primary plant type</Label>
         <TextInput
           id="greenhouse-plant-type"
           value={value.plantType}
@@ -137,7 +137,7 @@ export const GreenhouseFormFields = ({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="greenhouse-timelapse-hour" value="Capture hour (0 - 23)" />
+          <Label htmlFor="greenhouse-timelapse-hour">Capture hour (0 - 23)</Label>
           <TextInput
             id="greenhouse-timelapse-hour"
             type="number"
