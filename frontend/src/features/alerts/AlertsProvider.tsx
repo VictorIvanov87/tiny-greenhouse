@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { Badge, Button, Toast, ToastToggle } from 'flowbite-react';
 import { ackAlert, getActiveAlerts, type Alert } from './api';
+import { useAuth } from '../auth/hooks/useAuth';
 
 type AlertsContextValue = {
   active: Alert[];
@@ -26,6 +27,7 @@ type AlertsProviderProps = PropsWithChildren & {
 const POLL_INTERVAL = 30_000;
 
 export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsProviderProps) => {
+  const { user, loading } = useAuth();
   const [active, setActive] = useState<Alert[]>([]);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const [toasts, setToasts] = useState<Alert[]>([]);
@@ -33,6 +35,9 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
   const timerRef = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
+    if (!user) {
+      return;
+    }
     try {
       const alerts = await getActiveAlerts();
       setActive(alerts);
@@ -51,17 +56,35 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
     } catch (error) {
       console.error('Failed to fetch alerts', error);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    if (!user) {
+      setActive([]);
+      setLastFetchedAt(null);
+      setToasts([]);
+      seenIdsRef.current = new Set();
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
     refresh();
     timerRef.current = window.setInterval(refresh, intervalMs);
+
     return () => {
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
-  }, [intervalMs, refresh]);
+  }, [intervalMs, refresh, user, loading]);
 
   const handleToastDismiss = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
