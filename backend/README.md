@@ -29,6 +29,7 @@ Key variables:
 - `GET /api/notifications`
 - `PUT /api/notifications`
 - `GET /api/health/ai`
+- `GET /api/crops/:cropId/:variety/defaults`
 - `POST /api/rag/search` (dev/debug only; guarded by `RAG_DEBUG`)
 - `POST /api/assist`
 
@@ -94,3 +95,49 @@ curl -X POST http://localhost:3000/api/assist \
 ```
 
 Set `ASSIST_MIN_QUERY_LEN` (default `8`) to tune how short a prompt counts as small-talk, and `RAG_SCORE_FLOOR` (default `0.20`) to control the retrieval confidence floor. With `RAG_DEBUG=true` you can also inspect the effective targeting/temperature under `meta.options` in the response and hit `POST /api/rag/search` for raw retrieval debugging.
+
+## Crop defaults endpoint (/api/crops/:cropId/:variety/defaults)
+
+Deterministic view of the YAML seed pack for a specific crop/variety pair. Files are loaded from `data/rag/crops/<cropId>/<variety>/<variety>.yaml` (with a fallback to `data/rag/crops/<cropId>/<variety>.yaml`). Responses are cached in-memory for `CROP_DEFAULTS_TTL_MS` (default `60000`) unless `RAG_DEBUG=true`, which forces reads from disk for easier authoring.
+
+```bash
+curl -s http://localhost:3000/api/crops/chillies/prairie-fire/defaults | jq
+```
+
+Sample payload:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "cropId": "chillies",
+    "variety": "prairie-fire",
+    "lang": "en",
+    "displayName": "Prairie Fire",
+    "overview": "Compact ornamental chilli that loads up ...",
+    "defaults": {
+      "environment": {
+        "temperature_day": "22-28 °C",
+        "temperature_night": "18-22 °C",
+        "humidity": "45-60 %",
+        "light_hours": "14"
+      },
+      "irrigation": {
+        "method": "Top watering or simple drip",
+        "frequency": "Water when top 1–2 cm are dry; avoid constant saturation"
+      },
+      "container": {
+        "volume_liters": "1.5-3 L"
+      }
+    },
+    "safety_bounds": {
+      "temperature_c": { "min": 10, "max": 38 },
+      "humidity_pct": { "min": 25, "max": 80 }
+    },
+    "stages": [
+      { "id": "germination", "label": "Germination" },
+      { "id": "seedling", "label": "Seedling" }
+    ]
+  }
+}
+```

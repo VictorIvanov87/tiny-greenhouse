@@ -173,3 +173,65 @@ export const AssistantAnswerSchema = z.object({
 });
 export type AssistantAnswer = z.infer<typeof AssistantAnswerSchema>;
 export const AssistantResponseSchema = okResponse(AssistantAnswerSchema);
+
+const BoundedMetric = z.object({
+  min: z.number(),
+  max: z.number(),
+});
+
+export const CropStageSchema = z.object({
+  id: z.string(),
+  label: z.string().optional(),
+  cues: z.array(z.string()).optional(),
+  guidance: z.string().optional(),
+});
+
+export const CropDefaultsPayloadSchema = z.object({
+  cropId: z.string(),
+  variety: z.string(),
+  lang: z.string(),
+  displayName: z.string().nullable(),
+  overview: z.string().nullable(),
+  defaults: z
+    .object({
+      environment: z
+        .object({
+          temperature_day: z.string().optional(),
+          temperature_night: z.string().optional(),
+          humidity: z.string().optional(),
+          light_hours: z.string().optional(),
+        })
+        .partial()
+        .optional(),
+      irrigation: z
+        .object({
+          method: z.string().optional(),
+          frequency: z.string().optional(),
+          notes: z.string().optional(),
+        })
+        .partial()
+        .optional(),
+      container: z
+        .object({
+          volume_liters: z.string().optional(),
+          diameter_cm: z.string().optional(),
+          depth_cm: z.string().optional(),
+        })
+        .partial()
+        .optional(),
+      operations: z.record(z.string(), z.unknown()).optional(),
+    })
+    .partial()
+    .optional(),
+  safety_bounds: z
+    .object({
+      temperature_c: BoundedMetric.optional(),
+      humidity_pct: BoundedMetric.optional(),
+      light_hours: BoundedMetric.optional(),
+    })
+    .partial()
+    .optional(),
+  stages: z.array(CropStageSchema),
+});
+export type CropDefaultsPayload = z.infer<typeof CropDefaultsPayloadSchema>;
+export const CropDefaultsResponseSchema = okResponse(CropDefaultsPayloadSchema);

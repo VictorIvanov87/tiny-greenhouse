@@ -18,6 +18,7 @@ import greenhouseRoutes from './routes/greenhouse';
 import alertsRoutes from './routes/alerts';
 import ragRoutes from './routes/rag';
 import assistRoutes from './routes/assist';
+import cropsRoutes from './routes/crops';
 
 export function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -59,6 +60,7 @@ export function buildServer() {
   app.register(notificationsRoutes);
   app.register(alertsRoutes);
   app.register(greenhouseRoutes);
+  app.register(cropsRoutes);
   app.register(ragRoutes);
   app.register(assistRoutes);
 
