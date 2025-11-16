@@ -1,125 +1,116 @@
-import type { ChangeEvent, FormEvent } from 'react'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Alert, Button, Card, HelperText, Label, TextInput } from 'flowbite-react'
-import { Flip } from '../../../shared/ui/Flip'
-import { AuthError, signInWithEmail, signInWithGoogle, signUpWithEmail } from '../api'
-import { alpha, palette } from '../../../theme/palette'
+import type { ChangeEvent, FormEvent } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Alert, Button, Card, HelperText, Label, TextInput } from 'flowbite-react';
+import { Flip } from '../../../shared/ui/Flip';
+import { AuthError, signInWithEmail, signInWithGoogle, signUpWithEmail } from '../api';
+import { alpha, palette } from '../../../theme/palette';
 
-type CardFace = 'signIn' | 'signUp'
+type CardFace = 'signIn' | 'signUp';
 
 type FormState = {
-  email: string
-  password: string
-}
+  email: string;
+  password: string;
+};
 
-const PASSWORD_MIN_LENGTH = 8
-const DEFAULT_ERROR_MESSAGE = 'Something went wrong. Please try again.'
-const EMPTY_FORM: FormState = { email: '', password: '' }
+const PASSWORD_MIN_LENGTH = 8;
+const DEFAULT_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+const EMPTY_FORM: FormState = { email: '', password: '' };
 
-const isPasswordValid = (value: string) => value.length >= PASSWORD_MIN_LENGTH
-const resolveErrorMessage = (error: unknown) => (error instanceof AuthError ? error.message : DEFAULT_ERROR_MESSAGE)
+const isPasswordValid = (value: string) => value.length >= PASSWORD_MIN_LENGTH;
+const resolveErrorMessage = (error: unknown) =>
+  error instanceof AuthError ? error.message : DEFAULT_ERROR_MESSAGE;
 
 export function AuthCard() {
-  const [face, setFace] = useState<CardFace>('signIn')
-  const [signInForm, setSignInForm] = useState<FormState>(EMPTY_FORM)
-  const [signUpForm, setSignUpForm] = useState<FormState>(EMPTY_FORM)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [face, setFace] = useState<CardFace>('signIn');
+  const [signInForm, setSignInForm] = useState<FormState>(EMPTY_FORM);
+  const [signUpForm, setSignUpForm] = useState<FormState>(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const isFlipped = face === 'signUp'
+  const isFlipped = face === 'signUp';
 
   const handleFlip = (nextFace: CardFace) => {
-    setFace(nextFace)
-    setError(null)
-  }
+    setFace(nextFace);
+    setError(null);
+  };
 
   const handleInputChange =
-    (mode: CardFace, field: keyof FormState) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setError(null)
-      const { value } = event.target
+    (mode: CardFace, field: keyof FormState) => (event: ChangeEvent<HTMLInputElement>) => {
+      setError(null);
+      const { value } = event.target;
 
       if (mode === 'signIn') {
-        setSignInForm((prev) => ({ ...prev, [field]: value }))
+        setSignInForm((prev) => ({ ...prev, [field]: value }));
       } else {
-        setSignUpForm((prev) => ({ ...prev, [field]: value }))
+        setSignUpForm((prev) => ({ ...prev, [field]: value }));
       }
-    }
+    };
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     if (!isPasswordValid(signInForm.password)) {
-      return
+      return;
     }
 
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true);
+    setError(null);
 
     try {
-      await signInWithEmail(signInForm.email, signInForm.password)
-      navigate('/dashboard', { replace: true })
+      await signInWithEmail(signInForm.email, signInForm.password);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(resolveErrorMessage(err))
+      setError(resolveErrorMessage(err));
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     if (!isPasswordValid(signUpForm.password)) {
-      return
+      return;
     }
 
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true);
+    setError(null);
 
     try {
-      await signUpWithEmail(signUpForm.email, signUpForm.password)
-      navigate('/dashboard', { replace: true })
+      await signUpWithEmail(signUpForm.email, signUpForm.password);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(resolveErrorMessage(err))
+      setError(resolveErrorMessage(err));
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true);
+    setError(null);
 
     try {
-      await signInWithGoogle()
-      navigate('/dashboard', { replace: true })
+      await signInWithGoogle();
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       if (
         err instanceof AuthError &&
         (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')
       ) {
-        return
+        return;
       }
-      setError(resolveErrorMessage(err))
+      setError(resolveErrorMessage(err));
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
-  const signInPasswordValid = isPasswordValid(signInForm.password)
-  const signUpPasswordValid = isPasswordValid(signUpForm.password)
+  const signInPasswordValid = isPasswordValid(signInForm.password);
+  const signUpPasswordValid = isPasswordValid(signUpForm.password);
 
   const front = (
     <Card className="relative h-full min-h-[36rem] overflow-hidden rounded-[32px] border border-[rgba(31,111,74,0.16)] bg-[linear-gradient(145deg,rgba(248,252,248,0.98),rgba(239,250,243,0.96))] text-[color:var(--color-soil)] shadow-[0_34px_90px_rgba(9,22,16,0.28)] backdrop-blur">
-      <div
-        className="pointer-events-none absolute -right-24 -top-16 h-56 w-56 rounded-full blur-3xl"
-        style={{ background: alpha(palette.sunlight, 0.22) }}
-      />
-      <div
-        className="pointer-events-none absolute -left-16 bottom-10 h-40 w-40 rounded-full blur-2xl"
-        style={{ background: alpha(palette.moss, 0.18) }}
-      />
-
       <div className="relative space-y-8">
         <div className="space-y-3 text-center">
           <span
@@ -176,7 +167,9 @@ export function AuthCard() {
               disabled={submitting}
               className="!border-[rgba(31,111,74,0.22)] !bg-white !text-[color:var(--color-soil)] !placeholder:text-[color:var(--color-soil-60)] focus:!border-[rgba(31,111,74,0.6)] focus:!ring-[rgba(31,111,74,0.28)] disabled:!cursor-not-allowed disabled:!bg-[rgba(239,250,243,0.6)]"
             />
-            <HelperText className={`text-xs ${signInPasswordValid ? 'text-emerald-600' : 'text-red-600'}`}>
+            <HelperText
+              className={`text-xs ${signInPasswordValid ? 'text-emerald-600' : 'text-red-600'}`}
+            >
               Password must be at least 8 characters.
             </HelperText>
           </div>
@@ -223,7 +216,7 @@ export function AuthCard() {
         </div>
       </div>
     </Card>
-  )
+  );
 
   const back = (
     <Card className="relative h-full min-h-[36rem] overflow-hidden rounded-[32px] border border-[rgba(31,111,74,0.16)] bg-[linear-gradient(145deg,rgba(239,250,243,0.98),rgba(255,255,255,0.95))] text-[color:var(--color-soil)] shadow-[0_34px_90px_rgba(9,22,16,0.28)] backdrop-blur">
@@ -247,7 +240,9 @@ export function AuthCard() {
           >
             Sign Up
           </span>
-          <h2 className="text-2xl font-semibold text-[color:var(--color-soil)]">Join tiny greenhouse</h2>
+          <h2 className="text-2xl font-semibold text-[color:var(--color-soil)]">
+            Join tiny greenhouse
+          </h2>
           <p className="text-sm text-[color:var(--color-soil-70)]">
             Create your account to unlock dashboards, automations, and seasonal insights.
           </p>
@@ -292,7 +287,9 @@ export function AuthCard() {
               disabled={submitting}
               className="!border-[rgba(31,111,74,0.22)] !bg-white !text-[color:var(--color-soil)] !placeholder:text-[color:var(--color-soil-60)] focus:!border-[rgba(31,111,74,0.6)] focus:!ring-[rgba(31,111,74,0.28)] disabled:!cursor-not-allowed disabled:!bg-[rgba(239,250,243,0.6)]"
             />
-            <HelperText className={`text-xs ${signUpPasswordValid ? 'text-emerald-600' : 'text-red-600'}`}>
+            <HelperText
+              className={`text-xs ${signUpPasswordValid ? 'text-emerald-600' : 'text-red-600'}`}
+            >
               Password must be at least 8 characters.
             </HelperText>
           </div>
@@ -323,7 +320,7 @@ export function AuthCard() {
         </div>
       </div>
     </Card>
-  )
+  );
 
-  return <Flip front={front} back={back} isFlipped={isFlipped} className="w-full max-w-xl" />
+  return <Flip front={front} back={back} isFlipped={isFlipped} className="w-full max-w-xl" />;
 }
