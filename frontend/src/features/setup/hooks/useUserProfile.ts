@@ -3,8 +3,8 @@ import type { SetupProfile } from '../state'
 import { ensureUserDoc } from '../api'
 
 export const useUserProfile = (uid: string | null) => {
-  const [profile, setProfile] = useState<SetupProfile | null>(null)
-  const [loading, setLoading] = useState<boolean>(Boolean(uid))
+  const [profile, setProfile] = useState<SetupProfile | null | undefined>(undefined)
+  const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<Error | null>(null)
   const [refreshToken, setRefreshToken] = useState(0)
 
@@ -28,7 +28,7 @@ export const useUserProfile = (uid: string | null) => {
     ensureUserDoc(uid)
       .then((result) => {
         if (!cancelled) {
-          setProfile(result)
+          setProfile(result ?? null)
         }
       })
       .catch((err) => {

@@ -99,17 +99,6 @@ const navBlueprint: NavItem[] = [
   { to: '/assistant', label: 'Assistant', icon: ChatIcon },
 ];
 
-const SetupIcon = (props: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M4 9h16M4 15h16M8 9v10m4-10v10m4-10v10"
-    />
-    <path strokeLinecap="round" d="M6 5h12a1 1 0 0 1 1 1v0H5v0a1 1 0 0 1 1-1Z" />
-  </svg>
-);
-
 const getInitials = (displayName?: string | null, email?: string | null) => {
   const source = displayName || email || '';
   if (!source) {
@@ -131,14 +120,6 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
   const displayName = user?.displayName?.trim();
   const email = user?.email ?? undefined;
   const initials = useMemo(() => getInitials(displayName, email), [displayName, email]);
-
-  const navItems = useMemo(() => {
-    const items = [...navBlueprint];
-    if (!profile.setupCompleted || !profile.cropId || !profile.variety) {
-      items.unshift({ to: '/setup', label: 'Setup Wizard', icon: SetupIcon });
-    }
-    return items;
-  }, [profile.cropId, profile.variety, profile.setupCompleted]);
 
   const handleNavigate = (path: string) => (event: MouseEvent<HTMLElement>) => {
     event.preventDefault();
@@ -172,7 +153,7 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
 
         <SidebarItems className="mt-8 flex-1 overflow-y-auto px-3">
           <SidebarItemGroup className="space-y-1">
-            {navItems.map((item) => {
+            {navBlueprint.map((item) => {
               const isActive =
                 location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
 
