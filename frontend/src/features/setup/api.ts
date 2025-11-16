@@ -3,11 +3,25 @@ import { authReady, db } from '../auth/firebase';
 import type {
   CropDefaults,
   LanguageOption,
-  NotificationSettings,
+  NotificationChannels,
+  QuietHours,
   SetupProfile,
 } from './state';
 import { api } from '../../shared/hooks/useApi';
 import type { GreenhouseConfig } from '../greenhouse/types';
+
+type NotificationsEnvelope = {
+  light: { hours: number; startHour: number };
+  climate: {
+    temperature: { day: number; night: number };
+    humidity: { target: number };
+  };
+  soil: { moistureLowPct: number };
+  timelapse: { enabled: boolean; hour: number };
+  channels: { email: boolean; push: boolean; digestDaily: boolean; immediate: boolean };
+  digestHour: number;
+  quietHours: QuietHours | null;
+};
 
 const USERS_COLLECTION = 'users';
 
@@ -37,7 +51,7 @@ const ensureOk = <T>(payload: Envelope<T>): T => {
 
 const defaultProfile: SetupProfile = {
   setupCompleted: false,
-  notifications: { email: false, push: false },
+  notifications: { email: true, push: false, digestDaily: false, immediate: true },
 };
 
 export const getCropDefaults = async (cropId: string, variety: string): Promise<CropDefaults> => {
@@ -52,6 +66,16 @@ export const updateGreenhouse = async (
 ): Promise<GreenhouseConfig> => {
   const { data } = await api.put<Envelope<GreenhouseConfig>>('/greenhouses/current', payload);
   return ensureOk(data);
+};
+
+export const updateNotificationPrefs = async (payload: NotificationsEnvelope) => {
+  try {
+    await api.put('/notifications', payload);
+    return true;
+  } catch (error) {
+    console.warn('Failed to persist notification prefs', error);
+    return false;
+  }
 };
 
 export const getUserProfile = async (uid: string): Promise<SetupProfile | null> => {
@@ -83,8 +107,20 @@ type SettingsPayload = {
   cropId: string;
   variety: string;
   language: LanguageOption;
-  notifications: NotificationSettings;
+  notifications: NotificationChannels;
   greenhouseId: string;
+  light: {
+    hours: number;
+    startHour: number;
+  };
+  climate: {
+    temperature: { day: number; night: number };
+    humidity: { target: number };
+  };
+  soil: { moistureLowPct: number };
+  timelapse: { hour: number; enabled: boolean };
+  digestHour: number;
+  quietHours: QuietHours | null;
 };
 
 export const saveUserSettings = async (uid: string, payload: SettingsPayload) => {
@@ -113,6 +149,12 @@ export const saveUserSettings = async (uid: string, payload: SettingsPayload) =>
         variety: payload.variety,
         language: payload.language,
         notifications: payload.notifications,
+        light: payload.light,
+        climate: payload.climate,
+        soil: payload.soil,
+        timelapse: payload.timelapse,
+        digestHour: payload.digestHour,
+        quietHours: payload.quietHours,
         updatedAt: serverTimestamp(),
       },
       { merge: true },

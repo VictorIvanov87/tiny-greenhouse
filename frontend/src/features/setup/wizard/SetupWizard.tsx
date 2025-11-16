@@ -17,7 +17,7 @@ import StepPrefs from './steps/StepPrefs';
 import StepReview from './steps/StepReview';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { saveUserSettings, updateGreenhouse } from '../api';
+import { saveUserSettings, updateGreenhouse, updateNotificationPrefs } from '../api';
 import type { GreenhouseConfig } from '../../greenhouse/types';
 
 const TITLES = ['Welcome', 'Crop & Variety', 'Alarms & prefs', 'Finish'];
@@ -52,6 +52,7 @@ const WizardViewport = () => {
   const step = state.step ?? 0;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notificationWarning, setNotificationWarning] = useState(false);
 
   const canProceed = isStepValid(state, step as WizardStep);
   const isLastStep = step === TITLES.length - 1;
@@ -98,6 +99,42 @@ const WizardViewport = () => {
     setError(null);
 
     const defaults = state.selection.defaults;
+    const quietHoursPayload =
+      state.prefs.quietHours?.start && state.prefs.quietHours?.end
+        ? state.prefs.quietHours
+        : null;
+    const lightHours = state.prefs.lightHours ?? 12;
+    const notificationPayload = {
+      light: {
+        hours: lightHours,
+        startHour: state.prefs.lightStartHour,
+      },
+      climate: {
+        temperature: {
+          day: state.prefs.temperatureDay ?? 24,
+          night: state.prefs.temperatureNight ?? 18,
+        },
+        humidity: {
+          target: state.prefs.humidityTarget ?? 55,
+        },
+      },
+      soil: {
+        moistureLowPct: state.prefs.soilMoistureLowPct,
+      },
+      timelapse: {
+        enabled: true,
+        hour: state.prefs.timelapseHour,
+      },
+      channels: {
+        email: state.prefs.notifications.email,
+        push: state.prefs.notifications.push,
+        digestDaily: state.prefs.notifications.digestDaily,
+        immediate: state.prefs.notifications.immediate,
+      },
+      digestHour: state.prefs.digestHour,
+      quietHours: quietHoursPayload,
+    };
+
     const greenhousePayload: GreenhouseConfig = {
       id: 'gh-1',
       name: 'Tiny Greenhouse #1',
@@ -112,12 +149,20 @@ const WizardViewport = () => {
 
     try {
       const updated = await updateGreenhouse(greenhousePayload);
+      const notificationsSaved = await updateNotificationPrefs(notificationPayload);
+      setNotificationWarning(!notificationsSaved);
       await saveUserSettings(user.uid, {
         cropId: state.selection.cropId,
         variety: state.selection.variety,
         language: greenhousePayload.language,
         notifications: state.prefs.notifications,
         greenhouseId: updated.id,
+        light: notificationPayload.light,
+        climate: notificationPayload.climate,
+        soil: notificationPayload.soil,
+        timelapse: { hour: notificationPayload.timelapse.hour, enabled: notificationPayload.timelapse.enabled },
+        digestHour: notificationPayload.digestHour,
+        quietHours: notificationPayload.quietHours,
       });
       reset();
       refresh();
@@ -159,6 +204,12 @@ const WizardViewport = () => {
           <Card className="h-full w-full border border-slate-200 shadow-none">
             <div className="space-y-6">
               {error ? <Alert color="failure">{error}</Alert> : null}
+              {notificationWarning ? (
+                <Alert color="warning">
+                  Notifications not connected — preferences saved locally. You can retry later from
+                  Settings.
+                </Alert>
+              ) : null}
               <StepContent step={step as WizardStep} data={state} onChange={setState} />
               <footer className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-slate-500">{stepLabel}</div>

@@ -11,10 +11,14 @@ import {
 
 export type LanguageOption = 'bg' | 'en';
 
-export type NotificationSettings = {
+export type NotificationChannels = {
   email: boolean;
   push: boolean;
+  digestDaily: boolean;
+  immediate: boolean;
 };
+
+export type NotificationSettings = NotificationChannels;
 
 export type SetupProfile = {
   setupCompleted: boolean;
@@ -81,11 +85,22 @@ export type WizardSelection = {
   defaults?: CropDefaults;
 };
 
+export type QuietHours = {
+  start: string;
+  end: string;
+};
+
 export type WizardPreferences = {
   lightHours: number | null;
-  temperatureCeiling: number | null;
+  lightStartHour: number;
+  timelapseHour: number;
+  temperatureDay: number | null;
+  temperatureNight: number | null;
   humidityTarget: number | null;
-  notifications: NotificationSettings;
+  soilMoistureLowPct: number;
+  notifications: NotificationChannels;
+  digestHour: number;
+  quietHours: QuietHours | null;
 };
 
 export type SetupWizardState = {
@@ -102,9 +117,15 @@ const DEFAULT_STATE: SetupWizardState = {
   selection: {},
   prefs: {
     lightHours: null,
-    temperatureCeiling: null,
+    lightStartHour: 8,
+    timelapseHour: 9,
+    temperatureDay: null,
+    temperatureNight: null,
     humidityTarget: null,
-    notifications: { email: false, push: false },
+    soilMoistureLowPct: 40,
+    notifications: { email: true, push: false, digestDaily: false, immediate: true },
+    digestHour: 9,
+    quietHours: null,
   },
 };
 
@@ -218,8 +239,11 @@ export const isStepValid = (state: SetupWizardState, step: WizardStep): boolean 
     case 2:
       return (
         typeof state.prefs.lightHours === 'number' &&
-        typeof state.prefs.temperatureCeiling === 'number' &&
-        typeof state.prefs.humidityTarget === 'number'
+        typeof state.prefs.temperatureDay === 'number' &&
+        typeof state.prefs.temperatureNight === 'number' &&
+        typeof state.prefs.humidityTarget === 'number' &&
+        state.prefs.lightHours >= 6 &&
+        state.prefs.lightHours <= 20
       );
     case 3:
       return true;

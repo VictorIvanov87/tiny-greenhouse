@@ -4,6 +4,7 @@ import type { SetupWizardState, CropDefaults } from '../../state';
 import { getCropDefaults } from '../../api';
 import { MiniAssist } from '../../../assistant/MiniAssist';
 import { ApiError } from '../../../../shared/hooks/useApi';
+import { coerceNumber, parseHours } from '../../../../shared/utils/formatters';
 
 type StepProps = {
   data: SetupWizardState;
@@ -412,26 +413,6 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   );
 };
 
-const toNumber = (value?: string | null) => {
-  if (!value) {
-    return null;
-  }
-  const sanitized = value.replace(/–/g, '-');
-  const matches = sanitized.match(/-?\d+(\.\d+)?/g);
-  if (!matches || matches.length === 0) {
-    return null;
-  }
-  if (matches.length === 1) {
-    return Number(matches[0]);
-  }
-  const numbers = matches.map((match) => Number(match)).filter((num) => !Number.isNaN(num));
-  if (!numbers.length) {
-    return null;
-  }
-  const sum = numbers.reduce((acc, num) => acc + num, 0);
-  return sum / numbers.length;
-};
-
 const seedPrefsFromDefaults = (
   prefs: SetupWizardState['prefs'],
   defaults: CropDefaults,
@@ -441,13 +422,14 @@ const seedPrefsFromDefaults = (
 
   return {
     ...prefs,
-    lightHours: toNumber(environment?.light_hours) ?? prefs.lightHours ?? 12,
-    temperatureCeiling:
+    lightHours: parseHours(environment?.light_hours) ?? prefs.lightHours ?? 12,
+    temperatureDay:
+      coerceNumber(environment?.temperature_day) ??
+      prefs.temperatureDay ??
       safety?.temperature_c?.max ??
-      toNumber(environment?.temperature_day) ??
-      prefs.temperatureCeiling ??
-      30,
-    humidityTarget: toNumber(environment?.humidity) ?? prefs.humidityTarget ?? 55,
+      26,
+    temperatureNight: coerceNumber(environment?.temperature_night) ?? prefs.temperatureNight ?? 18,
+    humidityTarget: coerceNumber(environment?.humidity) ?? prefs.humidityTarget ?? 55,
     notifications: prefs.notifications,
   };
 };

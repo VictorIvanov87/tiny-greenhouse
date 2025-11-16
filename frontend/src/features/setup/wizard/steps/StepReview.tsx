@@ -20,16 +20,28 @@ const StepReview = ({ data }: StepProps) => {
       value: firstParagraph(defaults?.overview) ?? '—',
     },
     {
-      label: 'Light hours target',
-      value: prefs.lightHours !== null ? `${prefs.lightHours} hrs` : '—',
+      label: 'Light schedule',
+      value:
+        prefs.lightHours !== null
+          ? `${prefs.lightHours} hrs · start ${prefs.lightStartHour}:00`
+          : '—',
     },
     {
-      label: 'Temp ceiling',
-      value: prefs.temperatureCeiling !== null ? `${prefs.temperatureCeiling} °C` : '—',
+      label: 'Climate targets',
+      value:
+        prefs.temperatureDay !== null && prefs.temperatureNight !== null
+          ? `${prefs.temperatureDay}°C day / ${prefs.temperatureNight}°C night · humidity ${
+              prefs.humidityTarget ?? '—'
+            }%`
+          : '—',
     },
     {
-      label: 'Humidity floor',
-      value: prefs.humidityTarget !== null ? `${prefs.humidityTarget} %` : '—',
+      label: 'Soil moisture alert',
+      value: `${prefs.soilMoistureLowPct}% threshold`,
+    },
+    {
+      label: 'Timelapse',
+      value: `Daily @ ${formatHour(prefs.timelapseHour)}:00`,
     },
     {
       label: 'Notifications',
@@ -71,16 +83,14 @@ const firstParagraph = (value?: string | null) =>
   value?.split('\n').map((part) => part.trim()).filter(Boolean).at(0) ?? null;
 
 const formatNotifications = (settings: SetupWizardState['prefs']['notifications']) => {
-  if (settings.email && settings.push) {
-    return 'Email + push alerts';
-  }
-  if (settings.email) {
-    return 'Email only';
-  }
-  if (settings.push) {
-    return 'Push only';
-  }
-  return 'Disabled for now';
+  const parts: string[] = [];
+  if (settings.email) parts.push('Email');
+  if (settings.push) parts.push('Push');
+  if (settings.immediate) parts.push('Immediate');
+  if (settings.digestDaily) parts.push('Daily digest');
+  return parts.length ? parts.join(' · ') : 'Disabled for now';
 };
+
+const formatHour = (value: number) => value.toString().padStart(2, '0');
 
 export default StepReview;
