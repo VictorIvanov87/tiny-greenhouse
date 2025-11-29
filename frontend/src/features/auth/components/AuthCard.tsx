@@ -224,10 +224,6 @@ export function AuthCard() {
         className="pointer-events-none absolute -left-20 top-16 h-52 w-52 rounded-full blur-3xl"
         style={{ background: alpha(palette.moss, 0.16) }}
       />
-      <div
-        className="pointer-events-none absolute -right-16 bottom-8 h-48 w-48 rounded-full blur-3xl"
-        style={{ background: alpha(palette.sunlight, 0.22) }}
-      />
 
       <div className="relative space-y-8">
         <div className="space-y-3 text-center">

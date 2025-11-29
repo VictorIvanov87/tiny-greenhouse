@@ -39,12 +39,12 @@ const formatNumber = (value: number) => value.toFixed(1);
 export const RecentTelemetry = ({ items, total }: RecentTelemetryProps) => {
   const rows = useMemo(
     () => [...items].sort((a, b) => toEpoch(b.timestamp) - toEpoch(a.timestamp)),
-    [items],
+    [items]
   );
 
   return (
     <Card className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 px-6 pt-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 px-2 pt-2">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Recent telemetry</h2>
           <p className="text-sm text-slate-500">
@@ -53,7 +53,7 @@ export const RecentTelemetry = ({ items, total }: RecentTelemetryProps) => {
         </div>
       </div>
 
-      <div className="mt-4 flex-1 overflow-hidden px-6 pb-6">
+      <div className="mt-4 flex-1 overflow-hidden px-2 pb-2">
         <div className="overflow-x-auto">
           <div className="h-[26rem] overflow-y-auto rounded-2xl border border-slate-100">
             <Table hoverable className="min-w-full">

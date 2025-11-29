@@ -1,60 +1,93 @@
-import { Card } from 'flowbite-react'
+import { Card } from 'flowbite-react';
+
+export type MetricSnapshot = {
+  label: string;
+  unit: string;
+  start: number | null;
+  current: number | null;
+  avg: number | null;
+  delta: number | null;
+};
 
 export type TelemetryMetrics = {
-  avgTemperature: number | null
-  avgHumidity: number | null
-  latestSoilMoisture: number | null
-}
+  temperature: MetricSnapshot;
+  humidity: MetricSnapshot;
+  soilMoisture: MetricSnapshot;
+};
 
 type KpiCardsProps = {
-  metrics: TelemetryMetrics
-}
+  metrics: TelemetryMetrics;
+};
 
 const formatValue = (value: number | null) => {
   if (value === null || Number.isNaN(value)) {
-    return '—'
+    return '—';
   }
+  return value.toFixed(1);
+};
 
-  return value.toFixed(1)
-}
+const formatWithUnit = (value: number | null, unit: string) => {
+  const formatted = formatValue(value);
+  return formatted === '—' ? formatted : `${formatted}${unit}`;
+};
+
+const formatDelta = (delta: number | null, unit: string) => {
+  if (delta === null || Number.isNaN(delta)) {
+    return '—';
+  }
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta.toFixed(1)}${unit}`;
+};
+
+const deltaTone = (delta: number | null) => {
+  if (delta === null || Number.isNaN(delta) || delta === 0) return 'text-slate-600';
+  return delta > 0 ? 'text-emerald-600' : 'text-rose-600';
+};
 
 export const KpiCards = ({ metrics }: KpiCardsProps) => {
   const cards = [
-    {
-      id: 'avg-temp',
-      label: 'Avg. temperature',
-      value: formatValue(metrics.avgTemperature),
-      unit: '°C',
-      helper: 'Last 25 samples',
-    },
-    {
-      id: 'avg-humidity',
-      label: 'Avg. humidity',
-      value: formatValue(metrics.avgHumidity),
-      unit: '%',
-      helper: 'Last 25 samples',
-    },
-    {
-      id: 'soil',
-      label: 'Latest soil moisture',
-      value: formatValue(metrics.latestSoilMoisture),
-      unit: '%',
-      helper: 'Most recent sample',
-    },
-  ]
+    { id: 'temp', metric: metrics.temperature },
+    { id: 'humidity', metric: metrics.humidity },
+    { id: 'soil', metric: metrics.soilMoisture },
+  ];
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {cards.map((card) => (
-        <Card key={card.id} className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <p className="text-sm text-slate-500">{card.label}</p>
+      {cards.map(({ id, metric }) => (
+        <Card key={id} className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">{metric.label}</p>
           <div className="mt-3 flex items-baseline gap-1">
-            <span className="text-3xl font-semibold text-slate-900">{card.value}</span>
-            <span className="text-sm font-medium text-slate-500">{card.unit}</span>
+            <span className="text-3xl font-semibold text-slate-900">
+              {formatValue(metric.current)}
+            </span>
+            <span className="text-sm font-medium text-slate-500">{metric.unit}</span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center gap-2">
+              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Start
+              </span>
+              <span className="text-sm font-medium text-slate-700">
+                {formatWithUnit(metric.start, metric.unit)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                End
+              </span>
+              <span className="text-sm font-medium text-slate-700">
+                {formatWithUnit(metric.current, metric.unit)}
+              </span>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+            <span>Avg {formatWithUnit(metric.avg, metric.unit)}</span>
+            <span className={`font-semibold ${deltaTone(metric.delta)}`}>
+              Δ {formatDelta(metric.delta, metric.unit)}
+            </span>
+          </div>
         </Card>
       ))}
     </div>
-  )
-}
+  );
+};

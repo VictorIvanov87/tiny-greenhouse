@@ -30,7 +30,7 @@ const greetingByPlant = (plantType?: string) => {
 };
 
 const formatTick = (value: number) =>
-  new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
 const DashboardPage = () => {
   const { profile } = useOutletContext<DashboardContext>();
@@ -79,33 +79,6 @@ const DashboardPage = () => {
 
   const sortedSamples = useMemo(() => sortByTimestamp(samples), [samples]);
 
-  const metrics = useMemo<TelemetryMetrics>(() => {
-    if (!sortedSamples.length) {
-      return {
-        avgTemperature: null,
-        avgHumidity: null,
-        latestSoilMoisture: null,
-      };
-    }
-
-    const average = (values: number[]) => {
-      if (!values.length) {
-        return null;
-      }
-
-      const sum = values.reduce((acc, value) => acc + value, 0);
-      return sum / values.length;
-    };
-
-    const latest = sortedSamples.at(-1);
-
-    return {
-      avgTemperature: average(sortedSamples.map((sample) => sample.temperature)),
-      avgHumidity: average(sortedSamples.map((sample) => sample.humidity)),
-      latestSoilMoisture: latest?.soilMoisture ?? null,
-    };
-  }, [sortedSamples]);
-
   const recentSamples = useMemo(() => sortedSamples.slice(-25), [sortedSamples]);
   const windowedSamples = useMemo(
     () => filterByWindow(sortedSamples, timeWindow),
@@ -119,6 +92,33 @@ const DashboardPage = () => {
     return { temperature, humidity, soilMoisture };
   }, [windowedSamples]);
 
+  const summarizeSeries = (series: Array<{ value: number }>) => {
+    if (!series.length) {
+      return { start: null, current: null, avg: null, delta: null };
+    }
+    const start = series[0].value;
+    const current = series[series.length - 1].value;
+    const avg = series.reduce((acc, item) => acc + item.value, 0) / series.length;
+    return {
+      start,
+      current,
+      avg,
+      delta: current - start,
+    };
+  };
+
+  const metrics = useMemo<TelemetryMetrics>(() => {
+    const temperature = summarizeSeries(chartSeries.temperature);
+    const humidity = summarizeSeries(chartSeries.humidity);
+    const soilMoisture = summarizeSeries(chartSeries.soilMoisture);
+
+    return {
+      temperature: { ...temperature, label: 'Temperature', unit: '°C' },
+      humidity: { ...humidity, label: 'Humidity', unit: '%' },
+      soilMoisture: { ...soilMoisture, label: 'Soil moisture', unit: '%' },
+    };
+  }, [chartSeries]);
+
   const renderAreaChart = (
     data: Array<{ timestamp: number; value: number }>,
     stroke: string,
@@ -129,13 +129,14 @@ const DashboardPage = () => {
     }
 
     return (
-      <ResponsiveContainer width="100%" height={140}>
+      <ResponsiveContainer width="100%" height={160}>
         <AreaChart data={data} responsive>
-          <XAxis dataKey="timestamp" tickFormatter={formatTick} hide />
+          <XAxis dataKey="timestamp" tickFormatter={formatTick} tickSize={6} fontSize={12} />
           <YAxis hide domain={['auto', 'auto']} />
           <Tooltip
             contentStyle={{ fontSize: '0.75rem' }}
             labelFormatter={(value) => new Date(value as number).toLocaleString()}
+            labelStyle={{ color: '#111827', fontWeight: '600' }}
           />
           <Area
             type="monotone"
@@ -152,21 +153,35 @@ const DashboardPage = () => {
   };
 
   const TimeWindowSwitch = () => (
-    <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold shadow-sm">
-      {WINDOW_OPTIONS.map((window) => (
-        <button
-          key={window}
-          type="button"
-          onClick={() => setTimeWindow(window)}
-          className={`rounded-full px-3 py-1 transition ${
-            window === timeWindow
-              ? 'bg-emerald-500 text-white shadow'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          {window}
-        </button>
-      ))}
+    <div
+      className="inline-flex -space-x-px rounded-xl border border-slate-400 bg-slate-900/70 shadow-sm shadow-emerald-900/25"
+      role="group"
+      aria-label="Time window"
+    >
+      {WINDOW_OPTIONS.map((window, index) => {
+        const isActive = window === timeWindow;
+        const rounded =
+          index === 0
+            ? 'rounded-l-xl'
+            : index === WINDOW_OPTIONS.length - 1
+            ? 'rounded-r-xl'
+            : 'rounded-none';
+        return (
+          <button
+            key={window}
+            type="button"
+            onClick={() => setTimeWindow(window)}
+            aria-pressed={isActive}
+            className={`text-sm cursor-pointer font-semibold leading-5 px-3 py-2 transition focus:outline-none focus:ring-2 focus:ring-emerald-400/60 ${rounded} ${
+              isActive
+                ? 'z-10 bg-blue-600 rounded-xl border text-slate-900 shadow-[0_6px_22px_rgba(16,185,129,0.35)] ring-1 ring-emerald-300'
+                : 'bg-transparent text-slate-200 hover:bg-slate-800/60 hover:text-white'
+            }`}
+          >
+            {window}
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -233,7 +248,7 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-10">
-      <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
+      <Card className="rounded-3xl mb-6 border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">
             {greetingByPlant(profile.plantType)}

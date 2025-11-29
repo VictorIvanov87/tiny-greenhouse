@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Spinner,
-  Textarea,
-  Toast,
-  ToastToggle,
-} from 'flowbite-react';
+import { Alert, Badge, Button, Card, Spinner, Textarea, Toast, ToastToggle } from 'flowbite-react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../auth/hooks/useAuth';
 import type { SetupProfile } from '../setup/state';
@@ -73,7 +64,13 @@ const AssistantPage = () => {
         greenhouse?.cropId ?? greenhouse?.plantType ?? profile.currentGreenhouseId,
         greenhouse?.variety
       ),
-    [user?.uid, greenhouse?.cropId, greenhouse?.plantType, greenhouse?.variety, profile.currentGreenhouseId]
+    [
+      user?.uid,
+      greenhouse?.cropId,
+      greenhouse?.plantType,
+      greenhouse?.variety,
+      profile.currentGreenhouseId,
+    ]
   );
 
   useEffect(() => {
@@ -113,7 +110,8 @@ const AssistantPage = () => {
 
   useEffect(() => {
     const persistable = messages.filter(
-      (message) => message.role === 'user' || (isAssistantMessage(message) && message.status !== 'pending')
+      (message) =>
+        message.role === 'user' || (isAssistantMessage(message) && message.status !== 'pending')
     );
 
     saveTranscript(storageKey, trimMessages(persistable));
@@ -246,7 +244,6 @@ const AssistantPage = () => {
       } finally {
         setIsSending(false);
       }
-
     },
     [greenhouse?.cropId, greenhouse?.plantType, greenhouse?.variety]
   );
@@ -352,7 +349,7 @@ const AssistantPage = () => {
         </Alert>
       ) : null}
 
-      <Card className="flex h-[38rem] flex-col rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
+      <Card className="flex flex-col rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)] overflow-hidden">
         <div className="flex items-center justify-between gap-3 border-b border-[#1f2a3d] pb-3">
           <div>
             <h2 className="text-base font-semibold text-slate-100">Greenhouse Assistant</h2>
@@ -360,7 +357,7 @@ const AssistantPage = () => {
               Answers grounded in your crop plan, docs, and latest telemetry.
             </p>
           </div>
-          <Badge className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-200">
+          <Badge className="rounded-full border text-sm border-green-500 text-green-500">
             Live
           </Badge>
         </div>
@@ -378,12 +375,14 @@ const AssistantPage = () => {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${isUser ? 'justify-end' : 'justify-start'} text-sm leading-relaxed`}
+                  className={`flex ${
+                    isUser ? 'justify-end' : 'justify-start'
+                  } text-sm leading-relaxed`}
                 >
                   <div
-                    className={`max-w-full rounded-2xl border px-4 py-3 sm:max-w-[80%] ${
+                    className={`max-w-full rounded-2xl border px-4 py-3 sm:max-w-[80%] rounded-md ${
                       isUser
-                        ? 'border-[#1f2a3d] bg-[#0f1729] text-slate-50 shadow-[0_16px_36px_rgba(8,20,38,0.35)]'
+                        ? 'border-[#1f2a3d] bg-[#0f1729] text-slate-50 shadow-[0_16px_36px_rgba(8,20,38,0.35)] text-right'
                         : 'border-[#22324a] bg-[#1a2740] text-slate-100'
                     }`}
                   >
@@ -413,8 +412,14 @@ const AssistantPage = () => {
                     message.status === 'ready' &&
                     !message.sources.length &&
                     message.content.trim() !== SMALL_TALK_REPLY ? (
-                      <p className="mt-3 text-xs text-slate-300">I don’t have docs for this crop yet.</p>
+                      <p className="mt-3 text-xs text-slate-300">
+                        I don’t have docs for this crop yet.
+                      </p>
                     ) : null}
+
+                    <span className="text-right text-xs text-gray-500 mt-3 block">
+                      {new Date(message.createdAt).toLocaleString()}
+                    </span>
 
                     {message.role === 'assistant' && message.status === 'error' ? (
                       <div className="mt-3 flex items-center gap-3 text-xs text-slate-300">
@@ -448,7 +453,9 @@ const AssistantPage = () => {
                                   {basename(chunk.sourcePath)}
                                   {chunk.stage ? ` (${chunk.stage})` : ''}
                                 </p>
-                                <p className="mt-1 whitespace-pre-line text-slate-300">{chunk.chunk}</p>
+                                <p className="mt-1 whitespace-pre-line text-slate-300">
+                                  {chunk.chunk}
+                                </p>
                               </div>
                             ))}
                           </div>
@@ -490,7 +497,9 @@ const AssistantPage = () => {
         <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-xs -translate-x-1/2 px-2">
           <Toast className="border border-amber-200 bg-white text-slate-900 shadow-lg">
             <div className="text-sm font-semibold">Rate limit — try later</div>
-            <div className="text-xs text-slate-500">You hit the assistant rate limit. Give it a minute.</div>
+            <div className="text-xs text-slate-500">
+              You hit the assistant rate limit. Give it a minute.
+            </div>
             <ToastToggle onDismiss={() => setRateLimited(false)} />
           </Toast>
         </div>

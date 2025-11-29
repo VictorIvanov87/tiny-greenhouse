@@ -18,7 +18,7 @@ export const AppShell = ({ children, profile }: AppShellProps) => {
   }, [location.pathname]);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0b1220] text-slate-200 md:flex">
+    <div className="relative w-full bg-[#0b1220] text-slate-200 md:flex h-screen">
       <SidebarNav
         profile={profile}
         isMobileOpen={isMobileSidebarOpen}

@@ -25,24 +25,6 @@ const LoginPage = () => {
     return <Navigate to="/setup" replace />;
   }
 
-  const featureItems = [
-    {
-      id: 'insights',
-      accent: palette.moss,
-      copy: 'Realtime vitals tuned to your greenhouse microclimate with signal-based recommendations.',
-    },
-    {
-      id: 'balance',
-      accent: palette.sunlight,
-      copy: 'Adaptive lighting and irrigation cues that balance sunlight, humidity, and nutrient delivery.',
-    },
-    {
-      id: 'alerts',
-      accent: palette.chili,
-      copy: 'Early alerts before conditions slip so you can respond with confidence and keep crops thriving.',
-    },
-  ];
-
   const heroBackground = [
     `radial-gradient(circle at 12% 18%, ${alpha(palette.sunlight, 0.18)} 0%, transparent 50%)`,
     `radial-gradient(circle at 88% 12%, ${alpha(palette.moss, 0.2)} 0%, transparent 55%)`,
@@ -59,8 +41,8 @@ const LoginPage = () => {
       }}
     >
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 py-10 md:px-10">
-        <div className="flex w-full max-w-5xl flex-col justify-between items-center h-full gap-10 text-center lg:gap-12">
-          <div className="w-full space-y-4 text-center">
+        <div className="flex w-full max-w-5xl flex-col justify-start items-center h-full gap-10 text-center lg:gap-12">
+          <div className="w-full space-y-4 text-center pb-10 pt-10">
             <h1 className="text-4xl font-semibold leading-tight sm:text-4xl mt-5">
               Grow smarter with a live greenhouse companion
             </h1>
@@ -70,18 +52,8 @@ const LoginPage = () => {
             </p>
           </div>
 
-          <div className="w-full max-w-xl">
+          <div className="w-full max-w-xl pt-10">
             <AuthCard />
-          </div>
-
-          <div className="w-full text-center mb-5">
-            <ListGroup className="bg-transparent">
-              {featureItems.map((feature) => (
-                <ListGroupItem key={feature.id} className="flex items-center">
-                  <span>{feature.copy}</span>
-                </ListGroupItem>
-              ))}
-            </ListGroup>
           </div>
         </div>
       </div>
