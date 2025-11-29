@@ -21,6 +21,13 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const toNullableNumber = (value: string) => (value === '' ? null : Number(value));
 
 const formatHour = (value: number) => value.toString().padStart(2, '0');
+const rangePercent = (value: number, min: number, max: number) =>
+  ((value - min) / (max - min)) * 100;
+const parseHourFromTime = (value: string) => {
+  const [hourStr] = value.split(':');
+  const hour = Number(hourStr);
+  return Number.isNaN(hour) ? null : clamp(hour, 0, 23);
+};
 
 const useSummary = (prefs: SetupWizardState['prefs']) =>
   useMemo(
@@ -30,7 +37,7 @@ const useSummary = (prefs: SetupWizardState['prefs']) =>
         value:
           typeof prefs.lightHours === 'number'
             ? `${prefs.lightHours}h · ${formatHour(prefs.lightStartHour)}:00 → ${formatHour(
-                (prefs.lightStartHour + prefs.lightHours) % 24,
+                (prefs.lightStartHour + prefs.lightHours) % 24
               )}:00`
             : 'Set hours above',
       },
@@ -53,19 +60,18 @@ const useSummary = (prefs: SetupWizardState['prefs']) =>
       },
       {
         label: 'Notifications',
-        value: [
-          prefs.notifications.email ? 'Email' : null,
-          prefs.notifications.push ? 'Push' : null,
-          prefs.notifications.digestDaily
-            ? `Daily ${formatHour(prefs.digestHour)}:00`
-            : null,
-          prefs.notifications.immediate ? 'Immediate' : null,
-        ]
-          .filter(Boolean)
-          .join(' · ') || 'Disabled',
+        value:
+          [
+            prefs.notifications.email ? 'Email' : null,
+            prefs.notifications.push ? 'Push' : null,
+            prefs.notifications.digestDaily ? `Daily ${formatHour(prefs.digestHour)}:00` : null,
+            prefs.notifications.immediate ? 'Immediate' : null,
+          ]
+            .filter(Boolean)
+            .join(' · ') || 'Disabled',
       },
     ],
-    [prefs],
+    [prefs]
   );
 
 export const StepPrefs = ({ data, onChange }: StepProps) => {
@@ -175,20 +181,32 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
             {safetyBadges}
             <div className="space-y-2">
               <Label htmlFor="light-hours">Light hours per day</Label>
-              <input
-                id="light-hours"
-                type="range"
-                min={6}
-                max={20}
-                value={prefs.lightHours ?? 12}
-                onChange={(event) =>
-                  updatePrefs({ lightHours: Number(event.target.value), lightStartHour: prefs.lightStartHour })
-                }
-                className="w-full accent-emerald-500"
-              />
+              <div className="relative px-1">
+                <div
+                  className="pointer-events-none  absolute -top-7 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm text-blue-600"
+                  style={{
+                    left: `calc(${rangePercent(prefs.lightHours ?? 12, 6, 20)}% - 12px)`,
+                  }}
+                >
+                  {(prefs.lightHours ?? 12).toFixed(0)}h
+                </div>
+                <input
+                  id="light-hours"
+                  type="range"
+                  min={6}
+                  max={20}
+                  value={prefs.lightHours ?? 12}
+                  onChange={(event) =>
+                    updatePrefs({
+                      lightHours: Number(event.target.value),
+                      lightStartHour: prefs.lightStartHour,
+                    })
+                  }
+                  className="w-full accent-emerald-500"
+                />
+              </div>
               <div className="flex justify-between text-xs text-slate-500">
                 <span>6h</span>
-                <span>{prefs.lightHours ?? 12}h</span>
                 <span>20h</span>
               </div>
               {lightWarning ? (
@@ -203,24 +221,31 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
                 <Label htmlFor="light-start">Start hour</Label>
                 <TextInput
                   id="light-start"
-                  type="number"
-                  min={0}
-                  max={23}
-                  value={prefs.lightStartHour}
-                  onChange={(event) =>
-                    updatePrefs({
-                      lightStartHour: clamp(Number(event.target.value), 0, 23),
-                    })
-                  }
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\\d{1,2}:?\\d{0,2}"
+                  value={`${formatHour(prefs.lightStartHour)}:00`}
+                  onChange={(event) => {
+                    const next = parseHourFromTime(event.target.value);
+                    if (next !== null) {
+                      updatePrefs({ lightStartHour: next });
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
-                <Label>End hour</Label>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                  {typeof prefs.lightHours === 'number'
-                    ? `${formatHour((prefs.lightStartHour + prefs.lightHours) % 24)}:00`
-                    : '—'}
-                </div>
+                <Label htmlFor="light-end">End hour</Label>
+                <TextInput
+                  id="light-end"
+                  type="text"
+                  disabled
+                  value={
+                    typeof prefs.lightHours === 'number'
+                      ? `${formatHour((prefs.lightStartHour + prefs.lightHours) % 24)}:00`
+                      : ''
+                  }
+                  placeholder="—"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="timelapse-hour">Timelapse hour</Label>
@@ -318,21 +343,30 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="moisture-low">Alert when below (%)</Label>
-              <input
-                id="moisture-low"
-                type="range"
-                min={20}
-                max={60}
-                step={1}
-                value={prefs.soilMoistureLowPct}
-                onChange={(event) =>
-                  updatePrefs({ soilMoistureLowPct: Number(event.target.value) })
-                }
-                className="w-full accent-emerald-500"
-              />
+              <div className="relative px-1">
+                <div
+                  className="pointer-events-none absolute -top-7 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm text-blue-600"
+                  style={{
+                    left: `calc(${rangePercent(prefs.soilMoistureLowPct, 20, 60)}% - 12px)`,
+                  }}
+                >
+                  {prefs.soilMoistureLowPct}%
+                </div>
+                <input
+                  id="moisture-low"
+                  type="range"
+                  min={20}
+                  max={60}
+                  step={1}
+                  value={prefs.soilMoistureLowPct}
+                  onChange={(event) =>
+                    updatePrefs({ soilMoistureLowPct: Number(event.target.value) })
+                  }
+                  className="w-full accent-emerald-500"
+                />
+              </div>
               <div className="flex justify-between text-xs text-slate-500">
                 <span>20%</span>
-                <span>{prefs.soilMoistureLowPct}%</span>
                 <span>60%</span>
               </div>
             </div>
@@ -389,16 +423,16 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
               {prefs.notifications.digestDaily ? (
                 <div className="space-y-2">
                   <Label htmlFor="digest-hour">Digest at</Label>
-                <TextInput
-                  id="digest-hour"
-                  type="time"
-                  value={`${formatHour(prefs.digestHour)}:00`}
-                  onChange={(event) => {
-                    const [hour] = event.target.value.split(':');
-                    updatePrefs({ digestHour: clamp(Number(hour), 0, 23) });
-                  }}
-                />
-              </div>
+                  <TextInput
+                    id="digest-hour"
+                    type="time"
+                    value={`${formatHour(prefs.digestHour)}:00`}
+                    onChange={(event) => {
+                      const [hour] = event.target.value.split(':');
+                      updatePrefs({ digestHour: clamp(Number(hour), 0, 23) });
+                    }}
+                  />
+                </div>
               ) : null}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

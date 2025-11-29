@@ -1,27 +1,9 @@
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { authReady, db } from '../auth/firebase';
-import type {
-  CropDefaults,
-  LanguageOption,
-  NotificationChannels,
-  QuietHours,
-  SetupProfile,
-} from './state';
+import type { CropDefaults, LanguageOption, NotificationChannels, QuietHours, SetupProfile } from './state';
 import { api } from '../../shared/hooks/useApi';
 import type { GreenhouseConfig } from '../greenhouse/types';
-
-type NotificationsEnvelope = {
-  light: { hours: number; startHour: number };
-  climate: {
-    temperature: { day: number; night: number };
-    humidity: { target: number };
-  };
-  soil: { moistureLowPct: number };
-  timelapse: { enabled: boolean; hour: number };
-  channels: { email: boolean; push: boolean; digestDaily: boolean; immediate: boolean };
-  digestHour: number;
-  quietHours: QuietHours | null;
-};
+import type { NotificationPrefs } from '../notifications/api';
 
 const USERS_COLLECTION = 'users';
 
@@ -68,7 +50,7 @@ export const updateGreenhouse = async (
   return ensureOk(data);
 };
 
-export const updateNotificationPrefs = async (payload: NotificationsEnvelope) => {
+export const updateNotificationPrefs = async (payload: NotificationPrefs) => {
   try {
     await api.put('/notifications', payload);
     return true;

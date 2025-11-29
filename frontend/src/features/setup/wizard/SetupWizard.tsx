@@ -19,6 +19,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { saveUserSettings, updateGreenhouse, updateNotificationPrefs } from '../api';
 import type { GreenhouseConfig } from '../../greenhouse/types';
+import type { NotificationPrefs } from '../../notifications/api';
 
 const TITLES = ['Welcome', 'Crop & Variety', 'Alarms & prefs', 'Finish'];
 
@@ -76,7 +77,9 @@ const WizardViewport = () => {
   };
 
   const handleCancel = () => {
-    const confirmed = window.confirm('Cancel setup and head back to the dashboard? Progress clears.');
+    const confirmed = window.confirm(
+      'Cancel setup and head back to the dashboard? Progress clears.'
+    );
     if (!confirmed) {
       return;
     }
@@ -100,11 +103,9 @@ const WizardViewport = () => {
 
     const defaults = state.selection.defaults;
     const quietHoursPayload =
-      state.prefs.quietHours?.start && state.prefs.quietHours?.end
-        ? state.prefs.quietHours
-        : null;
+      state.prefs.quietHours?.start && state.prefs.quietHours?.end ? state.prefs.quietHours : null;
     const lightHours = state.prefs.lightHours ?? 12;
-    const notificationPayload = {
+    const preferencesPayload = {
       light: {
         hours: lightHours,
         startHour: state.prefs.lightStartHour,
@@ -134,6 +135,14 @@ const WizardViewport = () => {
       digestHour: state.prefs.digestHour,
       quietHours: quietHoursPayload,
     };
+    const notificationPrefsPayload: NotificationPrefs = {
+      email: state.prefs.notifications.email,
+      push: state.prefs.notifications.push,
+      thresholds: {
+        soilMoistureLow: state.prefs.soilMoistureLowPct,
+        tempHigh: state.prefs.temperatureDay ?? 30,
+      },
+    };
 
     const greenhousePayload: GreenhouseConfig = {
       id: 'gh-1',
@@ -149,7 +158,7 @@ const WizardViewport = () => {
 
     try {
       const updated = await updateGreenhouse(greenhousePayload);
-      const notificationsSaved = await updateNotificationPrefs(notificationPayload);
+      const notificationsSaved = await updateNotificationPrefs(notificationPrefsPayload);
       setNotificationWarning(!notificationsSaved);
       await saveUserSettings(user.uid, {
         cropId: state.selection.cropId,
@@ -157,12 +166,15 @@ const WizardViewport = () => {
         language: greenhousePayload.language,
         notifications: state.prefs.notifications,
         greenhouseId: updated.id,
-        light: notificationPayload.light,
-        climate: notificationPayload.climate,
-        soil: notificationPayload.soil,
-        timelapse: { hour: notificationPayload.timelapse.hour, enabled: notificationPayload.timelapse.enabled },
-        digestHour: notificationPayload.digestHour,
-        quietHours: notificationPayload.quietHours,
+        light: preferencesPayload.light,
+        climate: preferencesPayload.climate,
+        soil: preferencesPayload.soil,
+        timelapse: {
+          hour: preferencesPayload.timelapse.hour,
+          enabled: preferencesPayload.timelapse.enabled,
+        },
+        digestHour: preferencesPayload.digestHour,
+        quietHours: preferencesPayload.quietHours,
       });
       reset();
       refresh();
@@ -192,8 +204,8 @@ const WizardViewport = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-8 text-slate-900">
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col gap-6 rounded-[32px] border border-white/10 bg-white/95 p-6 shadow-[0_35px_120px_rgba(15,23,42,0.45)] backdrop-blur">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4 text-slate-900">
+      <div className="mx-auto flex h-full max-w-3xl flex-col gap-8 px-4">
         <header className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">
             Setup wizard
