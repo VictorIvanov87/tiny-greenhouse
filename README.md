@@ -55,6 +55,36 @@ frontend/   # React SPA (dashboard, timelapse, alerts, settings)
 backend/    # Node API (mock now; device API later)
 ```
 
+## Secrets & Environment
+
+Both `backend/.env` and `frontend/.env.local` are **git-ignored** and must never be committed.
+
+### Setup
+
+```bash
+# Backend
+cp backend/.env.example backend/.env
+# Then fill in the SECRET values (see comments in the file):
+#   FIREBASE_PRIVATE_KEY  — Firebase Console → Project Settings → Service accounts
+#   DATABASE_URL          — Supabase dashboard → Settings → Database → Connection string
+#   OPENAI_API_KEY        — OpenAI platform → API keys
+
+# Frontend
+cp frontend/.env.example frontend/.env.local
+# Then fill in the Firebase client config:
+#   VITE_FIREBASE_*       — Firebase Console → Project Settings → Your apps → Web app
+```
+
+Variables marked `# SECRET` in `.env.example` contain credentials — use real values only in your local `.env` file, never in committed code.
+
+### Pre-commit secret scan
+
+A lightweight script at `scripts/check-secrets.sh` scans staged files for credential patterns (private keys, API key prefixes, connection strings). To activate it as a git hook:
+
+```bash
+ln -sf ../../scripts/check-secrets.sh .git/hooks/pre-commit
+```
+
 ## Getting Started (dev)
 
 ```bash

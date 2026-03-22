@@ -17,10 +17,14 @@ frontend/dist/
 backend/node_modules/
 backend/dist/
 
-# Environment files
+# Environment files (generic patterns)
 .env
 .env.*
 !.env.example
+
+# Explicit env files with secrets — never track these
+backend/.env
+frontend/.env.local
 
 # OS / editors
 .DS_Store
