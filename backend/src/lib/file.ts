@@ -1,7 +1,9 @@
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(process.cwd(), 'data', 'mock');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, '..', '..', '..', 'data', 'mock');
 
 export async function readMock<T>(file: string): Promise<T> {
   const fullPath = resolve(root, file);
