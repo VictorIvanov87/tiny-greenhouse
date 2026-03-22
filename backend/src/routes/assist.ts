@@ -5,6 +5,9 @@ import { buildAssistantAnswer } from '../services/assist';
 import { assertRateLimit, RateLimitError } from '../services/rate-limit';
 import { isVectorStoreEnabled } from '../services/rag';
 
+const RATE_MAX = Math.max(1, Number(process.env.RATE_LIMIT_MAX) || 30);
+const RATE_WINDOW_MS = Math.max(1000, (Number(process.env.RATE_LIMIT_WINDOW) || 3600) * 1000);
+
 const assistRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     '/api/assist',
@@ -26,7 +29,7 @@ const assistRoutes: FastifyPluginAsync = async (app) => {
       }
 
       try {
-        assertRateLimit(`assist:${req.user!.uid}`, 30, 60 * 60 * 1000);
+        assertRateLimit(`assist:${req.user!.uid}`, RATE_MAX, RATE_WINDOW_MS);
       } catch (error) {
         if (error instanceof RateLimitError) {
           reply.header('Retry-After', String(error.retryAfter));
