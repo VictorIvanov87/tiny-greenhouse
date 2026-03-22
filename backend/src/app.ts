@@ -71,6 +71,10 @@ if (process.env.NODE_ENV !== 'test') {
   const app = buildServer();
   const port = Number(process.env.PORT ?? 3000);
 
+  if (process.env.RAG_DEBUG === 'true') {
+    app.log.warn('RAG debug endpoint is ENABLED — /api/rag/search is accessible');
+  }
+
   app
     .listen({ port, host: '0.0.0.0' })
     .catch((error) => {

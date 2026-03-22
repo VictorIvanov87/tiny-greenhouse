@@ -30,9 +30,7 @@ const ragRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (req, reply) => {
-      const isDev = process.env.NODE_ENV !== 'production';
-      const debugEnabled =
-        process.env.RAG_DEBUG === 'true' || (process.env.RAG_DEBUG !== 'false' && isDev);
+      const debugEnabled = process.env.RAG_DEBUG === 'true';
       if (!debugEnabled) {
         reply.code(403);
         throw errorBody('rag_disabled', 'RAG debugging endpoint disabled');
