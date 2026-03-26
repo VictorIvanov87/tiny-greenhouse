@@ -24,12 +24,12 @@ export const Brand = ({
 
   const badgeBackground =
     variant === 'dark'
-      ? 'linear-gradient(135deg, #2563eb 0%, #38bdf8 100%)'
+      ? `linear-gradient(135deg, ${palette.evergreen} 0%, ${alpha(palette.moss, 0.9)} 100%)`
       : `linear-gradient(135deg, ${palette.evergreen} 0%, ${alpha(palette.moss, 0.9)} 100%)`
 
   const badgeShadow =
     variant === 'dark'
-      ? 'shadow-[0_16px_36px_rgba(37,99,235,0.35)]'
+      ? 'shadow-[0_12px_28px_rgba(31,111,74,0.35)]'
       : 'shadow-[0_12px_28px_rgba(31,111,74,0.35)]'
 
   const titleClass =

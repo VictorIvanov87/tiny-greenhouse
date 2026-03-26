@@ -263,10 +263,10 @@ const NotificationsPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">
           Notification preferences
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-400">
           Decide how Tiny Greenhouse keeps your team informed when something needs attention.
         </p>
       </div>

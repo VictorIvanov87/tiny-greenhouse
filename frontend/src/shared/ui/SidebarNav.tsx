@@ -184,7 +184,7 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
                 <Avatar
                   placeholderInitials={initials}
                   rounded
-                  className="ring-sky-400/30 ring-offset-2 ring-offset-[#111c2d]"
+                  className="ring-emerald-400/30 ring-offset-2 ring-offset-[#111c2d]"
                 />
                 <div className="flex-1">
                   <span className="block text-sm font-semibold text-slate-100">

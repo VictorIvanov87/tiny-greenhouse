@@ -174,7 +174,7 @@ const DashboardPage = () => {
             aria-pressed={isActive}
             className={`text-sm cursor-pointer font-semibold leading-5 px-3 py-2 transition focus:outline-none focus:ring-2 focus:ring-emerald-400/60 ${rounded} ${
               isActive
-                ? 'z-10 bg-blue-600 rounded-xl border text-slate-900 shadow-[0_6px_22px_rgba(16,185,129,0.35)] ring-1 ring-emerald-300'
+                ? 'z-10 bg-[#1F6F4A] rounded-xl border text-slate-100 shadow-[0_6px_22px_rgba(16,185,129,0.35)] ring-1 ring-emerald-300'
                 : 'bg-transparent text-slate-200 hover:bg-slate-800/60 hover:text-white'
             }`}
           >

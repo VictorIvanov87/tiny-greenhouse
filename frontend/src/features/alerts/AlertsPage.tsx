@@ -132,8 +132,8 @@ const AlertsPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Alerts</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">Alerts</h1>
+        <p className="text-sm text-slate-400">
           Monitor environment issues and acknowledge them as you act.
         </p>
       </div>

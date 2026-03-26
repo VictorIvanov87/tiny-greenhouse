@@ -486,7 +486,7 @@ const AssistantPage = () => {
           <Button
             disabled={!canSend}
             onClick={handleSend}
-            className="w-full border-none bg-gradient-to-r from-emerald-500 to-sky-500 text-white shadow-[0_14px_36px_rgba(14,70,155,0.4)] transition hover:from-emerald-400 hover:to-sky-400 md:w-auto"
+            className="w-full border-none bg-gradient-to-r from-emerald-500 to-[#4FA071] text-white shadow-[0_14px_36px_rgba(31,111,74,0.4)] transition hover:from-emerald-400 hover:to-[#5db882] md:w-auto"
           >
             {isSending ? 'Sending…' : 'Send'}
           </Button>

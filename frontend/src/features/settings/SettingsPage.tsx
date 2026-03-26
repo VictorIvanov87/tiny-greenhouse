@@ -106,8 +106,8 @@ const SettingsPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Greenhouse settings</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">Greenhouse settings</h1>
+        <p className="text-sm text-slate-400">
           Configure your greenhouse profile and daily timelapse capture window.
         </p>
       </div>

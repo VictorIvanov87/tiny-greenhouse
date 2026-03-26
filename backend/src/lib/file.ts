@@ -3,7 +3,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..', '..', '..', 'data', 'mock');
+const root = resolve(__dirname, '..', '..', 'data', 'mock');
 
 export async function readMock<T>(file: string): Promise<T> {
   const fullPath = resolve(root, file);

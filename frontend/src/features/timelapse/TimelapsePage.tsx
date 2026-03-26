@@ -258,12 +258,12 @@ const TimelapsePage = () => {
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Timelapse gallery</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">Timelapse gallery</h1>
+          <p className="text-sm text-slate-400">
             Review recent frames captured by your greenhouse cameras.
           </p>
         </div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-400">
           Showing {items.length} of {total} frames
         </p>
       </div>
