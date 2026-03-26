@@ -1,5 +1,5 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { Alert, Button, Card, Spinner } from 'flowbite-react';
+import { Alert, Button, Card, Modal, ModalBody, ModalFooter, ModalHeader, Spinner } from 'flowbite-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import {
   getNextStep,
@@ -54,6 +54,7 @@ const WizardViewport = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notificationWarning, setNotificationWarning] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
   const canProceed = isStepValid(state, step as WizardStep);
   const isLastStep = step === TITLES.length - 1;
@@ -77,12 +78,11 @@ const WizardViewport = () => {
   };
 
   const handleCancel = () => {
-    const confirmed = window.confirm(
-      'Cancel setup and head back to the dashboard? Progress clears.'
-    );
-    if (!confirmed) {
-      return;
-    }
+    setCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = () => {
+    setCancelModalOpen(false);
     reset();
     navigate('/dashboard', { replace: true });
   };
@@ -204,50 +204,73 @@ const WizardViewport = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4 text-slate-900">
-      <div className="mx-auto flex h-full max-w-3xl flex-col gap-8 px-4">
-        <header className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">
-            Setup wizard
-          </p>
-          <Stepper current={step as WizardStep} titles={TITLES} />
-        </header>
-        <main className="flex-1">
-          <Card className="h-full w-full border border-slate-200 shadow-none">
-            <div className="space-y-6">
-              {error ? <Alert color="failure">{error}</Alert> : null}
-              {notificationWarning ? (
-                <Alert color="warning">
-                  Notifications not connected — preferences saved locally. You can retry later from
-                  Settings.
-                </Alert>
-              ) : null}
-              <StepContent step={step as WizardStep} data={state} onChange={setState} />
-              <footer className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm text-slate-500">{stepLabel}</div>
-                <div className="flex flex-wrap gap-2">
-                  <Button color="light" onClick={handleCancel} disabled={saving}>
-                    Cancel
-                  </Button>
-                  <Button color="light" onClick={handleBack} disabled={step === 0 || saving}>
-                    Back
-                  </Button>
-                  {!isLastStep ? (
-                    <Button onClick={handleNext} disabled={!canProceed || saving}>
-                      Next
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4 text-slate-900">
+        <div className="mx-auto flex h-full max-w-3xl flex-col gap-8 px-4">
+          <header className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">
+              Setup wizard
+            </p>
+            <Stepper current={step as WizardStep} titles={TITLES} />
+          </header>
+          <main className="flex-1">
+            <Card className="h-full w-full border border-slate-200 shadow-none">
+              <div className="space-y-6">
+                {error ? <Alert color="failure">{error}</Alert> : null}
+                {notificationWarning ? (
+                  <Alert color="warning">
+                    Notifications not connected — preferences saved locally. You can retry later from
+                    Settings.
+                  </Alert>
+                ) : null}
+                <StepContent step={step as WizardStep} data={state} onChange={setState} />
+                <footer className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-slate-500">{stepLabel}</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button color="light" onClick={handleCancel} disabled={saving}>
+                      Cancel
                     </Button>
-                  ) : (
-                    <Button onClick={handleFinish} disabled={saving || !canProceed}>
-                      {saving ? 'Finishing…' : 'Confirm'}
+                    <Button color="light" onClick={handleBack} disabled={step === 0 || saving}>
+                      Back
                     </Button>
-                  )}
-                </div>
-              </footer>
-            </div>
-          </Card>
-        </main>
+                    {!isLastStep ? (
+                      <Button onClick={handleNext} disabled={!canProceed || saving}>
+                        Next
+                      </Button>
+                    ) : (
+                      <Button onClick={handleFinish} disabled={saving || !canProceed}>
+                        {saving ? 'Finishing…' : 'Confirm'}
+                      </Button>
+                    )}
+                  </div>
+                </footer>
+              </div>
+            </Card>
+          </main>
+        </div>
       </div>
-    </div>
+
+      <Modal show={cancelModalOpen} size="md" onClose={() => setCancelModalOpen(false)} popup>
+        <ModalHeader />
+        <ModalBody>
+          <div className="space-y-4 text-center">
+            <p className="text-lg font-semibold text-slate-900">Cancel setup?</p>
+            <p className="text-sm text-slate-500">
+              Your progress will be cleared and you'll be taken back to the dashboard.
+            </p>
+            <div className="flex justify-center gap-3 pt-2">
+              <Button color="failure" onClick={handleConfirmCancel}>
+                Yes, cancel setup
+              </Button>
+              <Button color="light" onClick={() => setCancelModalOpen(false)}>
+                Keep going
+              </Button>
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter />
+      </Modal>
+    </>
   );
 };
 

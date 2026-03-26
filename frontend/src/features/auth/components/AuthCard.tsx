@@ -27,6 +27,8 @@ export function AuthCard() {
   const [signUpForm, setSignUpForm] = useState<FormState>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signInPasswordTouched, setSignInPasswordTouched] = useState(false);
+  const [signUpPasswordTouched, setSignUpPasswordTouched] = useState(false);
   const navigate = useNavigate();
 
   const isFlipped = face === 'signUp';
@@ -34,6 +36,8 @@ export function AuthCard() {
   const handleFlip = (nextFace: CardFace) => {
     setFace(nextFace);
     setError(null);
+    setSignInPasswordTouched(false);
+    setSignUpPasswordTouched(false);
   };
 
   const handleInputChange =
@@ -164,11 +168,18 @@ export function AuthCard() {
               autoComplete="current-password"
               value={signInForm.password}
               onChange={handleInputChange('signIn', 'password')}
+              onBlur={() => setSignInPasswordTouched(true)}
               disabled={submitting}
               className="!border-[rgba(31,111,74,0.22)] !bg-white !text-[color:var(--color-soil)] !placeholder:text-[color:var(--color-soil-60)] focus:!border-[rgba(31,111,74,0.6)] focus:!ring-[rgba(31,111,74,0.28)] disabled:!cursor-not-allowed disabled:!bg-[rgba(239,250,243,0.6)]"
             />
             <HelperText
-              className={`text-xs ${signInPasswordValid ? 'text-emerald-600' : 'text-red-600'}`}
+              className={`text-xs ${
+                !signInPasswordTouched
+                  ? 'text-slate-400'
+                  : signInPasswordValid
+                  ? 'text-emerald-600'
+                  : 'text-red-600'
+              }`}
             >
               Password must be at least 8 characters.
             </HelperText>
@@ -280,11 +291,18 @@ export function AuthCard() {
               autoComplete="new-password"
               value={signUpForm.password}
               onChange={handleInputChange('signUp', 'password')}
+              onBlur={() => setSignUpPasswordTouched(true)}
               disabled={submitting}
               className="!border-[rgba(31,111,74,0.22)] !bg-white !text-[color:var(--color-soil)] !placeholder:text-[color:var(--color-soil-60)] focus:!border-[rgba(31,111,74,0.6)] focus:!ring-[rgba(31,111,74,0.28)] disabled:!cursor-not-allowed disabled:!bg-[rgba(239,250,243,0.6)]"
             />
             <HelperText
-              className={`text-xs ${signUpPasswordValid ? 'text-emerald-600' : 'text-red-600'}`}
+              className={`text-xs ${
+                !signUpPasswordTouched
+                  ? 'text-slate-400'
+                  : signUpPasswordValid
+                  ? 'text-emerald-600'
+                  : 'text-red-600'
+              }`}
             >
               Password must be at least 8 characters.
             </HelperText>

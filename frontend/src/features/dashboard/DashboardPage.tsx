@@ -130,7 +130,7 @@ const DashboardPage = () => {
 
     return (
       <ResponsiveContainer width="100%" height={160}>
-        <AreaChart data={data} responsive>
+        <AreaChart data={data}>
           <XAxis dataKey="timestamp" tickFormatter={formatTick} tickSize={6} fontSize={12} />
           <YAxis hide domain={['auto', 'auto']} />
           <Tooltip
