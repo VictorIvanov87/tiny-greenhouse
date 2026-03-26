@@ -27,7 +27,7 @@ export const ChartCard = ({
         </div>
         {footer}
       </div>
-      <div className="h-36 min-w-0 md:h-40">
+      <div className="h-52 min-w-0 md:h-60">
         {isEmpty ? (
           <div className="flex h-full items-center justify-center text-sm text-slate-400">
             {emptyMessage}

@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ChartCard } from '../../shared/ui/ChartCard';
 import { AlertPanel } from '../alerts/AlertPanel';
+import { useAlerts } from '../alerts/AlertsProvider';
 import {
   bucketByMinute,
   filterByWindow,
@@ -34,6 +35,7 @@ const formatTick = (value: number) =>
 
 const DashboardPage = () => {
   const { profile } = useOutletContext<DashboardContext>();
+  const { active } = useAlerts();
   const [samples, setSamples] = useState<TelemetrySample[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -119,6 +121,20 @@ const DashboardPage = () => {
     };
   }, [chartSeries]);
 
+  // Greeting card indicators
+  const criticalCount = active.filter((a) => a.severity === 'critical').length;
+  const warnCount = active.filter((a) => a.severity === 'warn').length;
+
+  const lastSeenMs = sortedSamples.at(-1)
+    ? Date.now() - new Date(sortedSamples.at(-1)!.timestamp).getTime()
+    : null;
+  const lastSeenLabel =
+    lastSeenMs === null
+      ? null
+      : lastSeenMs < 60_000
+      ? 'Last reading: just now'
+      : `Last reading: ${Math.floor(lastSeenMs / 60_000)} min ago`;
+
   const renderAreaChart = (
     data: Array<{ timestamp: number; value: number }>,
     stroke: string,
@@ -129,10 +145,16 @@ const DashboardPage = () => {
     }
 
     return (
-      <ResponsiveContainer width="100%" height={160}>
+      <ResponsiveContainer width="100%" height={208}>
         <AreaChart data={data}>
           <XAxis dataKey="timestamp" tickFormatter={formatTick} tickSize={6} fontSize={12} />
-          <YAxis hide domain={['auto', 'auto']} />
+          <YAxis
+            domain={['auto', 'auto']}
+            tick={{ fill: '#94a3b8', fontSize: 11 }}
+            tickLine={false}
+            axisLine={false}
+            width={36}
+          />
           <Tooltip
             contentStyle={{ fontSize: '0.75rem' }}
             labelFormatter={(value) => new Date(value as number).toLocaleString()}
@@ -189,8 +211,8 @@ const DashboardPage = () => {
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Environment trends</h2>
-          <p className="text-xs text-slate-500">Filtered to the past {timeWindow}</p>
+          <h2 className="text-lg font-semibold text-slate-100">Environment trends</h2>
+          <p className="text-xs text-slate-400">Filtered to the past {timeWindow}</p>
         </div>
         <TimeWindowSwitch />
       </div>
@@ -254,8 +276,26 @@ const DashboardPage = () => {
             {greetingByPlant(profile.plantType)}
           </h1>
           <p className="text-sm text-slate-400">
-            Here’s the latest snapshot of your greenhouse performance and captured moments.
+            Here's the latest snapshot of your greenhouse performance and captured moments.
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {lastSeenLabel && (
+              <span className="text-xs text-slate-400">{lastSeenLabel}</span>
+            )}
+            {criticalCount > 0 ? (
+              <span className="rounded-full bg-rose-900/50 px-3 py-1 text-xs font-semibold text-rose-300">
+                {criticalCount} critical
+              </span>
+            ) : warnCount > 0 ? (
+              <span className="rounded-full bg-amber-900/50 px-3 py-1 text-xs font-semibold text-amber-300">
+                {warnCount} warning{warnCount > 1 ? 's' : ''}
+              </span>
+            ) : (
+              <span className="rounded-full bg-emerald-900/50 px-3 py-1 text-xs font-semibold text-emerald-300">
+                All clear
+              </span>
+            )}
+          </div>
         </div>
       </Card>
 

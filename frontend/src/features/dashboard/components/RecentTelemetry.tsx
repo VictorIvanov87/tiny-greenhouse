@@ -36,6 +36,14 @@ const formatTimestamp = (value: string) => {
 
 const formatNumber = (value: number) => value.toFixed(1);
 
+const tempColour = (v: number) =>
+  v >= 35 ? 'text-rose-400' : v <= 10 ? 'text-sky-400' : '';
+
+const humidityColour = (v: number) =>
+  v < 30 ? 'text-amber-400' : v > 90 ? 'text-sky-400' : '';
+
+const soilColour = (v: number) => (v < 20 ? 'text-amber-400' : '');
+
 export const RecentTelemetry = ({ items, total }: RecentTelemetryProps) => {
   const rows = useMemo(
     () => [...items].sort((a, b) => toEpoch(b.timestamp) - toEpoch(a.timestamp)),
@@ -55,7 +63,7 @@ export const RecentTelemetry = ({ items, total }: RecentTelemetryProps) => {
 
       <div className="mt-4 flex-1 overflow-hidden px-2 pb-2">
         <div className="overflow-x-auto">
-          <div className="h-[26rem] overflow-y-auto rounded-2xl border border-[#1f2a3d]">
+          <div className="max-h-[36rem] overflow-y-auto rounded-2xl border border-[#1f2a3d]">
             <Table hoverable className="min-w-full">
               <TableHead className="sticky top-0 z-10 bg-[#111c2d]">
                 <TableRow>
@@ -78,9 +86,15 @@ export const RecentTelemetry = ({ items, total }: RecentTelemetryProps) => {
                       <TableCell className="whitespace-nowrap font-medium text-slate-100">
                         {formatTimestamp(sample.timestamp)}
                       </TableCell>
-                      <TableCell>{formatNumber(sample.temperature)}</TableCell>
-                      <TableCell>{formatNumber(sample.humidity)}</TableCell>
-                      <TableCell>{formatNumber(sample.soilMoisture)}</TableCell>
+                      <TableCell className={tempColour(sample.temperature)}>
+                        {formatNumber(sample.temperature)}
+                      </TableCell>
+                      <TableCell className={humidityColour(sample.humidity)}>
+                        {formatNumber(sample.humidity)}
+                      </TableCell>
+                      <TableCell className={soilColour(sample.soilMoisture)}>
+                        {formatNumber(sample.soilMoisture)}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
