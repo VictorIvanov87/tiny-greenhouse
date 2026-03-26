@@ -211,7 +211,7 @@ const DashboardPage = () => {
   const renderContent = () => {
     if (loading) {
       return (
-        <Card className="flex min-h-[280px] items-center justify-center rounded-3xl border border-slate-200 shadow-sm">
+        <Card className="flex min-h-[280px] items-center justify-center rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
           <Spinner size="xl" />
         </Card>
       );
@@ -219,7 +219,7 @@ const DashboardPage = () => {
 
     if (error) {
       return (
-        <Card className="space-y-4 rounded-3xl border border-slate-200 shadow-sm">
+        <Card className="space-y-4 rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
           <Alert color="failure">
             <span className="font-medium">Unable to load telemetry.</span> {error}
           </Alert>
