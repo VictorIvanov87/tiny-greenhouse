@@ -45,7 +45,7 @@ export const AppShell = ({ children, profile }: AppShellProps) => {
           <Brand variant="dark" />
         </div>
         <main className="flex-1 overflow-y-auto px-4 py-6 md:px-12 md:py-12">
-          <div className="w-full max-w-6xl text-slate-200">{children}</div>
+          <div className="mx-auto w-full max-w-6xl text-slate-200">{children}</div>
         </main>
       </div>
     </div>

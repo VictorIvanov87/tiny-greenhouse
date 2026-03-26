@@ -112,11 +112,11 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
   return (
     <AlertsContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
-        {toasts.map((alert) => (
+      <div className="fixed bottom-4 right-4 z-50 flex max-h-[calc(100dvh-5rem)] flex-col gap-3 overflow-hidden max-w-[calc(100vw-2rem)] sm:max-w-xs">
+        {toasts.slice(-3).map((alert) => (
           <Toast
             key={alert.id}
-            className="w-72 border border-slate-200 bg-white text-slate-900 shadow-lg"
+            className="w-full border border-[#1f2a3d] bg-[#111c2d] text-slate-100 shadow-lg"
           >
             <ToastToggle onDismiss={() => handleToastDismiss(alert.id)} />
             <div>
