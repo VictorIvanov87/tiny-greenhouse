@@ -8,6 +8,7 @@ type ChartCardProps = {
   children: ReactNode
   isEmpty?: boolean
   emptyMessage?: string
+  contentClassName?: string
 }
 
 export const ChartCard = ({
@@ -17,6 +18,7 @@ export const ChartCard = ({
   children,
   isEmpty = false,
   emptyMessage = 'No data',
+  contentClassName,
 }: ChartCardProps) => {
   return (
     <Card className="min-w-0 rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
@@ -27,7 +29,7 @@ export const ChartCard = ({
         </div>
         {footer}
       </div>
-      <div className="h-52 min-w-0 md:h-60">
+      <div className={contentClassName ?? 'h-52 min-w-0 md:h-60'}>
         {isEmpty ? (
           <div className="flex h-full items-center justify-center text-sm text-slate-400">
             {emptyMessage}

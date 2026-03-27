@@ -33,7 +33,7 @@ export const AlertPanel = () => {
         <div className="text-sm text-slate-400">All clear. No alerts at the moment.</div>
       ) : (
         <ul className="space-y-3">
-          {active.slice(0, 3).map((alert) => (
+          {active.slice(0, 5).map((alert) => (
             <li key={alert.id} className="rounded-2xl border border-[#22324a] p-3">
               <div className="flex items-center justify-between gap-2 text-sm">
                 <span className="font-semibold text-slate-100">{capitalize(alert.type)}</span>
@@ -53,9 +53,9 @@ export const AlertPanel = () => {
             </li>
           ))}
 
-          {active.length > 3 ? (
+          {active.length > 5 ? (
             <p className="text-xs text-slate-400">
-              {active.length - 3} more alerts.{' '}
+              {active.length - 5} more alerts.{' '}
               <Link to="/alerts" className="text-emerald-400 underline">
                 View all
               </Link>

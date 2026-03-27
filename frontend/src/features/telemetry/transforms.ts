@@ -1,9 +1,8 @@
-export type WindowKey = '1h' | '6h' | '24h'
+export type WindowKey = '2h' | 'today' | '7d'
 
-const WINDOW_TO_MS: Record<WindowKey, number> = {
-  '1h': 60 * 60 * 1000,
-  '6h': 6 * 60 * 60 * 1000,
-  '24h': 24 * 60 * 60 * 1000,
+const WINDOW_TO_MS: Partial<Record<WindowKey, number>> = {
+  '2h': 2 * 60 * 60 * 1000,
+  '7d': 7 * 24 * 60 * 60 * 1000,
 }
 
 export type HasTimestamp = {
@@ -15,12 +14,23 @@ export const parseTimestamp = (iso: string): number => Date.parse(iso)
 export const sortByTimestamp = <T extends HasTimestamp>(items: T[]): T[] =>
   [...items].sort((a, b) => parseTimestamp(a.timestamp) - parseTimestamp(b.timestamp))
 
+export const filterToday = <T extends HasTimestamp>(items: T[]): T[] => {
+  const midnight = new Date()
+  midnight.setHours(0, 0, 0, 0)
+  const cutoff = midnight.getTime()
+  return items.filter((i) => parseTimestamp(i.timestamp) >= cutoff)
+}
+
 export const filterByWindow = <T extends HasTimestamp>(items: T[], windowKey: WindowKey): T[] => {
   if (!items.length) {
     return items
   }
 
-  const ms = WINDOW_TO_MS[windowKey]
+  if (windowKey === 'today') {
+    return filterToday(items)
+  }
+
+  const ms = WINDOW_TO_MS[windowKey]!
   const reference = parseTimestamp(items[items.length - 1]?.timestamp)
   const threshold = reference - ms
 
