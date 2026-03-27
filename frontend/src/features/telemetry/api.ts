@@ -6,6 +6,8 @@ export type TelemetrySample = {
   temperature: number
   humidity: number
   soilMoisture: number
+  lightLux?: number | null
+  pressureHpa?: number | null
   lightHours?: number
   sensor?: string
 }

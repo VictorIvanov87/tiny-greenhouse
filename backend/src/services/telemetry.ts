@@ -73,6 +73,8 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
   temperature: s.temperatureC,
   humidity: s.humidityPct,
   soilMoisture: s.soilMoistureRaw ?? 0,
+  lightLux: s.lightLux,
+  pressureHpa: s.pressureHpa,
   sensor: s.deviceId,
 });
 

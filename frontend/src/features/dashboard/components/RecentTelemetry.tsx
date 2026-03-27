@@ -71,12 +71,14 @@ export const RecentTelemetry = ({ items, total }: RecentTelemetryProps) => {
                   <TableHeadCell>Temperature (°C)</TableHeadCell>
                   <TableHeadCell>Humidity (%)</TableHeadCell>
                   <TableHeadCell>Soil moisture (%)</TableHeadCell>
+                  <TableHeadCell>Light (lux)</TableHeadCell>
+                  <TableHeadCell>Pressure (hPa)</TableHeadCell>
                 </TableRow>
               </TableHead>
               <TableBody className="divide-y divide-[#1f2a3d]">
                 {rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-slate-400">
+                    <TableCell colSpan={6} className="text-center text-sm text-slate-400">
                       No telemetry samples yet. Data will appear once sensors report in.
                     </TableCell>
                   </TableRow>
@@ -94,6 +96,12 @@ export const RecentTelemetry = ({ items, total }: RecentTelemetryProps) => {
                       </TableCell>
                       <TableCell className={soilColour(sample.soilMoisture)}>
                         {formatNumber(sample.soilMoisture)}
+                      </TableCell>
+                      <TableCell>
+                        {sample.lightLux != null ? formatNumber(sample.lightLux) : '—'}
+                      </TableCell>
+                      <TableCell>
+                        {sample.pressureHpa != null ? formatNumber(sample.pressureHpa) : '—'}
                       </TableCell>
                     </TableRow>
                   ))

@@ -48,6 +48,7 @@ type ChartPoint = {
   temperature?: number
   humidity?: number
   soilMoisture?: number
+  lightLux?: number
 }
 
 const windowFrom = (window: WindowKey): string => {
@@ -98,11 +99,15 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
     const soilMap = new Map(
       bucketByMinute(samples, (s) => s.soilMoisture).map((d) => [d.timestamp, d.value]),
     )
+    const luxMap = new Map(
+      bucketByMinute(samples, (s) => s.lightLux ?? 0).map((d) => [d.timestamp, d.value]),
+    )
     return temp.map(({ timestamp, value: temperature }) => ({
       timestamp,
       temperature,
       humidity: humMap.get(timestamp),
       soilMoisture: soilMap.get(timestamp),
+      lightLux: luxMap.get(timestamp),
     }))
   }, [samples])
 
@@ -184,6 +189,11 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
             width={32}
             label={{ value: '%', position: 'insideTopRight', fill: '#94a3b8', fontSize: 10, dx: -4 }}
           />
+          <YAxis
+            yAxisId="lux"
+            hide
+            domain={['auto', 'auto']}
+          />
           <Tooltip
             contentStyle={{
               fontSize: '0.75rem',
@@ -263,6 +273,16 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
             dataKey="soilMoisture"
             name="Soil (%)"
             stroke="#10b981"
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
+          <Line
+            yAxisId="lux"
+            type="monotone"
+            dataKey="lightLux"
+            name="Light (lux)"
+            stroke="#eab308"
             strokeWidth={2}
             dot={false}
             isAnimationActive={false}

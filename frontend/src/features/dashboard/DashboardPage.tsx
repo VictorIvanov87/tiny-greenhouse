@@ -74,6 +74,8 @@ const DashboardPage = () => {
       temperature: bucketByMinute(sparklineSamples, (s) => s.temperature),
       humidity: bucketByMinute(sparklineSamples, (s) => s.humidity),
       soilMoisture: bucketByMinute(sparklineSamples, (s) => s.soilMoisture),
+      lightLux: bucketByMinute(sparklineSamples, (s) => s.lightLux ?? 0),
+      pressureHpa: bucketByMinute(sparklineSamples, (s) => s.pressureHpa ?? 0),
     }),
     [sparklineSamples],
   );
@@ -130,7 +132,7 @@ const DashboardPage = () => {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
             <SensorCard
               label="Temperature"
               unit="°C"
@@ -160,6 +162,26 @@ const DashboardPage = () => {
               high={100}
               delta={windowDelta(sparklines.soilMoisture)}
               targetLabel="Min 20 %"
+            />
+            <SensorCard
+              label="Light"
+              unit=" lux"
+              current={latestSample?.lightLux ?? null}
+              sparklineData={sparklines.lightLux}
+              low={0}
+              high={100000}
+              delta={windowDelta(sparklines.lightLux)}
+              targetLabel="Ambient light"
+            />
+            <SensorCard
+              label="Pressure"
+              unit=" hPa"
+              current={latestSample?.pressureHpa ?? null}
+              sparklineData={sparklines.pressureHpa}
+              low={900}
+              high={1100}
+              delta={windowDelta(sparklines.pressureHpa)}
+              targetLabel="Atmospheric"
             />
           </div>
 

@@ -46,6 +46,8 @@ export const TelemetrySample = z.object({
   temperature: z.number(),
   humidity: z.number(),
   soilMoisture: z.number(),
+  lightLux: z.number().nullable().optional(),
+  pressureHpa: z.number().nullable().optional(),
   lightHours: z.number().optional(),
   sensor: z.string().optional(),
 });

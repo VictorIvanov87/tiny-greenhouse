@@ -16,7 +16,7 @@ import {
 } from 'flowbite-react';
 import { getTelemetry, type TelemetrySample } from './api';
 
-type SortKey = 'timestamp' | 'temperature' | 'humidity' | 'soilMoisture';
+type SortKey = 'timestamp' | 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
 type SortDirection = 'asc' | 'desc' | null;
 
 type FormState = {
@@ -112,8 +112,8 @@ const SensorDataPage = () => {
         return sortDirection === 'asc' ? ta - tb : tb - ta;
       }
 
-      const valueA = a[sortKey];
-      const valueB = b[sortKey];
+      const valueA = a[sortKey] ?? 0;
+      const valueB = b[sortKey] ?? 0;
       return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
     });
 
@@ -145,12 +145,14 @@ const SensorDataPage = () => {
     }
 
     const rows = [
-      ['timestamp', 'temperature', 'humidity', 'soilMoisture', 'sensor'],
+      ['timestamp', 'temperature', 'humidity', 'soilMoisture', 'lightLux', 'pressureHpa', 'sensor'],
       ...pageItems.map((row) => [
         row.timestamp,
         row.temperature.toString(),
         row.humidity.toString(),
         row.soilMoisture.toString(),
+        row.lightLux != null ? row.lightLux.toString() : '',
+        row.pressureHpa != null ? row.pressureHpa.toString() : '',
         row.sensor ?? '',
       ]),
     ];
@@ -276,6 +278,24 @@ const SensorDataPage = () => {
                     Soil moisture (%) {renderSortIndicator('soilMoisture')}
                   </button>
                 </TableHeadCell>
+                <TableHeadCell>
+                  <button
+                    type="button"
+                    className="flex items-center text-left text-sm font-semibold"
+                    onClick={() => toggleSort('lightLux')}
+                  >
+                    Light (lux) {renderSortIndicator('lightLux')}
+                  </button>
+                </TableHeadCell>
+                <TableHeadCell>
+                  <button
+                    type="button"
+                    className="flex items-center text-left text-sm font-semibold"
+                    onClick={() => toggleSort('pressureHpa')}
+                  >
+                    Pressure (hPa) {renderSortIndicator('pressureHpa')}
+                  </button>
+                </TableHeadCell>
                 <TableHeadCell>Sensor</TableHeadCell>
               </TableRow>
             </TableHead>
@@ -288,6 +308,8 @@ const SensorDataPage = () => {
                   <TableCell>{item.temperature.toFixed(1)}</TableCell>
                   <TableCell>{item.humidity.toFixed(1)}</TableCell>
                   <TableCell>{item.soilMoisture.toFixed(1)}</TableCell>
+                  <TableCell>{item.lightLux != null ? item.lightLux.toFixed(1) : '—'}</TableCell>
+                  <TableCell>{item.pressureHpa != null ? item.pressureHpa.toFixed(1) : '—'}</TableCell>
                   <TableCell>{item.sensor ?? '—'}</TableCell>
                 </TableRow>
               ))}

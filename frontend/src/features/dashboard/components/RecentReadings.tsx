@@ -35,6 +35,8 @@ export const RecentReadings = ({ items }: RecentReadingsProps) => {
                 <th className="pb-2 text-right font-medium">Temp</th>
                 <th className="pb-2 text-right font-medium">Hum</th>
                 <th className="pb-2 pl-3 text-right font-medium">Soil</th>
+                <th className="pb-2 pl-3 text-right font-medium">Light</th>
+                <th className="pb-2 pl-3 text-right font-medium">hPa</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1f2a3d]">
@@ -46,6 +48,8 @@ export const RecentReadings = ({ items }: RecentReadingsProps) => {
                   <td className="py-2 text-right">{fmt(s.temperature)} °C</td>
                   <td className="py-2 text-right">{fmt(s.humidity)} %</td>
                   <td className="py-2 pl-3 text-right">{fmt(s.soilMoisture)} %</td>
+                  <td className="py-2 pl-3 text-right">{s.lightLux != null ? fmt(s.lightLux) : '—'}</td>
+                  <td className="py-2 pl-3 text-right">{s.pressureHpa != null ? fmt(s.pressureHpa) : '—'}</td>
                 </tr>
               ))}
             </tbody>
