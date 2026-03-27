@@ -1,7 +1,15 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { ISODate, TelemetrySample, TelemetryListResponseSchema } from '../lib/schemas';
-import { ok } from '../lib/respond';
+import {
+  ISODate,
+  TelemetrySample,
+  TelemetryListResponseSchema,
+  TelemetryIngestBody,
+  TelemetryIngestResponseSchema,
+  ErrorResponseSchema,
+  type TelemetryAcceptedSample,
+} from '../lib/schemas';
+import { ok, errorBody } from '../lib/respond';
 import { readMock } from '../lib/file';
 
 const TelemetryQuery = z.object({
@@ -10,6 +18,9 @@ const TelemetryQuery = z.object({
   limit: z.coerce.number().int().min(1).max(2000).default(100),
   sensor: z.string().optional(),
 });
+
+/** In-memory store for ingested telemetry samples, keyed by deviceId. */
+const ingestedSamples = new Map<string, TelemetryAcceptedSample[]>();
 
 const telemetryRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -58,6 +69,47 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
       const items = filtered.slice(-query.limit);
 
       return ok({ items, total });
+    },
+  );
+
+  // POST /api/telemetry — ingestion endpoint for the main ESP32 controller.
+  // Currently unauthenticated for device integration simplicity;
+  // device auth should be added before production use.
+  app.post(
+    '/api/telemetry',
+    {
+      schema: {
+        response: {
+          200: TelemetryIngestResponseSchema,
+          400: ErrorResponseSchema,
+        },
+      },
+    },
+    async (req, reply) => {
+      const result = TelemetryIngestBody.safeParse(req.body);
+      if (!result.success) {
+        return reply.status(400).send(
+          errorBody('INVALID_TELEMETRY_PAYLOAD', 'Telemetry payload is invalid'),
+        );
+      }
+
+      const body = result.data;
+      const sample: TelemetryAcceptedSample = {
+        deviceId: body.device_id,
+        uptimeMs: body.uptime_ms,
+        temperatureC: body.temperature_c,
+        humidityPct: body.humidity_pct,
+        pressureHpa: body.pressure_hpa,
+        lightLux: body.light_lux,
+        soilMoistureRaw: body.soil_moisture_raw,
+        receivedAt: new Date().toISOString(),
+      };
+
+      const deviceSamples = ingestedSamples.get(sample.deviceId) ?? [];
+      deviceSamples.push(sample);
+      ingestedSamples.set(sample.deviceId, deviceSamples);
+
+      return ok({ accepted: true as const, sample });
     },
   );
 };

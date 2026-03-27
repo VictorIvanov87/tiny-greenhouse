@@ -236,6 +236,38 @@ export const CropDefaultsPayloadSchema = z.object({
 export type CropDefaultsPayload = z.infer<typeof CropDefaultsPayloadSchema>;
 export const CropDefaultsResponseSchema = okResponse(CropDefaultsPayloadSchema);
 
+// --- Telemetry ingestion (POST /api/telemetry) ---
+
+export const TelemetryIngestBody = z.object({
+  device_id: z.string().min(1),
+  uptime_ms: z.coerce.number().int().nonnegative(),
+  temperature_c: z.number().finite(),
+  humidity_pct: z.number().finite(),
+  pressure_hpa: z.number().finite(),
+  light_lux: z.number().finite().nullable(),
+  soil_moisture_raw: z.number().finite().nullable(),
+});
+export type TelemetryIngestBody = z.infer<typeof TelemetryIngestBody>;
+
+export const TelemetryAcceptedSample = z.object({
+  deviceId: z.string(),
+  uptimeMs: z.number(),
+  temperatureC: z.number(),
+  humidityPct: z.number(),
+  pressureHpa: z.number(),
+  lightLux: z.number().nullable(),
+  soilMoistureRaw: z.number().nullable(),
+  receivedAt: ISODate,
+});
+export type TelemetryAcceptedSample = z.infer<typeof TelemetryAcceptedSample>;
+
+export const TelemetryIngestResult = z.object({
+  accepted: z.literal(true),
+  sample: TelemetryAcceptedSample,
+});
+export type TelemetryIngestResult = z.infer<typeof TelemetryIngestResult>;
+export const TelemetryIngestResponseSchema = okResponse(TelemetryIngestResult);
+
 export const CameraUploadResultSchema = z.object({
   deviceId: z.string(),
   uptimeMs: z.number(),
