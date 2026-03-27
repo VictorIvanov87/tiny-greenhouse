@@ -1,5 +1,7 @@
 #include "esp_camera.h"
 #include <Arduino.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -18,6 +20,11 @@
 #define VSYNC_GPIO_NUM    25
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
+
+static const char* WIFI_SSID = "A1_A3D2";
+static const char* WIFI_PASSWORD = "61450653";
+static const char* UPLOAD_URL = "http://192.168.0.4:3000/api/camera/upload";
+static const char* DEVICE_ID = "esp32-cam-1";
 
 static bool initCamera() {
   camera_config_t config;
@@ -50,18 +57,64 @@ static bool initCamera() {
   return err == ESP_OK;
 }
 
-void takeSnapshot() {
-  camera_fb_t *fb = esp_camera_fb_get();
+static void connectWifi() {
+  Serial.print("Connecting to Wi-Fi: ");
+  Serial.println(WIFI_SSID);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  unsigned long startMs = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    if (millis() - startMs > 20000) {
+      Serial.println();
+      Serial.println("Wi-Fi connect timeout");
+      return;
+    }
+  }
+
+  Serial.println();
+  Serial.print("Wi-Fi connected. IP: ");
+  Serial.println(WiFi.localIP());
+}
+
+static void uploadSnapshot() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Wi-Fi not connected, upload skipped");
+    return;
+  }
+
+  camera_fb_t* fb = esp_camera_fb_get();
   if (!fb) {
     Serial.println("Capture failed");
     return;
   }
 
-  Serial.print("Snapshot OK | uptime_ms=");
-  Serial.print(millis());
-  Serial.print(" | size_bytes=");
+  Serial.print("Snapshot captured, size_bytes=");
   Serial.println(fb->len);
 
+  HTTPClient http;
+  http.begin(UPLOAD_URL);
+  http.addHeader("Content-Type", "image/jpeg");
+  http.addHeader("x-device-id", DEVICE_ID);
+  http.addHeader("x-uptime-ms", String(millis()));
+
+  int httpCode = http.POST(fb->buf, fb->len);
+  Serial.print("HTTP status: ");
+  Serial.println(httpCode);
+
+  if (httpCode > 0) {
+    String response = http.getString();
+    Serial.println("Response body:");
+    Serial.println(response);
+  } else {
+    Serial.print("HTTP POST failed: ");
+    Serial.println(http.errorToString(httpCode));
+  }
+
+  http.end();
   esp_camera_fb_return(fb);
 }
 
@@ -70,7 +123,7 @@ void setup() {
   delay(2000);
 
   Serial.println();
-  Serial.println("ESP32-CAM serial snapshot mode starting...");
+  Serial.println("ESP32-CAM upload test starting...");
 
   if (!initCamera()) {
     Serial.println("Camera init failed");
@@ -80,15 +133,17 @@ void setup() {
   }
 
   Serial.println("Camera init OK");
-  Serial.println("Send 's' in Serial Monitor to take a snapshot.");
+
+  connectWifi();
+
+  Serial.println("Send 's' in Serial Monitor to capture and upload a snapshot.");
 }
 
 void loop() {
   if (Serial.available()) {
     char cmd = Serial.read();
-
     if (cmd == 's' || cmd == 'S') {
-      takeSnapshot();
+      uploadSnapshot();
     }
   }
 }
