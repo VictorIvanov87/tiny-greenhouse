@@ -235,3 +235,13 @@ export const CropDefaultsPayloadSchema = z.object({
 });
 export type CropDefaultsPayload = z.infer<typeof CropDefaultsPayloadSchema>;
 export const CropDefaultsResponseSchema = okResponse(CropDefaultsPayloadSchema);
+
+export const CameraUploadResultSchema = z.object({
+  deviceId: z.string(),
+  uptimeMs: z.number(),
+  sizeBytes: z.number(),
+  filename: z.string(),
+  contentType: z.string(),
+});
+export type CameraUploadResult = z.infer<typeof CameraUploadResultSchema>;
+export const CameraUploadResponseSchema = okResponse(CameraUploadResultSchema);
