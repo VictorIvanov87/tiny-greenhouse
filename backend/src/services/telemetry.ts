@@ -1,7 +1,31 @@
-import { TelemetrySample } from '../lib/schemas';
+import { Timestamp } from 'firebase-admin/firestore';
+import { TelemetrySample, type TelemetryAcceptedSample } from '../lib/schemas';
 import { readMock } from '../lib/file';
+import { ensureFirebase, type Firestore } from '../lib/firebase';
+
+const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
+const RETENTION_DAYS = Number(process.env.TELEMETRY_RETENTION_DAYS ?? 90);
+const COLLECTION = 'telemetry';
+
+// ---------------------------------------------------------------------------
+// Firestore helpers
+// ---------------------------------------------------------------------------
+
+let _db: Firestore | null = null;
+
+const db = (): Firestore => {
+  if (!_db) {
+    _db = ensureFirebase().db;
+  }
+  return _db;
+};
+
+// ---------------------------------------------------------------------------
+// Mock (in-memory) storage
+// ---------------------------------------------------------------------------
 
 const telemetryCache = new Map<string, TelemetrySample[]>();
+const ingestedSamples = new Map<string, TelemetryAcceptedSample[]>();
 let defaultSamples: TelemetrySample[] | null = null;
 
 const loadDefaultTelemetry = async (): Promise<TelemetrySample[]> => {
@@ -16,7 +40,117 @@ const loadDefaultTelemetry = async (): Promise<TelemetrySample[]> => {
   return defaultSamples;
 };
 
+// ---------------------------------------------------------------------------
+// Mapper: TelemetryAcceptedSample → TelemetrySample (presentation shape)
+// ---------------------------------------------------------------------------
+
+const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
+  timestamp: s.receivedAt,
+  temperature: s.temperatureC,
+  humidity: s.humidityPct,
+  soilMoisture: s.soilMoistureRaw ?? 0,
+  sensor: s.deviceId,
+});
+
+// ---------------------------------------------------------------------------
+// Write: insert an accepted telemetry sample
+// ---------------------------------------------------------------------------
+
+export const insertTelemetry = async (sample: TelemetryAcceptedSample): Promise<void> => {
+  if (STORAGE_MODE === 'firestore') {
+    const receivedAt = Timestamp.fromDate(new Date(sample.receivedAt));
+    const expiresAt = Timestamp.fromDate(
+      new Date(Date.parse(sample.receivedAt) + RETENTION_DAYS * 86_400_000),
+    );
+
+    await db().collection(COLLECTION).add({
+      deviceId: sample.deviceId,
+      uptimeMs: sample.uptimeMs,
+      temperatureC: sample.temperatureC,
+      humidityPct: sample.humidityPct,
+      pressureHpa: sample.pressureHpa,
+      lightLux: sample.lightLux,
+      soilMoistureRaw: sample.soilMoistureRaw,
+      receivedAt,
+      expiresAt,
+    });
+    return;
+  }
+
+  // Mock mode: store in memory
+  const deviceSamples = ingestedSamples.get(sample.deviceId) ?? [];
+  deviceSamples.push(sample);
+  ingestedSamples.set(sample.deviceId, deviceSamples);
+};
+
+// ---------------------------------------------------------------------------
+// Read: query telemetry samples
+// ---------------------------------------------------------------------------
+
+interface QueryOpts {
+  deviceId?: string;
+  from?: string;
+  to?: string;
+  limit: number;
+}
+
+export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAcceptedSample[]> => {
+  if (STORAGE_MODE !== 'firestore') {
+    // In mock mode, return ingested samples only (mock GET has its own path)
+    const all = opts.deviceId
+      ? (ingestedSamples.get(opts.deviceId) ?? [])
+      : Array.from(ingestedSamples.values()).flat();
+
+    return all
+      .filter((s) => {
+        const ts = Date.parse(s.receivedAt);
+        if (opts.from && ts < Date.parse(opts.from)) return false;
+        if (opts.to && ts > Date.parse(opts.to)) return false;
+        return true;
+      })
+      .sort((a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt))
+      .slice(0, opts.limit);
+  }
+
+  let query = db().collection(COLLECTION).orderBy('receivedAt', 'desc');
+
+  if (opts.deviceId) {
+    query = query.where('deviceId', '==', opts.deviceId);
+  }
+  if (opts.from) {
+    query = query.where('receivedAt', '>=', Timestamp.fromDate(new Date(opts.from)));
+  }
+  if (opts.to) {
+    query = query.where('receivedAt', '<=', Timestamp.fromDate(new Date(opts.to)));
+  }
+
+  const snap = await query.limit(opts.limit).get();
+
+  return snap.docs.map((doc) => {
+    const d = doc.data();
+    return {
+      deviceId: d.deviceId,
+      uptimeMs: d.uptimeMs,
+      temperatureC: d.temperatureC,
+      humidityPct: d.humidityPct,
+      pressureHpa: d.pressureHpa,
+      lightLux: d.lightLux ?? null,
+      soilMoistureRaw: d.soilMoistureRaw ?? null,
+      receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
+    };
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Read: existing API used by alerts & assistant (returns presentation shape)
+// ---------------------------------------------------------------------------
+
 export const getTelemetrySamples = async (uid: string): Promise<TelemetrySample[]> => {
+  if (STORAGE_MODE === 'firestore') {
+    const samples = await queryTelemetry({ limit: 2000 });
+    return samples.map(toTelemetrySample);
+  }
+
   const cached = telemetryCache.get(uid);
   if (cached) {
     return cached;
@@ -28,6 +162,11 @@ export const getTelemetrySamples = async (uid: string): Promise<TelemetrySample[
 };
 
 export const getLatestTelemetry = async (uid: string): Promise<TelemetrySample | null> => {
+  if (STORAGE_MODE === 'firestore') {
+    const [latest] = await queryTelemetry({ limit: 1 });
+    return latest ? toTelemetrySample(latest) : null;
+  }
+
   const samples = await getTelemetrySamples(uid);
   if (!samples.length) {
     return null;

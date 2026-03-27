@@ -11,6 +11,9 @@ import {
 } from '../lib/schemas';
 import { ok, errorBody } from '../lib/respond';
 import { readMock } from '../lib/file';
+import { insertTelemetry, queryTelemetry } from '../services/telemetry';
+
+const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 
 const TelemetryQuery = z.object({
   from: ISODate.optional(),
@@ -18,9 +21,6 @@ const TelemetryQuery = z.object({
   limit: z.coerce.number().int().min(1).max(2000).default(100),
   sensor: z.string().optional(),
 });
-
-/** In-memory store for ingested telemetry samples, keyed by deviceId. */
-const ingestedSamples = new Map<string, TelemetryAcceptedSample[]>();
 
 const telemetryRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -30,6 +30,27 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const query = TelemetryQuery.parse(req.query);
+
+      if (STORAGE_MODE === 'firestore') {
+        const samples = await queryTelemetry({
+          deviceId: query.sensor,
+          from: query.from,
+          to: query.to,
+          limit: query.limit,
+        });
+
+        const items: TelemetrySample[] = samples.map((s) => ({
+          timestamp: s.receivedAt,
+          temperature: s.temperatureC,
+          humidity: s.humidityPct,
+          soilMoisture: s.soilMoistureRaw ?? 0,
+          sensor: s.deviceId,
+        }));
+
+        return ok({ items, total: items.length });
+      }
+
+      // Mock mode: serve from mock JSON with time-shifted timestamps
       const raw = TelemetrySample.array().parse(
         await readMock<unknown>('telemetry.json'),
       );
@@ -82,6 +103,7 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
         response: {
           200: TelemetryIngestResponseSchema,
           400: ErrorResponseSchema,
+          500: ErrorResponseSchema,
         },
       },
     },
@@ -105,9 +127,14 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
         receivedAt: new Date().toISOString(),
       };
 
-      const deviceSamples = ingestedSamples.get(sample.deviceId) ?? [];
-      deviceSamples.push(sample);
-      ingestedSamples.set(sample.deviceId, deviceSamples);
+      try {
+        await insertTelemetry(sample);
+      } catch (err) {
+        req.log.error(err, 'Failed to persist telemetry sample');
+        return reply.status(500).send(
+          errorBody('TELEMETRY_PERSIST_FAILED', 'Could not persist telemetry sample'),
+        );
+      }
 
       return ok({ accepted: true as const, sample });
     },

@@ -1,5 +1,6 @@
-import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
+import { initializeApp, cert, type App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 let app: App | null = null;
 
@@ -26,5 +27,8 @@ export function ensureFirebase() {
 
   return {
     auth: getAuth(),
+    db: getFirestore(),
   };
 }
+
+export type { Firestore };
