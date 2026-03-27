@@ -236,6 +236,37 @@ export const CropDefaultsPayloadSchema = z.object({
 export type CropDefaultsPayload = z.infer<typeof CropDefaultsPayloadSchema>;
 export const CropDefaultsResponseSchema = okResponse(CropDefaultsPayloadSchema);
 
+// --- Device registration ---
+
+export const DeviceType = z.enum(['esp32-main', 'esp32-cam']);
+export type DeviceType = z.infer<typeof DeviceType>;
+
+export const DeviceRegistrationBody = z.object({
+  deviceId: z.string().min(1),
+  greenhouseId: z.string().min(1),
+  type: DeviceType,
+  name: z.string().min(1).max(100).optional(),
+});
+export type DeviceRegistrationBody = z.infer<typeof DeviceRegistrationBody>;
+
+export const DeviceRecord = z.object({
+  deviceId: z.string(),
+  ownerId: z.string(),
+  greenhouseId: z.string(),
+  type: DeviceType,
+  name: z.string(),
+  registeredAt: ISODate,
+});
+export type DeviceRecord = z.infer<typeof DeviceRecord>;
+
+export const DeviceRecordResponseSchema = okResponse(DeviceRecord);
+
+export const DeviceListResult = z.object({
+  items: z.array(DeviceRecord),
+  total: z.number().int().nonnegative(),
+});
+export const DeviceListResponseSchema = okResponse(DeviceListResult);
+
 // --- Telemetry ingestion (POST /api/telemetry) ---
 
 export const TelemetryIngestBody = z.object({

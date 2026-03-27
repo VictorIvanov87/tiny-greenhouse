@@ -5,7 +5,8 @@ import { ensureFirebase, type Firestore } from '../lib/firebase';
 
 const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 const RETENTION_DAYS = Number(process.env.TELEMETRY_RETENTION_DAYS ?? 90);
-const COLLECTION = 'telemetry';
+const TELEMETRY_COLLECTION = 'telemetry';
+const DEVICES_COLLECTION = 'devices';
 
 // ---------------------------------------------------------------------------
 // Firestore helpers
@@ -18,6 +19,29 @@ const db = (): Firestore => {
     _db = ensureFirebase().db;
   }
   return _db;
+};
+
+// ---------------------------------------------------------------------------
+// Device lookup
+// ---------------------------------------------------------------------------
+
+interface DeviceOwnership {
+  ownerId: string;
+  greenhouseId: string;
+}
+
+/** Resolve deviceId → owner. Returns null if the device is not registered. */
+export const lookupDevice = async (deviceId: string): Promise<DeviceOwnership | null> => {
+  if (STORAGE_MODE !== 'firestore') {
+    // Mock mode: accept all devices without ownership checks
+    return { ownerId: 'demo', greenhouseId: 'gh-1' };
+  }
+
+  const doc = await db().collection(DEVICES_COLLECTION).doc(deviceId).get();
+  if (!doc.exists) return null;
+
+  const data = doc.data()!;
+  return { ownerId: data.ownerId, greenhouseId: data.greenhouseId };
 };
 
 // ---------------------------------------------------------------------------
@@ -56,15 +80,20 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
 // Write: insert an accepted telemetry sample
 // ---------------------------------------------------------------------------
 
-export const insertTelemetry = async (sample: TelemetryAcceptedSample): Promise<void> => {
+export const insertTelemetry = async (
+  sample: TelemetryAcceptedSample,
+  ownership: DeviceOwnership,
+): Promise<void> => {
   if (STORAGE_MODE === 'firestore') {
     const receivedAt = Timestamp.fromDate(new Date(sample.receivedAt));
     const expiresAt = Timestamp.fromDate(
       new Date(Date.parse(sample.receivedAt) + RETENTION_DAYS * 86_400_000),
     );
 
-    await db().collection(COLLECTION).add({
+    await db().collection(TELEMETRY_COLLECTION).add({
       deviceId: sample.deviceId,
+      ownerId: ownership.ownerId,
+      greenhouseId: ownership.greenhouseId,
       uptimeMs: sample.uptimeMs,
       temperatureC: sample.temperatureC,
       humidityPct: sample.humidityPct,
@@ -88,6 +117,7 @@ export const insertTelemetry = async (sample: TelemetryAcceptedSample): Promise<
 // ---------------------------------------------------------------------------
 
 interface QueryOpts {
+  ownerId?: string;
   deviceId?: string;
   from?: string;
   to?: string;
@@ -112,8 +142,11 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       .slice(0, opts.limit);
   }
 
-  let query = db().collection(COLLECTION).orderBy('receivedAt', 'desc');
+  let query = db().collection(TELEMETRY_COLLECTION).orderBy('receivedAt', 'desc');
 
+  if (opts.ownerId) {
+    query = query.where('ownerId', '==', opts.ownerId);
+  }
   if (opts.deviceId) {
     query = query.where('deviceId', '==', opts.deviceId);
   }
@@ -147,7 +180,7 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
 
 export const getTelemetrySamples = async (uid: string): Promise<TelemetrySample[]> => {
   if (STORAGE_MODE === 'firestore') {
-    const samples = await queryTelemetry({ limit: 2000 });
+    const samples = await queryTelemetry({ ownerId: uid, limit: 2000 });
     return samples.map(toTelemetrySample);
   }
 
@@ -163,7 +196,7 @@ export const getTelemetrySamples = async (uid: string): Promise<TelemetrySample[
 
 export const getLatestTelemetry = async (uid: string): Promise<TelemetrySample | null> => {
   if (STORAGE_MODE === 'firestore') {
-    const [latest] = await queryTelemetry({ limit: 1 });
+    const [latest] = await queryTelemetry({ ownerId: uid, limit: 1 });
     return latest ? toTelemetrySample(latest) : null;
   }
 

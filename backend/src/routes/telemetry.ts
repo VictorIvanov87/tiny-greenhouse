@@ -11,7 +11,7 @@ import {
 } from '../lib/schemas';
 import { ok, errorBody } from '../lib/respond';
 import { readMock } from '../lib/file';
-import { insertTelemetry, queryTelemetry } from '../services/telemetry';
+import { insertTelemetry, lookupDevice, queryTelemetry } from '../services/telemetry';
 
 const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 
@@ -26,13 +26,16 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     '/api/telemetry',
     {
+      preHandler: app.auth,
       schema: { response: { 200: TelemetryListResponseSchema } },
     },
     async (req) => {
       const query = TelemetryQuery.parse(req.query);
+      const uid = req.user!.uid;
 
       if (STORAGE_MODE === 'firestore') {
         const samples = await queryTelemetry({
+          ownerId: uid,
           deviceId: query.sensor,
           from: query.from,
           to: query.to,
@@ -94,8 +97,8 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
   );
 
   // POST /api/telemetry — ingestion endpoint for the main ESP32 controller.
-  // Currently unauthenticated for device integration simplicity;
-  // device auth should be added before production use.
+  // Unauthenticated (ESP32 can't do Firebase auth). Device must be registered
+  // via POST /api/devices first; ownership is resolved from the device record.
   app.post(
     '/api/telemetry',
     {
@@ -103,6 +106,7 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
         response: {
           200: TelemetryIngestResponseSchema,
           400: ErrorResponseSchema,
+          403: ErrorResponseSchema,
           500: ErrorResponseSchema,
         },
       },
@@ -116,6 +120,15 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const body = result.data;
+
+      // Resolve device ownership
+      const ownership = await lookupDevice(body.device_id);
+      if (!ownership) {
+        return reply.status(403).send(
+          errorBody('UNKNOWN_DEVICE', `Device '${body.device_id}' is not registered`),
+        );
+      }
+
       const sample: TelemetryAcceptedSample = {
         deviceId: body.device_id,
         uptimeMs: body.uptime_ms,
@@ -128,7 +141,7 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
       };
 
       try {
-        await insertTelemetry(sample);
+        await insertTelemetry(sample, ownership);
       } catch (err) {
         req.log.error(err, 'Failed to persist telemetry sample');
         return reply.status(500).send(
