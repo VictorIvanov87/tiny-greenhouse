@@ -3,11 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { AlertPanel } from '../alerts/AlertPanel';
 import { useAlerts } from '../alerts/AlertsProvider';
-import {
-  bucketByMinute,
-  filterByWindow,
-  sortByTimestamp,
-} from '../telemetry/transforms';
+import { sortByTimestamp } from '../telemetry/transforms';
 import { getTelemetry, type TelemetrySample } from '../telemetry/api';
 import type { SetupProfile } from '../setup/state';
 import { AlertBanner } from './components/AlertBanner';
@@ -64,27 +60,6 @@ const DashboardPage = () => {
 
   const sortedSamples = useMemo(() => sortByTimestamp(samples), [samples]);
 
-  const sparklineSamples = useMemo(
-    () => filterByWindow(sortedSamples, '2h'),
-    [sortedSamples],
-  );
-
-  const sparklines = useMemo(
-    () => ({
-      temperature: bucketByMinute(sparklineSamples, (s) => s.temperature),
-      humidity: bucketByMinute(sparklineSamples, (s) => s.humidity),
-      soilMoisture: bucketByMinute(sparklineSamples, (s) => s.soilMoisture),
-      lightLux: bucketByMinute(sparklineSamples, (s) => s.lightLux ?? 0),
-      pressureHpa: bucketByMinute(sparklineSamples, (s) => s.pressureHpa ?? 0),
-    }),
-    [sparklineSamples],
-  );
-
-  const windowDelta = (series: Array<{ value: number }>) => {
-    if (series.length < 2) return null;
-    return series[series.length - 1].value - series[0].value;
-  };
-
   const latestSample = sortedSamples.at(-1);
 
   const criticalCount = active.filter((a) => a.severity === 'critical').length;
@@ -132,56 +107,34 @@ const DashboardPage = () => {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <SensorCard
               label="Temperature"
               unit="°C"
               current={latestSample?.temperature ?? null}
-              sparklineData={sparklines.temperature}
               low={18}
               high={26}
-              delta={windowDelta(sparklines.temperature)}
-              targetLabel="Target 18–26 °C"
             />
             <SensorCard
               label="Humidity"
               unit="%"
               current={latestSample?.humidity ?? null}
-              sparklineData={sparklines.humidity}
               low={40}
               high={70}
-              delta={windowDelta(sparklines.humidity)}
-              targetLabel="Target 40–70 %"
             />
             <SensorCard
               label="Soil moisture"
               unit="%"
-              current={latestSample?.soilMoisture ?? null}
-              sparklineData={sparklines.soilMoisture}
+              current={latestSample?.soilMoisture || null}
               low={20}
-              high={100}
-              delta={windowDelta(sparklines.soilMoisture)}
-              targetLabel="Min 20 %"
+              high={80}
             />
             <SensorCard
               label="Light"
               unit=" lux"
-              current={latestSample?.lightLux ?? null}
-              sparklineData={sparklines.lightLux}
-              low={0}
-              high={100000}
-              delta={windowDelta(sparklines.lightLux)}
-              targetLabel="Ambient light"
-            />
-            <SensorCard
-              label="Pressure"
-              unit=" hPa"
-              current={latestSample?.pressureHpa ?? null}
-              sparklineData={sparklines.pressureHpa}
-              low={900}
-              high={1100}
-              delta={windowDelta(sparklines.pressureHpa)}
-              targetLabel="Atmospheric"
+              current={latestSample?.lightLux || null}
+              low={100}
+              high={50000}
             />
           </div>
 

@@ -107,7 +107,16 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
   }
 
   const soilThreshold = prefs.thresholds.soilMoistureLow;
-  if (latest.soilMoisture < soilThreshold) {
+  if (latest.soilMoisture === 0) {
+    upsertAlert(uid, {
+      type: 'SOIL_MOISTURE_LOW',
+      severity: 'critical',
+      message: 'Soil moisture sensor not responding — check wiring or replace sensor',
+      startedAt: latest.timestamp,
+      value: 0,
+      threshold: soilThreshold,
+    });
+  } else if (latest.soilMoisture < soilThreshold) {
     upsertAlert(uid, {
       type: 'SOIL_MOISTURE_LOW',
       severity: 'warn',

@@ -34,6 +34,8 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
   const seenIdsRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<number | null>(null);
 
+  const initialFetchRef = useRef(true);
+
   const refresh = useCallback(async () => {
     if (!user) {
       return;
@@ -44,6 +46,14 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
       setLastFetchedAt(new Date());
 
       const seen = seenIdsRef.current;
+
+      // On first fetch, mark all existing alerts as seen without showing toasts
+      if (initialFetchRef.current) {
+        initialFetchRef.current = false;
+        alerts.forEach((alert) => seen.add(alert.id));
+        return;
+      }
+
       const newAlerts = alerts.filter((alert) => !seen.has(alert.id));
 
       if (newAlerts.length > 0) {
@@ -109,43 +119,81 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
     [active, lastFetchedAt, refresh]
   );
 
+  const severityStyle = (severity: Alert['severity']) => {
+    switch (severity) {
+      case 'critical':
+        return { border: '#f43f5e', iconBg: '#7f1d1d', iconStroke: '#fb7185', label: 'Error' };
+      case 'warn':
+        return { border: '#f59e0b', iconBg: '#78350f', iconStroke: '#fbbf24', label: 'Warning' };
+      default:
+        return { border: '#38bdf8', iconBg: '#0c4a6e', iconStroke: '#7dd3fc', label: 'Info' };
+    }
+  };
+
   return (
     <AlertsContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex max-h-[calc(100dvh-5rem)] flex-col gap-3 overflow-hidden max-w-[calc(100vw-2rem)] sm:max-w-xs">
-        {toasts.slice(-3).map((alert) => (
-          <Toast
-            key={alert.id}
-            className="w-full border border-[#1f2a3d] bg-[#111c2d] text-slate-100 shadow-lg"
-          >
-            <ToastToggle onDismiss={() => handleToastDismiss(alert.id)} />
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold">{alert.type.replace(/_/g, ' ')}</span>
-                <Badge
-                  color={
-                    alert.severity === 'critical'
-                      ? 'failure'
-                      : alert.severity === 'warn'
-                      ? 'warning'
-                      : 'info'
-                  }
-                >
-                  {alert.severity}
-                </Badge>
+      <div
+        style={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          maxHeight: 'calc(100dvh - 5rem)',
+          maxWidth: 384,
+          overflow: 'hidden',
+        }}
+      >
+        {toasts.slice(-3).map((alert) => {
+          const s = severityStyle(alert.severity);
+          return (
+            <Toast
+              key={alert.id}
+              className="w-full bg-[#111c2d] text-slate-100 shadow-xl"
+              style={{
+                animation: 'toastPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                border: `2px solid ${s.border}`,
+              }}
+            >
+              <ToastToggle onDismiss={() => handleToastDismiss(alert.id)} />
+              <div className="flex gap-3">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="mt-0.5 shrink-0">
+                  <circle cx="10" cy="10" r="9" fill={s.iconBg} stroke={s.border} strokeWidth="1.5" />
+                  <path d="M10 6V11" stroke={s.iconStroke} strokeWidth="2" strokeLinecap="round" />
+                  <circle cx="10" cy="14" r="1" fill={s.iconStroke} />
+                </svg>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">{alert.type.replace(/_/g, ' ')}</span>
+                    <Badge
+                      color={
+                        alert.severity === 'critical'
+                          ? 'failure'
+                          : alert.severity === 'warn'
+                          ? 'warning'
+                          : 'info'
+                      }
+                    >
+                      {s.label}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-slate-300">{alert.message}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Button size="xs" onClick={() => handleAck(alert.id)}>
+                      Acknowledge
+                    </Button>
+                    <Button size="xs" color="light" onClick={() => handleToastDismiss(alert.id)}>
+                      Dismiss
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <p className="mt-1 text-sm">{alert.message}</p>
-              <div className="mt-2 flex items-center gap-2">
-                <Button size="xs" onClick={() => handleAck(alert.id)}>
-                  Acknowledge
-                </Button>
-                <Button size="xs" color="light" onClick={() => handleToastDismiss(alert.id)}>
-                  Dismiss
-                </Button>
-              </div>
-            </div>
-          </Toast>
-        ))}
+            </Toast>
+          );
+        })}
       </div>
     </AlertsContext.Provider>
   );
