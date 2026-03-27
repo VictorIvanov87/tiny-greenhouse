@@ -1,13 +1,20 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <math.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <math.h>
 
 Adafruit_BME280 bme;
 
 static const uint8_t BH1750_ADDR = 0x23;
 static const unsigned long READ_INTERVAL_MS = 3000;
+
+static const char* WIFI_SSID = "A1_A3D2";
+static const char* WIFI_PASSWORD = "61450653";
+static const char* TELEMETRY_URL = "http://192.168.0.4:3000/api/telemetry";
+static const char* DEVICE_ID = "esp32-main-1";
 
 unsigned long lastReadMs = 0;
 
@@ -31,6 +38,39 @@ float readLightLux() {
   }
 
   return -1.0f;
+}
+
+void connectWifi() {
+  Serial.print("Connecting to Wi-Fi: ");
+  Serial.println(WIFI_SSID);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  unsigned long startMs = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    if (millis() - startMs > 20000) {
+      Serial.println();
+      Serial.println("Wi-Fi connect timeout");
+      return;
+    }
+  }
+
+  Serial.println();
+  Serial.print("Wi-Fi connected. IP: ");
+  Serial.println(WiFi.localIP());
+}
+
+void ensureWifiConnected() {
+  if (WiFi.status() == WL_CONNECTED) {
+    return;
+  }
+
+  Serial.println("Wi-Fi disconnected, reconnecting...");
+  WiFi.disconnect();
+  connectWifi();
 }
 
 void printHumanReadable(float temperatureC, float humidityPct, float pressureHpa, float lightLux) {
@@ -57,23 +97,74 @@ void printHumanReadable(float temperatureC, float humidityPct, float pressureHpa
   Serial.println("---");
 }
 
-void printJson(unsigned long uptimeMs, float temperatureC, float humidityPct, float pressureHpa, float lightLux) {
-  Serial.print("{\"uptime_ms\":");
-  Serial.print(uptimeMs);
-  Serial.print(",\"temperature_c\":");
-  Serial.print(temperatureC, 2);
-  Serial.print(",\"humidity_pct\":");
-  Serial.print(humidityPct, 2);
-  Serial.print(",\"pressure_hpa\":");
-  Serial.print(pressureHpa, 2);
-  Serial.print(",\"light_lux\":");
+String buildTelemetryJson(
+  unsigned long uptimeMs,
+  float temperatureC,
+  float humidityPct,
+  float pressureHpa,
+  float lightLux
+) {
+  String json = "{";
+  json += "\"device_id\":\"";
+  json += DEVICE_ID;
+  json += "\"";
+
+  json += ",\"uptime_ms\":";
+  json += String(uptimeMs);
+
+  json += ",\"temperature_c\":";
+  json += String(temperatureC, 2);
+
+  json += ",\"humidity_pct\":";
+  json += String(humidityPct, 2);
+
+  json += ",\"pressure_hpa\":";
+  json += String(pressureHpa, 2);
+
+  json += ",\"light_lux\":";
   if (lightLux >= 0.0f) {
-    Serial.print(lightLux, 2);
+    json += String(lightLux, 2);
   } else {
-    Serial.print("null");
+    json += "null";
   }
-  Serial.print(",\"soil_moisture_raw\":null");
-  Serial.println("}");
+
+  json += ",\"soil_moisture_raw\":null";
+  json += "}";
+
+  return json;
+}
+
+void printJsonLine(const String& json) {
+  Serial.println(json);
+}
+
+void postTelemetry(const String& payload) {
+  ensureWifiConnected();
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Telemetry upload skipped: Wi-Fi not connected");
+    return;
+  }
+
+  HTTPClient http;
+  http.begin(TELEMETRY_URL);
+  http.addHeader("Content-Type", "application/json");
+
+  int httpCode = http.POST(payload);
+
+  Serial.print("Telemetry HTTP status: ");
+  Serial.println(httpCode);
+
+  if (httpCode > 0) {
+    String response = http.getString();
+    Serial.println("Telemetry response:");
+    Serial.println(response);
+  } else {
+    Serial.print("Telemetry POST failed: ");
+    Serial.println(http.errorToString(httpCode));
+  }
+
+  http.end();
 }
 
 void setup() {
@@ -95,7 +186,9 @@ void setup() {
     while (true) delay(1000);
   }
 
-  Serial.println("Milestone 2 telemetry firmware started.");
+  connectWifi();
+
+  Serial.println("ESP32 telemetry upload firmware started.");
 }
 
 void loop() {
@@ -122,5 +215,15 @@ void loop() {
   }
 
   printHumanReadable(temperatureC, humidityPct, pressureHpa, lightLux);
-  printJson(now, temperatureC, humidityPct, pressureHpa, lightLux);
+
+  String payload = buildTelemetryJson(
+    now,
+    temperatureC,
+    humidityPct,
+    pressureHpa,
+    lightLux
+  );
+
+  printJsonLine(payload);
+  postTelemetry(payload);
 }
