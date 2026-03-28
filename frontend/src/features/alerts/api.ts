@@ -9,7 +9,6 @@ export type Alert = {
   severity: AlertSeverity
   message: string
   startedAt: string
-  resolvedAt?: string
   sensor?: string
   value?: number
   threshold?: number
@@ -33,10 +32,4 @@ export const getActiveAlerts = async (): Promise<Alert[]> => {
   return ensureOk(data).items
 }
 
-export const getAlertHistory = async (limit = 100): Promise<Alert[]> => {
-  const { data } = await api.get<Envelope<{ items: Alert[]; total: number }>>('/alerts/history', {
-    params: { limit },
-  })
-  return ensureOk(data).items
-}
 

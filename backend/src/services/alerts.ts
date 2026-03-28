@@ -4,7 +4,6 @@ import { getLatestTelemetry } from './telemetry';
 
 type Store = {
   active: Map<string, Alert>;
-  history: Alert[];
 };
 
 const stores = new Map<string, Store>();
@@ -16,12 +15,11 @@ const HYSTERESIS = {
 
 const STALE_WARN_MINUTES = 10;
 const STALE_CRITICAL_MINUTES = 60;
-const HISTORY_CAP = 500;
 
 const getStore = (uid: string): Store => {
   let store = stores.get(uid);
   if (!store) {
-    store = { active: new Map(), history: [] };
+    store = { active: new Map() };
     stores.set(uid, store);
   }
   return store;
@@ -32,7 +30,7 @@ const findActiveByType = (store: Store, type: AlertType) =>
 
 const nextId = (type: AlertType) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-const upsertAlert = (uid: string, alert: Omit<Alert, 'id' | 'resolvedAt'>) => {
+const upsertAlert = (uid: string, alert: Omit<Alert, 'id'>) => {
   const store = getStore(uid);
   const existing = findActiveByType(store, alert.type);
 
@@ -47,25 +45,17 @@ const upsertAlert = (uid: string, alert: Omit<Alert, 'id' | 'resolvedAt'>) => {
 
   const record: Alert = {
     id: nextId(alert.type),
-    resolvedAt: undefined,
     ...alert,
   };
   store.active.set(record.id, record);
   return record;
 };
 
-const resolveAlert = (uid: string, type: AlertType, resolvedAt: string) => {
+const resolveAlert = (uid: string, type: AlertType) => {
   const store = getStore(uid);
   const existing = findActiveByType(store, type);
-  if (!existing) {
-    return;
-  }
-
+  if (!existing) return;
   store.active.delete(existing.id);
-  store.history.unshift({ ...existing, resolvedAt });
-  if (store.history.length > HISTORY_CAP) {
-    store.history.length = HISTORY_CAP;
-  }
 };
 
 export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
@@ -102,7 +92,7 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
       startedAt: latest.timestamp,
     });
   } else {
-    resolveAlert(uid, 'SENSOR_STALE', now.toISOString());
+    resolveAlert(uid, 'SENSOR_STALE');
   }
 
   const soilThreshold = prefs.thresholds.soilMoistureLow;
@@ -125,7 +115,7 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
       threshold: soilThreshold,
     });
   } else if (latest.soilMoisture >= soilThreshold + HYSTERESIS.soil) {
-    resolveAlert(uid, 'SOIL_MOISTURE_LOW', now.toISOString());
+    resolveAlert(uid, 'SOIL_MOISTURE_LOW');
   }
 
   const tempThreshold = prefs.thresholds.tempHigh;
@@ -139,7 +129,7 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
       threshold: tempThreshold,
     });
   } else if (latest.temperature <= tempThreshold - HYSTERESIS.temp) {
-    resolveAlert(uid, 'TEMP_HIGH', now.toISOString());
+    resolveAlert(uid, 'TEMP_HIGH');
   }
 };
 
@@ -147,7 +137,4 @@ export const getActiveAlerts = (uid: string): Alert[] => {
   return Array.from(getStore(uid).active.values());
 };
 
-export const getAlertHistory = (uid: string, limit = 100): Alert[] => {
-  return getStore(uid).history.slice(0, limit);
-};
 

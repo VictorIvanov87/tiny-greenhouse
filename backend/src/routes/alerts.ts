@@ -1,10 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod';
 import { AlertListResponseSchema } from '../lib/schemas';
 import { ok } from '../lib/respond';
 import {
   getActiveAlerts,
-  getAlertHistory,
   recomputeAlerts,
 } from '../services/alerts';
 
@@ -19,25 +17,6 @@ const alertsRoutes: FastifyPluginAsync = async (app) => {
       const uid = req.user!.uid;
       await recomputeAlerts(uid);
       const items = getActiveAlerts(uid);
-      return ok({ items, total: items.length });
-    },
-  );
-
-  app.get(
-    '/api/alerts/history',
-    {
-      preHandler: app.auth,
-      schema: { response: { 200: AlertListResponseSchema } },
-    },
-    async (req) => {
-      const uid = req.user!.uid;
-      const query = z
-        .object({
-          limit: z.coerce.number().int().min(1).max(500).default(100),
-        })
-        .parse(req.query);
-
-      const items = getAlertHistory(uid, query.limit);
       return ok({ items, total: items.length });
     },
   );

@@ -110,7 +110,6 @@ export const AlertSchema = z.object({
   severity: AlertSeverity,
   message: z.string(),
   startedAt: ISODate,
-  resolvedAt: ISODate.optional(),
   sensor: z.string().optional(),
   value: z.number().optional(),
   threshold: z.number().optional(),

@@ -1,165 +1,181 @@
-import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert as FlowbiteAlert,
-  Badge,
-  Button,
-  Card,
-  Label,
-  Select,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeadCell,
-  TableRow,
-} from 'flowbite-react'
-import { getActiveAlerts, getAlertHistory, type Alert } from './api'
+import { useAlerts } from './AlertsProvider'
+import type { Alert } from './api'
+import { InternalLink } from '../../shared/ui/InternalLink'
 
-const severityColor: Record<Alert['severity'], string> = {
-  info: 'info',
-  warn: 'warning',
-  critical: 'failure',
+const CARD_CLASS =
+  'rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]'
+
+const formatDuration = (startedAt: string): string => {
+  const ms = Date.now() - new Date(startedAt).getTime()
+  if (ms < 60_000) return 'just now'
+  const mins = Math.floor(ms / 60_000)
+  if (mins < 60) return `${mins}m`
+  const hours = Math.floor(mins / 60)
+  const remMins = mins % 60
+  if (hours < 24) return remMins > 0 ? `${hours}h ${remMins}m` : `${hours}h`
+  const days = Math.floor(hours / 24)
+  return `${days}d ${hours % 24}h`
 }
 
-const formatDate = (value?: string) =>
-  value ? new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+const formatLastChecked = (date: Date | null): string => {
+  if (!date) return 'Checking...'
+  const ms = Date.now() - date.getTime()
+  if (ms < 60_000) return 'just now'
+  const mins = Math.floor(ms / 60_000)
+  return `${mins}m ago`
+}
 
-const AlertsTable = ({ items }: { items: Alert[] }) => {
-  if (!items.length) {
-    return <p className="text-sm text-slate-500">No alerts to show.</p>
+const severityConfig = (severity: Alert['severity']) => {
+  switch (severity) {
+    case 'critical':
+      return {
+        borderColor: 'rgba(244,63,94,0.4)',
+        pillClass: 'bg-rose-900/50 text-rose-300',
+        iconBg: '#7f1d1d',
+        iconStroke: '#fb7185',
+        label: 'Critical',
+      }
+    case 'warn':
+      return {
+        borderColor: 'rgba(245,158,11,0.4)',
+        pillClass: 'bg-amber-900/50 text-amber-300',
+        iconBg: '#78350f',
+        iconStroke: '#fbbf24',
+        label: 'Warning',
+      }
+    default:
+      return {
+        borderColor: 'rgba(56,189,248,0.4)',
+        pillClass: 'bg-sky-900/50 text-sky-300',
+        iconBg: '#0c4a6e',
+        iconStroke: '#7dd3fc',
+        label: 'Info',
+      }
   }
+}
+
+const SeverityIcon = ({ severity }: { severity: Alert['severity'] }) => {
+  const s = severityConfig(severity)
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="shrink-0">
+      <circle cx="16" cy="16" r="14" fill={s.iconBg} stroke={s.borderColor} strokeWidth="1.5" />
+      <path d="M16 10V18" stroke={s.iconStroke} strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="16" cy="22" r="1.5" fill={s.iconStroke} />
+    </svg>
+  )
+}
+
+const AlertCard = ({ alert }: { alert: Alert }) => {
+  const s = severityConfig(alert.severity)
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableHeadCell>Type</TableHeadCell>
-            <TableHeadCell>Severity</TableHeadCell>
-            <TableHeadCell>Message</TableHeadCell>
-            <TableHeadCell>Started</TableHeadCell>
-            <TableHeadCell>Resolved</TableHeadCell>
-          </TableRow>
-        </TableHead>
-        <TableBody className="divide-y">
-          {items.map((alert) => (
-            <TableRow key={alert.id}>
-              <TableCell className="font-medium text-slate-900">
-                {alert.type.replace(/_/g, ' ').toLowerCase()}
-              </TableCell>
-              <TableCell>
-                <Badge color={severityColor[alert.severity]}>{alert.severity}</Badge>
-              </TableCell>
-              <TableCell>{alert.message}</TableCell>
-              <TableCell>{formatDate(alert.startedAt)}</TableCell>
-              <TableCell>{formatDate(alert.resolvedAt)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div
+      className="rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4"
+      style={{ borderLeftWidth: 4, borderLeftColor: s.borderColor }}
+    >
+      <div className="flex gap-3">
+        <SeverityIcon severity={alert.severity} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-slate-100">
+              {alert.type.replace(/_/g, ' ').toLowerCase()}
+            </span>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.pillClass}`}>
+              {s.label}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-slate-300">{alert.message}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+            {alert.value !== undefined && alert.threshold !== undefined && (
+              <span>
+                Value: <span className="text-slate-200">{alert.value}</span> / Threshold:{' '}
+                <span className="text-slate-200">{alert.threshold}</span>
+              </span>
+            )}
+            <span>Active for {formatDuration(alert.startedAt)}</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center py-16 text-center">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mb-4">
+      <circle cx="24" cy="24" r="20" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.4)" strokeWidth="1.5" />
+      <path d="M16 24L22 30L32 18" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+    <p className="text-lg font-semibold text-slate-100">All clear</p>
+    <p className="mt-1 text-sm text-slate-400">No active alerts at the moment.</p>
+  </div>
+)
+
 const AlertsPage = () => {
-  const [active, setActive] = useState<Alert[]>([])
-  const [history, setHistory] = useState<Alert[]>([])
-  const [historyLimit, setHistoryLimit] = useState(100)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [historyLoading, setHistoryLoading] = useState(true)
+  const { active, lastFetchedAt, refresh } = useAlerts()
 
-  const loadActive = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const alerts = await getActiveAlerts()
-      setActive(alerts)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load alerts'
-      setError(message)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  const loadHistory = useCallback(async () => {
-    setHistoryLoading(true)
-    try {
-      const alerts = await getAlertHistory(historyLimit)
-      setHistory(alerts)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setHistoryLoading(false)
-    }
-  }, [historyLimit])
-
-  useEffect(() => {
-    loadActive()
-  }, [loadActive])
-
-  useEffect(() => {
-    loadHistory()
-  }, [loadHistory])
+  const criticalCount = active.filter((a) => a.severity === 'critical').length
+  const warnCount = active.filter((a) => a.severity === 'warn').length
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">Alerts</h1>
-        <p className="text-sm text-slate-400">
-          Monitor environment issues and sensor status.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">Alerts</h1>
+          <p className="text-sm text-slate-400">Monitor environment issues and sensor status.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-500">
+            Last checked: {formatLastChecked(lastFetchedAt)}
+          </span>
+          <button
+            onClick={() => refresh()}
+            className="rounded-lg border border-[#22324a] bg-[#1a2740] px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-[#2d3f5d] hover:bg-[#1f2f4d]"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
-      <Card className="rounded-3xl border border-slate-200 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Active alerts</h2>
-          <Button size="sm" color="light" onClick={loadActive}>
-            Refresh
-          </Button>
+      <div className={`${CARD_CLASS} p-5`}>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold text-slate-100">
+            Active alerts
+          </h2>
+          {active.length > 0 ? (
+            <div className="flex gap-2">
+              {criticalCount > 0 && (
+                <span className="rounded-full bg-rose-900/50 px-2.5 py-0.5 text-xs font-semibold text-rose-300">
+                  {criticalCount} critical
+                </span>
+              )}
+              {warnCount > 0 && (
+                <span className="rounded-full bg-amber-900/50 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                  {warnCount} warning{warnCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="rounded-full bg-emerald-900/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+              0 alerts
+            </span>
+          )}
         </div>
-        {loading ? (
-          <div className="flex min-h-[160px] items-center justify-center">
-            <Spinner />
-          </div>
-        ) : error ? (
-          <FlowbiteAlert color="failure">{error}</FlowbiteAlert>
-        ) : (
-          <AlertsTable items={active} />
-        )}
-      </Card>
 
-      <Card className="rounded-3xl border border-slate-200 shadow-sm">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-900">History</h2>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="history-limit" className="text-sm text-slate-500">
-              Limit
-            </Label>
-            <Select
-              id="history-limit"
-              value={historyLimit.toString()}
-              onChange={(event) => setHistoryLimit(Number(event.target.value))}
-              className="w-24"
-            >
-              {[50, 100, 200].map((limit) => (
-                <option key={limit} value={limit}>
-                  {limit}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
-        {historyLoading ? (
-          <div className="flex min-h-[160px] items-center justify-center">
-            <Spinner />
-          </div>
+        {active.length === 0 ? (
+          <EmptyState />
         ) : (
-          <AlertsTable items={history} />
+          <div className="space-y-3">
+            {active.map((alert) => (
+              <AlertCard key={alert.id} alert={alert} />
+            ))}
+          </div>
         )}
-      </Card>
+      </div>
+
+      <div className="text-right">
+        <InternalLink to="/dashboard">Back to dashboard</InternalLink>
+      </div>
     </div>
   )
 }
