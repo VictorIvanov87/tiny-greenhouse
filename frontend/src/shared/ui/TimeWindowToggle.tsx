@@ -1,3 +1,4 @@
+import { Button } from 'flowbite-react'
 import type { WindowKey } from '../../features/telemetry/transforms'
 
 const OPTIONS: WindowKey[] = ['2h', 'today', '7d']
@@ -18,12 +19,12 @@ export const TimeWindowToggle = ({ value, onChange }: TimeWindowToggleProps) => 
     {OPTIONS.map((w) => {
       const isActive = w === value
       return (
-        <button
+        <Button
           key={w}
-          type="button"
+          size="xs"
+          color={isActive ? 'success' : 'gray'}
           onClick={() => onChange(w)}
-          aria-pressed={isActive}
-          className="relative z-10 cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-all duration-200"
+          className="relative z-10 border-none shadow-none"
           style={{
             color: isActive ? '#fff' : '#94a3b8',
             backgroundColor: isActive ? '#10b981' : 'transparent',
@@ -31,7 +32,7 @@ export const TimeWindowToggle = ({ value, onChange }: TimeWindowToggleProps) => 
           }}
         >
           {LABELS[w]}
-        </button>
+        </Button>
       )
     })}
   </div>

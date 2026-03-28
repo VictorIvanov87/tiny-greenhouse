@@ -1,39 +1,192 @@
-import { Alert, Button, Card, Label, Spinner, TextInput, ToggleSwitch } from 'flowbite-react';
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { Card } from 'flowbite-react';
 import { getNotificationPrefs, updateNotificationPrefs } from './api';
-import type { NotificationPrefs } from './api';
+import type { AlertRule, AlertRuleCondition, AlertRuleMetric, NotificationPrefs } from './api';
+import { getCropDefaults } from '../setup/api';
+import type { SetupProfile, BoundedMetric } from '../setup/state';
 
-const MIN_SOIL = 0;
-const MAX_SOIL = 100;
-const MIN_TEMP = 5;
-const MAX_TEMP = 45;
+type PageContext = { profile: SetupProfile };
 
-const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+const CARD_CLASS =
+  'rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]';
+const INNER_CLASS = 'rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4';
 
-type ThresholdInputs = {
-  soil: string;
-  temp: string;
+const fieldStyle: React.CSSProperties = {
+  backgroundColor: '#0b1220',
+  color: '#e2e8f0',
+  borderColor: '#22324a',
 };
 
-const thresholdConfig = {
-  soil: { field: 'soilMoistureLow', min: MIN_SOIL, max: MAX_SOIL },
-  temp: { field: 'tempHigh', min: MIN_TEMP, max: MAX_TEMP },
-} as const;
+type SafetyBounds = {
+  temperature_c?: BoundedMetric;
+  humidity_pct?: BoundedMetric;
+  light_hours?: BoundedMetric;
+};
+
+const METRICS: { value: AlertRuleMetric; label: string; unit: string }[] = [
+  { value: 'temperature', label: 'Temperature', unit: '°C' },
+  { value: 'humidity', label: 'Humidity', unit: '%' },
+  { value: 'soilMoisture', label: 'Soil moisture', unit: '%' },
+  { value: 'lightLux', label: 'Light', unit: 'lux' },
+];
+
+const CONDITIONS: { value: AlertRuleCondition; label: string }[] = [
+  { value: 'below', label: 'Below' },
+  { value: 'above', label: 'Above' },
+];
+
+const metricUnit = (metric: AlertRuleMetric) =>
+  METRICS.find((m) => m.value === metric)?.unit ?? '';
+
+const newRuleId = () => crypto.randomUUID?.() ?? `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
+
+const Toggle = ({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    disabled={disabled}
+    onClick={() => onChange(!checked)}
+    className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50"
+    style={{ backgroundColor: checked ? '#10b981' : '#374151' }}
+  >
+    <span
+      className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200"
+      style={{ transform: checked ? 'translateX(1.25rem)' : 'translateX(0)' }}
+    />
+  </button>
+);
+
+const getBoundsForMetric = (metric: AlertRuleMetric, bounds: SafetyBounds): BoundedMetric | null => {
+  switch (metric) {
+    case 'temperature': return bounds.temperature_c ?? null;
+    case 'humidity': return bounds.humidity_pct ?? null;
+    case 'lightLux': return bounds.light_hours ?? null;
+    default: return null;
+  }
+};
+
+const RuleRow = ({
+  rule,
+  onChange,
+  onDelete,
+  disabled,
+  bounds,
+  plantType,
+}: {
+  rule: AlertRule;
+  onChange: (updated: AlertRule) => void;
+  onDelete: () => void;
+  disabled?: boolean;
+  bounds: SafetyBounds;
+  plantType?: string;
+}) => {
+  const range = getBoundsForMetric(rule.metric, bounds);
+  const unit = metricUnit(rule.metric);
+  const plantLabel = plantType ? plantType.replace(/-/g, ' ') : 'your plant';
+
+  return (
+    <div className={INNER_CLASS}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Toggle
+          checked={rule.enabled}
+          onChange={(enabled) => onChange({ ...rule, enabled })}
+          disabled={disabled}
+        />
+
+        <select
+          value={rule.metric}
+          onChange={(e) => onChange({ ...rule, metric: e.target.value as AlertRuleMetric })}
+          disabled={disabled}
+          className="w-36 rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[#3b5998]"
+          style={fieldStyle}
+        >
+          {METRICS.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={rule.condition}
+          onChange={(e) => onChange({ ...rule, condition: e.target.value as AlertRuleCondition })}
+          disabled={disabled}
+          className="w-24 rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[#3b5998]"
+          style={fieldStyle}
+        >
+          {CONDITIONS.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            value={rule.value}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              if (!Number.isNaN(v)) onChange({ ...rule, value: v });
+            }}
+            disabled={disabled}
+            className="w-24 rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[#3b5998]"
+            style={fieldStyle}
+          />
+          <span className="text-xs text-slate-400">{unit}</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={disabled}
+          className="ml-auto cursor-pointer rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-[#1a2740] disabled:opacity-50"
+          style={{ color: undefined }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#f43f5e'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
+          title="Delete rule"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      {range && (
+        <p className="mt-2 text-xs text-slate-500">
+          Recommended range for {plantLabel} is: {range.min}–{range.max}{unit}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 const NotificationsPage = () => {
+  const { profile } = useOutletContext<PageContext>();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [thresholdInputs, setThresholdInputs] = useState<ThresholdInputs>({ soil: '', temp: '' });
-
-  const syncThresholdInputs = useCallback((next: NotificationPrefs) => {
-    setThresholdInputs({
-      soil: String(next.thresholds.soilMoistureLow),
-      temp: String(next.thresholds.tempHigh),
-    });
-  }, []);
+  const [bounds, setBounds] = useState<SafetyBounds>({});
 
   const fetchPrefs = useCallback(async () => {
     setLoading(true);
@@ -42,235 +195,213 @@ const NotificationsPage = () => {
     try {
       const data = await getNotificationPrefs();
       setPrefs(data);
-      syncThresholdInputs(data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load notifications';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Failed to load preferences');
     } finally {
       setLoading(false);
     }
-  }, [syncThresholdInputs]);
+  }, []);
 
   useEffect(() => {
     fetchPrefs();
   }, [fetchPrefs]);
 
-  const handleSave = useCallback(async () => {
-    if (!prefs) {
-      return;
-    }
+  // Load crop safety bounds for hints
+  useEffect(() => {
+    if (!profile.cropId || !profile.variety) return;
+    getCropDefaults(profile.cropId, profile.variety)
+      .then((defaults) => {
+        if (defaults.safety_bounds) setBounds(defaults.safety_bounds);
+      })
+      .catch(() => {});
+  }, [profile.cropId, profile.variety]);
+
+  const handleSave = async () => {
+    if (!prefs) return;
     setSaving(true);
     setError(null);
     setSaved(false);
     try {
       const updated = await updateNotificationPrefs(prefs);
       setPrefs(updated);
-      syncThresholdInputs(updated);
       setSaved(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save notifications';
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Failed to save preferences');
     } finally {
       setSaving(false);
     }
-  }, [prefs, syncThresholdInputs]);
+  };
 
-  const handleThresholdChange = useCallback(
-    (key: keyof ThresholdInputs) => (event: ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      setThresholdInputs((prev) => ({ ...prev, [key]: value }));
+  const updateRule = (index: number, updated: AlertRule) => {
+    setPrefs((prev) => {
+      if (!prev) return prev;
+      const rules = [...prev.rules];
+      rules[index] = updated;
+      return { ...prev, rules };
+    });
+  };
 
-      setPrefs((prev) => {
-        if (!prev) {
-          return prev;
-        }
+  const deleteRule = (index: number) => {
+    setPrefs((prev) => {
+      if (!prev) return prev;
+      return { ...prev, rules: prev.rules.filter((_, i) => i !== index) };
+    });
+  };
 
-        const meta = thresholdConfig[key];
-        const numeric = Number(value);
-        if (Number.isNaN(numeric) || numeric < meta.min || numeric > meta.max) {
-          return prev;
-        }
+  const addRule = () => {
+    setPrefs((prev) => {
+      if (!prev) return prev;
+      const rule: AlertRule = {
+        id: newRuleId(),
+        metric: 'temperature',
+        condition: 'above',
+        value: 30,
+        enabled: true,
+      };
+      return { ...prev, rules: [...prev.rules, rule] };
+    });
+  };
 
-        if (numeric === prev.thresholds[meta.field]) {
-          return prev;
-        }
-
-        return {
-          ...prev,
-          thresholds: {
-            ...prev.thresholds,
-            [meta.field]: numeric,
-          },
-        };
-      });
-    },
-    []
-  );
-
-  const handleThresholdBlur = useCallback(
-    (key: keyof ThresholdInputs) => () => {
-      const meta = thresholdConfig[key];
-      const raw = thresholdInputs[key];
-      const numeric = Number(raw);
-      const fallback = prefs?.thresholds[meta.field] ?? meta.min;
-      const clampedValue = clamp(Number.isNaN(numeric) ? fallback : numeric, meta.min, meta.max);
-
-      setThresholdInputs((prev) => ({
-        ...prev,
-        [key]: String(clampedValue),
-      }));
-
-      setPrefs((prev) => {
-        if (!prev || clampedValue === prev.thresholds[meta.field]) {
-          return prev;
-        }
-
-        return {
-          ...prev,
-          thresholds: {
-            ...prev.thresholds,
-            [meta.field]: clampedValue,
-          },
-        };
-      });
-    },
-    [prefs, thresholdInputs]
-  );
-
-  const MainContent = useMemo(() => {
-    if (loading) {
-      return (
-        <div className="flex min-h-[40vh] items-center justify-center">
-          <Spinner size="xl" />
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">Notification preferences</h1>
+          <p className="text-sm text-slate-400">Configure how and when you get alerted.</p>
         </div>
-      );
-    }
-
-    if (error && !prefs) {
-      return (
-        <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="space-y-4">
-            <Alert color="failure">
-              <span className="font-semibold">Unable to load notifications.</span> {error}
-            </Alert>
-            <Button onClick={fetchPrefs}>Retry</Button>
+        <Card className={CARD_CLASS}>
+          <div className="flex min-h-[200px] items-center justify-center">
+            <div className="skeleton h-6 w-40" />
           </div>
         </Card>
-      );
-    }
-
-    if (!prefs) {
-      return null;
-    }
-
-    return (
-      <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="space-y-5">
-          {saved && <Alert color="success">Notification preferences saved.</Alert>}
-          {error && (
-            <Alert color="failure">
-              <span className="font-semibold">Save failed.</span> {error}
-            </Alert>
-          )}
-
-          <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-medium text-slate-900">Email alerts</p>
-              <p className="text-sm text-slate-500">Send urgent events directly to your inbox.</p>
-            </div>
-            <ToggleSwitch
-              checked={prefs.email}
-              onChange={(checked) => setPrefs({ ...prefs, email: checked })}
-              disabled={saving}
-            />
-          </div>
-
-          <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-medium text-slate-900">Push alerts</p>
-              <p className="text-sm text-slate-500">
-                Browser/device notifications. (Coming soon — toggling now keeps preference synced.)
-              </p>
-            </div>
-            <ToggleSwitch
-              checked={prefs.push}
-              onChange={(checked) => setPrefs({ ...prefs, push: checked })}
-              disabled={saving}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="soil-threshold">Soil moisture low threshold (%)</Label>
-              <TextInput
-                id="soil-threshold"
-                type="number"
-                min={MIN_SOIL}
-                max={MAX_SOIL}
-                value={thresholdInputs.soil}
-                disabled={saving}
-                onChange={handleThresholdChange('soil')}
-                onBlur={handleThresholdBlur('soil')}
-              />
-              <p className="text-xs text-slate-500">
-                We’ll warn you when moisture drops below this level.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="temp-threshold">Temperature high threshold (°C)</Label>
-              <TextInput
-                id="temp-threshold"
-                type="number"
-                min={MIN_TEMP}
-                max={MAX_TEMP}
-                value={thresholdInputs.temp}
-                disabled={saving}
-                onChange={handleThresholdChange('temp')}
-                onBlur={handleThresholdBlur('temp')}
-              />
-              <p className="text-xs text-slate-500">
-                Alert when your greenhouse runs hotter than this.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Button onClick={handleSave} disabled={saving}>
-              Save preferences
-            </Button>
-            <Button color="light" onClick={fetchPrefs} disabled={saving}>
-              Reset
-            </Button>
-          </div>
-        </div>
-      </Card>
+      </div>
     );
-  }, [
-    error,
-    fetchPrefs,
-    handleSave,
-    handleThresholdBlur,
-    handleThresholdChange,
-    loading,
-    prefs,
-    saving,
-    saved,
-    thresholdInputs.soil,
-    thresholdInputs.temp,
-  ]);
+  }
+
+  // Error state (no prefs loaded)
+  if (error && !prefs) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">Notification preferences</h1>
+          <p className="text-sm text-slate-400">Configure how and when you get alerted.</p>
+        </div>
+        <Card className={CARD_CLASS}>
+          <p className="text-sm text-rose-400">{error}</p>
+          <button onClick={fetchPrefs} className="mt-3 rounded-lg border border-[#22324a] bg-[#1a2740] px-3 py-1.5 text-sm text-slate-200 hover:border-[#2d3f5d]">
+            Retry
+          </button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!prefs) return null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">
-          Notification preferences
-        </h1>
-        <p className="text-sm text-slate-400">
-          Decide how Tiny Greenhouse keeps your team informed when something needs attention.
-        </p>
+        <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">Notification preferences</h1>
+        <p className="text-sm text-slate-400">Configure how and when you get alerted.</p>
       </div>
-      {MainContent}
+
+      {/* Status messages */}
+      {saved && (
+        <div className="rounded-xl border border-emerald-800/40 bg-emerald-900/30 px-4 py-3 text-sm text-emerald-300">
+          Preferences saved successfully.
+        </div>
+      )}
+      {error && prefs && (
+        <div className="rounded-xl px-4 py-3 text-sm" style={{ border: '1px solid rgba(244,63,94,0.3)', backgroundColor: 'rgba(136,19,55,0.3)', color: '#fda4af' }}>
+          Save failed: {error}
+        </div>
+      )}
+
+      {/* Channels card */}
+      <Card className={CARD_CLASS}>
+        <p className="text-sm font-semibold text-slate-100">Notification channels</p>
+
+        <div className="space-y-3">
+          <div className={`${INNER_CLASS} flex items-center justify-between gap-3`}>
+            <div>
+              <p className="text-sm font-medium text-slate-100">Email alerts</p>
+              <p className="text-xs text-slate-400">Send urgent events directly to your inbox.</p>
+            </div>
+            <Toggle checked={prefs.email} onChange={(v) => setPrefs({ ...prefs, email: v })} disabled={saving} />
+          </div>
+
+          <div className={`${INNER_CLASS} flex items-center justify-between gap-3`}>
+            <div>
+              <p className="text-sm font-medium text-slate-100">Push alerts</p>
+              <p className="text-xs text-slate-400">
+                Browser/device notifications.{' '}
+                <span className="italic text-slate-500">Coming soon</span>
+              </p>
+            </div>
+            <Toggle checked={prefs.push} onChange={(v) => setPrefs({ ...prefs, push: v })} disabled={saving} />
+          </div>
+        </div>
+      </Card>
+
+      {/* Alert rules card */}
+      <Card className={CARD_CLASS}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-slate-100">Alert rules</p>
+            <p className="text-xs text-slate-400">Get alerted when a sensor value crosses a threshold.</p>
+          </div>
+          <button
+            type="button"
+            onClick={addRule}
+            disabled={saving}
+            className="rounded-lg border border-[#22324a] bg-[#1a2740] px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-[#2d3f5d] hover:bg-[#1f2f4d] disabled:opacity-50"
+          >
+            + Add rule
+          </button>
+        </div>
+
+        {prefs.rules.length === 0 ? (
+          <div className="py-10 text-center text-sm text-slate-500">
+            No alert rules configured. Add one to get started.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {prefs.rules.map((rule, i) => (
+              <RuleRow
+                key={rule.id}
+                rule={rule}
+                onChange={(updated) => updateRule(i, updated)}
+                onDelete={() => deleteRule(i)}
+                disabled={saving}
+                bounds={bounds}
+                plantType={profile.plantType}
+              />
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+          style={{ backgroundColor: '#10b981' }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#059669'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; }}
+        >
+          {saving ? 'Saving...' : 'Save preferences'}
+        </button>
+        <button
+          onClick={fetchPrefs}
+          disabled={saving}
+          className="rounded-lg border border-[#22324a] bg-transparent px-5 py-2 text-sm text-slate-400 transition-colors hover:border-[#2d3f5d] hover:text-slate-200 disabled:opacity-50"
+        >
+          Reset
+        </button>
+      </div>
     </div>
   );
 };

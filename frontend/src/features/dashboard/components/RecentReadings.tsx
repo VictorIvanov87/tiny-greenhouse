@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Card } from 'flowbite-react'
+import { Card, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from 'flowbite-react'
 import type { TelemetrySample } from '../../telemetry/api'
 import type { WindowKey } from '../../telemetry/transforms'
 import { InternalLink } from '../../../shared/ui/InternalLink'
@@ -64,20 +64,19 @@ export const RecentReadings = ({ items }: RecentReadingsProps) => {
       .slice(0, 10)
   }, [items, timeWindow])
 
-  const ValueCell = ({ value, rangeKey, unit, align = 'right' }: {
+  const ValueCell = ({ value, rangeKey, unit }: {
     value: number | null | undefined
     rangeKey: keyof typeof RANGES
     unit: string
-    align?: 'left' | 'right'
   }) => {
     const status = isInRange(value, rangeKey)
     return (
-      <td
-        className={`py-2 ${align === 'right' ? 'text-right' : 'text-left'} ${align === 'right' ? 'pl-3' : 'pr-3'}`}
+      <TableCell
+        className="text-right"
         style={{ color: status ? VALUE_COLOR[status] : '#94a3b8' }}
       >
         {value != null ? `${fmt(value)}${unit}` : '—'}
-      </td>
+      </TableCell>
     )
   }
 
@@ -91,33 +90,33 @@ export const RecentReadings = ({ items }: RecentReadingsProps) => {
       {rows.length === 0 ? (
         <p className="mt-3 text-sm text-slate-400">No readings in this period.</p>
       ) : (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#1f2a3d] text-xs text-slate-500">
-                <th className="pb-2 text-left font-medium">Time</th>
-                <th className="pb-2 pl-3 text-right font-medium">Temp</th>
-                <th className="pb-2 pl-3 text-right font-medium">Hum</th>
-                <th className="pb-2 pl-3 text-right font-medium">Soil</th>
-                <th className="pb-2 pl-3 text-right font-medium">Light</th>
-                <th className="pb-2 pl-3 text-right font-medium">hPa</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1f2a3d]">
+        <div className="mt-3 overflow-x-auto [&_table]:bg-transparent [&_thead]:bg-[#0b1220] [&_th]:text-slate-500 [&_th]:text-xs [&_th]:font-medium [&_td]:text-slate-300 [&_tr]:border-[#1f2a3d]">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeadCell>Time</TableHeadCell>
+                <TableHeadCell className="text-right">Temp</TableHeadCell>
+                <TableHeadCell className="text-right">Hum</TableHeadCell>
+                <TableHeadCell className="text-right">Soil</TableHeadCell>
+                <TableHeadCell className="text-right">Light</TableHeadCell>
+                <TableHeadCell className="text-right">hPa</TableHeadCell>
+              </TableRow>
+            </TableHead>
+            <TableBody className="divide-y divide-[#1f2a3d]">
               {rows.map((s) => (
-                <tr key={s.timestamp}>
-                  <td className="whitespace-nowrap py-2 pr-4 text-xs text-slate-400">
+                <TableRow key={s.timestamp}>
+                  <TableCell className="whitespace-nowrap text-xs text-slate-400">
                     {formatTime(s.timestamp)}
-                  </td>
+                  </TableCell>
                   <ValueCell value={s.temperature} rangeKey="temperature" unit=" °C" />
                   <ValueCell value={s.humidity} rangeKey="humidity" unit=" %" />
                   <ValueCell value={s.soilMoisture} rangeKey="soilMoisture" unit=" %" />
                   <ValueCell value={s.lightLux} rangeKey="lightLux" unit="" />
                   <ValueCell value={s.pressureHpa} rangeKey="pressureHpa" unit="" />
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

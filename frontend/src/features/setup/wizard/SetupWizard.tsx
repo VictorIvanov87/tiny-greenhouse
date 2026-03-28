@@ -138,10 +138,10 @@ const WizardViewport = () => {
     const notificationPrefsPayload: NotificationPrefs = {
       email: state.prefs.notifications.email,
       push: state.prefs.notifications.push,
-      thresholds: {
-        soilMoistureLow: state.prefs.soilMoistureLowPct,
-        tempHigh: state.prefs.temperatureDay ?? 30,
-      },
+      rules: [
+        { id: 'setup-soil', metric: 'soilMoisture', condition: 'below', value: state.prefs.soilMoistureLowPct, enabled: true },
+        { id: 'setup-temp', metric: 'temperature', condition: 'above', value: state.prefs.temperatureDay ?? 30, enabled: true },
+      ],
     };
 
     const greenhousePayload: GreenhouseConfig = {

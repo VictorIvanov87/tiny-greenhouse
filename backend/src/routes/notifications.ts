@@ -33,7 +33,7 @@ const notificationRoutes: FastifyPluginAsync = async (app) => {
     async (req) => {
       const prefs = NotificationPrefs.parse(req.body);
       const uid = req.user!.uid;
-      setUserPrefs(uid, prefs);
+      await setUserPrefs(uid, prefs);
       return ok(prefs);
     },
   );

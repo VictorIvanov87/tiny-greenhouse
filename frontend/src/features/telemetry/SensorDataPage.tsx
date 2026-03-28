@@ -16,6 +16,15 @@ import {
 } from 'flowbite-react';
 import { useTelemetryQuery } from './api';
 
+const CARD_CLASS =
+  'rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]';
+
+const fieldStyle: React.CSSProperties = {
+  backgroundColor: '#0b1220',
+  color: '#e2e8f0',
+  borderColor: '#22324a',
+};
+
 type SortKey = 'timestamp' | 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
 type SortDirection = 'asc' | 'desc' | null;
 
@@ -39,10 +48,18 @@ const LIMIT_OPTIONS = ['25', '50', '100', '200'];
 const formatTimestamp = (value: string) =>
   new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
+const toISOIfPresent = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  // datetime-local gives "YYYY-MM-DDTHH:mm", convert to ISO
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? trimmed : date.toISOString();
+};
+
 const buildQueryParams = (state: FormState) => ({
   limit: Number(state.limit) || 100,
-  from: state.from.trim() || undefined,
-  to: state.to.trim() || undefined,
+  from: toISOIfPresent(state.from),
+  to: toISOIfPresent(state.to),
   sensor: state.sensor.trim() || undefined,
 });
 
@@ -57,6 +74,12 @@ const SensorDataPage = () => {
   const { data, isLoading: loading, error: queryError, refetch } = useTelemetryQuery(buildQueryParams(query));
   const total = data?.total ?? 0;
   const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
+
+  const sensorOptions = useMemo(() => {
+    const items = data?.items ?? [];
+    const unique = new Set(items.map((i) => i.sensor).filter(Boolean) as string[]);
+    return [...unique].sort();
+  }, [data]);
 
   // Reset to page 1 when data changes (new query)
   useEffect(() => {
@@ -173,7 +196,7 @@ const SensorDataPage = () => {
 
     if (error) {
       return (
-        <Card className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <Card className={`${CARD_CLASS} space-y-4 p-6`}>
           <Alert color="failure">
             <span className="font-semibold">Unable to load sensor data.</span> {error}
           </Alert>
@@ -184,14 +207,14 @@ const SensorDataPage = () => {
 
     if (!sortedItems.length) {
       return (
-        <Alert color="info" className="rounded-3xl border border-slate-200 bg-white text-slate-700">
+        <Alert color="info" className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-300">
           No telemetry samples match the selected filters. Try adjusting the time range or limit.
         </Alert>
       );
     }
 
     return (
-      <Card className="space-y-4 rounded-3xl border border-slate-200 shadow-sm">
+      <Card className={`${CARD_CLASS} space-y-4`}>
         <div className="flex flex-wrap items-center gap-3">
           <div className="text-sm text-slate-500">
             Showing {(currentPage - 1) * pageSize + 1}-
@@ -210,6 +233,7 @@ const SensorDataPage = () => {
                 setPage(1);
               }}
               className="w-24"
+              style={fieldStyle}
             >
               {PAGE_SIZE_OPTIONS.map((size) => (
                 <option key={size} value={size}>
@@ -217,13 +241,13 @@ const SensorDataPage = () => {
                 </option>
               ))}
             </Select>
-            <Button color="light" size="xs" onClick={handleExportCsv}>
+            <Button color="gray" size="xs" onClick={handleExportCsv}>
               Export CSV
             </Button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto [&_table]:bg-transparent [&_thead]:bg-[#0b1220] [&_th]:text-slate-300 [&_td]:text-slate-300 [&_tr]:border-[#1f2a3d]">
           <Table>
             <TableHead>
               <TableRow>
@@ -287,7 +311,7 @@ const SensorDataPage = () => {
             <TableBody className="divide-y">
               {pageItems.map((item) => (
                 <TableRow key={`${item.timestamp}-${item.sensor ?? 'default'}`}>
-                  <TableCell className="whitespace-nowrap font-medium text-slate-900">
+                  <TableCell className="whitespace-nowrap font-medium text-slate-100">
                     {formatTimestamp(item.timestamp)}
                   </TableCell>
                   <TableCell>{item.temperature.toFixed(1)}</TableCell>
@@ -308,7 +332,7 @@ const SensorDataPage = () => {
           </div>
           <div className="flex gap-2">
             <Button
-              color="light"
+              color="gray"
               size="sm"
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
@@ -316,7 +340,7 @@ const SensorDataPage = () => {
               Previous
             </Button>
             <Button
-              color="light"
+              color="gray"
               size="sm"
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
@@ -338,14 +362,16 @@ const SensorDataPage = () => {
         </p>
       </div>
 
-      <Card className="rounded-3xl border border-slate-200 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-5">
-          <div className="md:col-span-1">
-            <Label htmlFor="limit">Limit</Label>
+      <Card className={CARD_CLASS}>
+        <p className="text-sm font-semibold text-slate-100">Filters</p>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="w-24">
+            <Label htmlFor="limit" className="mb-1 text-xs text-slate-400">Limit</Label>
             <Select
               id="limit"
               value={form.limit}
               onChange={(event) => setForm((prev) => ({ ...prev, limit: event.target.value }))}
+              style={fieldStyle}
             >
               {LIMIT_OPTIONS.map((option) => (
                 <option key={option} value={option}>
@@ -354,38 +380,45 @@ const SensorDataPage = () => {
               ))}
             </Select>
           </div>
-          <div className="md:col-span-1">
-            <Label htmlFor="from">From (ISO)</Label>
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="from" className="mb-1 text-xs text-slate-400">From</Label>
             <TextInput
               id="from"
-              placeholder="2025-01-01T00:00:00Z"
+              type="datetime-local"
               value={form.from}
               onChange={(event) => setForm((prev) => ({ ...prev, from: event.target.value }))}
+              style={fieldStyle}
             />
           </div>
-          <div className="md:col-span-1">
-            <Label htmlFor="to">To (ISO)</Label>
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="to" className="mb-1 text-xs text-slate-400">To</Label>
             <TextInput
               id="to"
-              placeholder="2025-01-02T00:00:00Z"
+              type="datetime-local"
               value={form.to}
               onChange={(event) => setForm((prev) => ({ ...prev, to: event.target.value }))}
+              style={fieldStyle}
             />
           </div>
-          <div className="md:col-span-1">
-            <Label htmlFor="sensor">Sensor</Label>
-            <TextInput
+          <div className="w-36">
+            <Label htmlFor="sensor" className="mb-1 text-xs text-slate-400">Sensor</Label>
+            <Select
               id="sensor"
-              placeholder="sensor-id"
               value={form.sensor}
               onChange={(event) => setForm((prev) => ({ ...prev, sensor: event.target.value }))}
-            />
+              style={fieldStyle}
+            >
+              <option value="">All sensors</option>
+              {sensorOptions.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </Select>
           </div>
-          <div className="flex items-end gap-2 md:col-span-1">
-            <Button className="flex-1" onClick={handleApplyFilters}>
+          <div className="flex items-end gap-2">
+            <Button color="success" onClick={handleApplyFilters}>
               Apply
             </Button>
-            <Button color="light" className="flex-1" onClick={handleResetFilters}>
+            <Button color="gray" onClick={handleResetFilters}>
               Reset
             </Button>
           </div>

@@ -1,6 +1,15 @@
 import { api } from '../../shared/hooks/useApi'
 
-export type AlertType = 'SOIL_MOISTURE_LOW' | 'TEMP_HIGH' | 'SENSOR_STALE'
+export type AlertType =
+  | 'SOIL_MOISTURE_LOW'
+  | 'SOIL_MOISTURE_HIGH'
+  | 'TEMP_HIGH'
+  | 'TEMP_LOW'
+  | 'HUMIDITY_LOW'
+  | 'HUMIDITY_HIGH'
+  | 'LIGHT_LOW'
+  | 'LIGHT_HIGH'
+  | 'SENSOR_STALE'
 export type AlertSeverity = 'info' | 'warn' | 'critical'
 
 export type Alert = {

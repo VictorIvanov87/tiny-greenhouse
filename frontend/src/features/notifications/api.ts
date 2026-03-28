@@ -1,12 +1,20 @@
 import { api } from '../../shared/hooks/useApi'
 
+export type AlertRuleMetric = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux'
+export type AlertRuleCondition = 'above' | 'below'
+
+export type AlertRule = {
+  id: string
+  metric: AlertRuleMetric
+  condition: AlertRuleCondition
+  value: number
+  enabled: boolean
+}
+
 export type NotificationPrefs = {
   email: boolean
   push: boolean
-  thresholds: {
-    soilMoistureLow: number
-    tempHigh: number
-  }
+  rules: AlertRule[]
 }
 
 type SuccessEnvelope<T> = {

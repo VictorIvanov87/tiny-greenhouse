@@ -1,4 +1,4 @@
-import { Alert, AlertSeverity, AlertType } from '../lib/schemas';
+import { Alert, AlertSeverity, AlertType, type AlertRule, type AlertRuleMetric } from '../lib/schemas';
 import { getUserPrefs } from './prefs';
 import { getLatestTelemetry } from './telemetry';
 
@@ -8,9 +8,11 @@ type Store = {
 
 const stores = new Map<string, Store>();
 
-const HYSTERESIS = {
-  soil: 2,
-  temp: 1,
+const HYSTERESIS: Record<AlertRuleMetric, number> = {
+  soilMoisture: 2,
+  temperature: 1,
+  humidity: 2,
+  lightLux: 500,
 };
 
 const STALE_WARN_MINUTES = 10;
@@ -58,6 +60,58 @@ const resolveAlert = (uid: string, type: AlertType) => {
   store.active.delete(existing.id);
 };
 
+// ---------------------------------------------------------------------------
+// Map a rule to an AlertType
+// ---------------------------------------------------------------------------
+
+const METRIC_UNITS: Record<AlertRuleMetric, string> = {
+  temperature: '°C',
+  humidity: '%',
+  soilMoisture: '%',
+  lightLux: ' lux',
+};
+
+const METRIC_LABELS: Record<AlertRuleMetric, string> = {
+  temperature: 'Temperature',
+  humidity: 'Humidity',
+  soilMoisture: 'Soil moisture',
+  lightLux: 'Light',
+};
+
+const ruleToAlertType = (rule: AlertRule): AlertType => {
+  const map: Record<string, AlertType> = {
+    'temperature:above': 'TEMP_HIGH',
+    'temperature:below': 'TEMP_LOW',
+    'humidity:above': 'HUMIDITY_HIGH',
+    'humidity:below': 'HUMIDITY_LOW',
+    'soilMoisture:above': 'SOIL_MOISTURE_HIGH',
+    'soilMoisture:below': 'SOIL_MOISTURE_LOW',
+    'lightLux:above': 'LIGHT_HIGH',
+    'lightLux:below': 'LIGHT_LOW',
+  };
+  return map[`${rule.metric}:${rule.condition}`];
+};
+
+const getSensorValue = (
+  latest: { temperature: number; humidity: number; soilMoisture: number; lightLux?: number | null },
+  metric: AlertRuleMetric,
+): number | null => {
+  switch (metric) {
+    case 'temperature':
+      return latest.temperature;
+    case 'humidity':
+      return latest.humidity;
+    case 'soilMoisture':
+      return latest.soilMoisture;
+    case 'lightLux':
+      return latest.lightLux ?? null;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Main recompute
+// ---------------------------------------------------------------------------
+
 export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
   const prefs = await getUserPrefs(uid);
   const latest = await getLatestTelemetry(uid);
@@ -80,6 +134,7 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
 
   const minutesSince = (now.getTime() - sampleTime) / 60000;
 
+  // --- Staleness check (always runs, not rule-based) ---
   if (minutesSince >= STALE_WARN_MINUTES) {
     const severity: AlertSeverity = minutesSince >= STALE_CRITICAL_MINUTES ? 'critical' : 'warn';
     upsertAlert(uid, {
@@ -95,7 +150,7 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
     resolveAlert(uid, 'SENSOR_STALE');
   }
 
-  const soilThreshold = prefs.thresholds.soilMoistureLow;
+  // --- Special case: soil moisture = 0 means sensor broken ---
   if (latest.soilMoisture === 0) {
     upsertAlert(uid, {
       type: 'SOIL_MOISTURE_LOW',
@@ -103,38 +158,79 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
       message: 'Soil moisture sensor not responding — check wiring or replace sensor',
       startedAt: latest.timestamp,
       value: 0,
-      threshold: soilThreshold,
+      threshold: 0,
     });
-  } else if (latest.soilMoisture < soilThreshold) {
-    upsertAlert(uid, {
-      type: 'SOIL_MOISTURE_LOW',
-      severity: 'warn',
-      message: `Soil moisture low: ${latest.soilMoisture}% < ${soilThreshold}%`,
-      startedAt: latest.timestamp,
-      value: latest.soilMoisture,
-      threshold: soilThreshold,
-    });
-  } else if (latest.soilMoisture >= soilThreshold + HYSTERESIS.soil) {
-    resolveAlert(uid, 'SOIL_MOISTURE_LOW');
   }
 
-  const tempThreshold = prefs.thresholds.tempHigh;
-  if (latest.temperature > tempThreshold) {
-    upsertAlert(uid, {
-      type: 'TEMP_HIGH',
-      severity: 'warn',
-      message: `Temperature high: ${latest.temperature}°C > ${tempThreshold}°C`,
-      startedAt: latest.timestamp,
-      value: latest.temperature,
-      threshold: tempThreshold,
-    });
-  } else if (latest.temperature <= tempThreshold - HYSTERESIS.temp) {
-    resolveAlert(uid, 'TEMP_HIGH');
+  // --- Evaluate user-defined rules ---
+  const activeRuleTypes = new Set<AlertType>();
+
+  for (const rule of prefs.rules) {
+    const alertType = ruleToAlertType(rule);
+    if (!alertType) continue;
+
+    // Skip soil moisture low if sensor is broken (handled above)
+    if (alertType === 'SOIL_MOISTURE_LOW' && latest.soilMoisture === 0) {
+      activeRuleTypes.add(alertType);
+      continue;
+    }
+
+    const sensorValue = getSensorValue(latest, rule.metric);
+    if (sensorValue === null) continue;
+
+    const hysteresis = HYSTERESIS[rule.metric];
+    const label = METRIC_LABELS[rule.metric];
+    const unit = METRIC_UNITS[rule.metric];
+
+    if (!rule.enabled) {
+      resolveAlert(uid, alertType);
+      continue;
+    }
+
+    const isTriggered =
+      rule.condition === 'above'
+        ? sensorValue > rule.value
+        : sensorValue < rule.value;
+
+    const isResolved =
+      rule.condition === 'above'
+        ? sensorValue <= rule.value - hysteresis
+        : sensorValue >= rule.value + hysteresis;
+
+    if (isTriggered) {
+      activeRuleTypes.add(alertType);
+      const direction = rule.condition === 'above' ? 'high' : 'low';
+      upsertAlert(uid, {
+        type: alertType,
+        severity: 'warn',
+        message: `${label} ${direction}: ${sensorValue}${unit} ${rule.condition === 'above' ? '>' : '<'} ${rule.value}${unit}`,
+        startedAt: latest.timestamp,
+        value: sensorValue,
+        threshold: rule.value,
+      });
+    } else if (isResolved) {
+      resolveAlert(uid, alertType);
+    }
+  }
+
+  // Resolve rule-based alert types that no longer have any active rule
+  const allRuleTypes: AlertType[] = [
+    'SOIL_MOISTURE_LOW', 'SOIL_MOISTURE_HIGH',
+    'TEMP_HIGH', 'TEMP_LOW',
+    'HUMIDITY_LOW', 'HUMIDITY_HIGH',
+    'LIGHT_LOW', 'LIGHT_HIGH',
+  ];
+  for (const type of allRuleTypes) {
+    if (!activeRuleTypes.has(type) && latest.soilMoisture !== 0) {
+      // No rule targets this type — resolve if still active
+      const hasRule = prefs.rules.some((r) => ruleToAlertType(r) === type);
+      if (!hasRule) {
+        resolveAlert(uid, type);
+      }
+    }
   }
 };
 
 export const getActiveAlerts = (uid: string): Alert[] => {
   return Array.from(getStore(uid).active.values());
 };
-
-

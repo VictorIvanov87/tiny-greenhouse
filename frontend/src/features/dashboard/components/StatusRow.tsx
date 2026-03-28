@@ -1,3 +1,5 @@
+import { Badge } from 'flowbite-react';
+
 type StatusRowProps = {
   plantType?: string;
   lastSeenLabel?: string | null;
@@ -7,24 +9,12 @@ type StatusRowProps = {
 
 const HealthPill = ({ criticalCount, warnCount }: { criticalCount: number; warnCount: number }) => {
   if (criticalCount > 0) {
-    return (
-      <span className="rounded-full bg-rose-900/50 px-3 py-1 text-xs font-semibold text-rose-300">
-        {criticalCount} critical
-      </span>
-    );
+    return <Badge color="failure" size="sm">{criticalCount} critical</Badge>;
   }
   if (warnCount > 0) {
-    return (
-      <span className="rounded-full bg-amber-900/50 px-3 py-1 text-xs font-semibold text-amber-300">
-        {warnCount} warning{warnCount > 1 ? 's' : ''}
-      </span>
-    );
+    return <Badge color="warning" size="sm">{warnCount} warning{warnCount > 1 ? 's' : ''}</Badge>;
   }
-  return (
-    <span className="rounded-full bg-emerald-900/50 px-3 py-1 text-xs font-semibold text-emerald-300">
-      All clear — 0 active alerts
-    </span>
-  );
+  return <Badge color="success" size="sm">All clear — 0 active alerts</Badge>;
 };
 
 export const StatusRow = ({

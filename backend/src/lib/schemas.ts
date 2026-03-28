@@ -87,18 +87,40 @@ export const GreenhouseConfig = z.object({
 export type GreenhouseConfigType = z.infer<typeof GreenhouseConfig>;
 export const GreenhouseConfigResponseSchema = okResponse(GreenhouseConfig);
 
+export const AlertRuleMetric = z.enum(['temperature', 'humidity', 'soilMoisture', 'lightLux']);
+export type AlertRuleMetric = z.infer<typeof AlertRuleMetric>;
+
+export const AlertRuleCondition = z.enum(['above', 'below']);
+export type AlertRuleCondition = z.infer<typeof AlertRuleCondition>;
+
+export const AlertRule = z.object({
+  id: z.string(),
+  metric: AlertRuleMetric,
+  condition: AlertRuleCondition,
+  value: z.number(),
+  enabled: z.boolean(),
+});
+export type AlertRule = z.infer<typeof AlertRule>;
+
 export const NotificationPrefs = z.object({
   email: z.boolean(),
   push: z.boolean(),
-  thresholds: z.object({
-    soilMoistureLow: z.number(),
-    tempHigh: z.number(),
-  }),
+  rules: z.array(AlertRule),
 });
 export type NotificationPrefsType = z.infer<typeof NotificationPrefs>;
 export const NotificationPrefsResponseSchema = okResponse(NotificationPrefs);
 
-export const AlertType = z.enum(['SOIL_MOISTURE_LOW', 'TEMP_HIGH', 'SENSOR_STALE']);
+export const AlertType = z.enum([
+  'SOIL_MOISTURE_LOW',
+  'SOIL_MOISTURE_HIGH',
+  'TEMP_HIGH',
+  'TEMP_LOW',
+  'HUMIDITY_LOW',
+  'HUMIDITY_HIGH',
+  'LIGHT_LOW',
+  'LIGHT_HIGH',
+  'SENSOR_STALE',
+]);
 export type AlertType = z.infer<typeof AlertType>;
 
 export const AlertSeverity = z.enum(['info', 'warn', 'critical']);

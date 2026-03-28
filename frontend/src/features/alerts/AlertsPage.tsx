@@ -1,3 +1,4 @@
+import { Badge, Button } from 'flowbite-react'
 import { useAlerts } from './AlertsProvider'
 import type { Alert } from './api'
 import { InternalLink } from '../../shared/ui/InternalLink'
@@ -30,7 +31,7 @@ const severityConfig = (severity: Alert['severity']) => {
     case 'critical':
       return {
         borderColor: 'rgba(244,63,94,0.4)',
-        pillClass: 'bg-rose-900/50 text-rose-300',
+        badgeColor: 'failure' as const,
         iconBg: '#7f1d1d',
         iconStroke: '#fb7185',
         label: 'Critical',
@@ -38,7 +39,7 @@ const severityConfig = (severity: Alert['severity']) => {
     case 'warn':
       return {
         borderColor: 'rgba(245,158,11,0.4)',
-        pillClass: 'bg-amber-900/50 text-amber-300',
+        badgeColor: 'warning' as const,
         iconBg: '#78350f',
         iconStroke: '#fbbf24',
         label: 'Warning',
@@ -46,7 +47,7 @@ const severityConfig = (severity: Alert['severity']) => {
     default:
       return {
         borderColor: 'rgba(56,189,248,0.4)',
-        pillClass: 'bg-sky-900/50 text-sky-300',
+        badgeColor: 'info' as const,
         iconBg: '#0c4a6e',
         iconStroke: '#7dd3fc',
         label: 'Info',
@@ -80,9 +81,7 @@ const AlertCard = ({ alert }: { alert: Alert }) => {
             <span className="text-sm font-semibold text-slate-100">
               {alert.type.replace(/_/g, ' ').toLowerCase()}
             </span>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.pillClass}`}>
-              {s.label}
-            </span>
+            <Badge color={s.badgeColor} size="sm">{s.label}</Badge>
           </div>
           <p className="mt-1 text-sm text-slate-300">{alert.message}</p>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400">
@@ -128,12 +127,9 @@ const AlertsPage = () => {
           <span className="text-xs text-slate-500">
             Last checked: {formatLastChecked(lastFetchedAt)}
           </span>
-          <button
-            onClick={() => refresh()}
-            className="rounded-lg border border-[#22324a] bg-[#1a2740] px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-[#2d3f5d] hover:bg-[#1f2f4d]"
-          >
+          <Button color="gray" size="sm" onClick={() => refresh()}>
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -145,20 +141,14 @@ const AlertsPage = () => {
           {active.length > 0 ? (
             <div className="flex gap-2">
               {criticalCount > 0 && (
-                <span className="rounded-full bg-rose-900/50 px-2.5 py-0.5 text-xs font-semibold text-rose-300">
-                  {criticalCount} critical
-                </span>
+                <Badge color="failure">{criticalCount} critical</Badge>
               )}
               {warnCount > 0 && (
-                <span className="rounded-full bg-amber-900/50 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
-                  {warnCount} warning{warnCount > 1 ? 's' : ''}
-                </span>
+                <Badge color="warning">{warnCount} warning{warnCount > 1 ? 's' : ''}</Badge>
               )}
             </div>
           ) : (
-            <span className="rounded-full bg-emerald-900/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-              0 alerts
-            </span>
+            <Badge color="success">0 alerts</Badge>
           )}
         </div>
 
