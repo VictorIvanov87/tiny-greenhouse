@@ -1,20 +1,14 @@
 import { Button } from 'flowbite-react'
 import { Link } from 'react-router-dom'
 import { useAlerts } from '../../alerts/AlertsProvider'
-import { ackAlert } from '../../alerts/api'
 
 export const AlertBanner = () => {
-  const { active, refresh } = useAlerts()
+  const { active } = useAlerts()
   const criticals = active.filter((a) => a.severity === 'critical')
 
   if (criticals.length === 0) return null
 
   const first = criticals[0]
-
-  const handleAck = async () => {
-    await ackAlert(first.id)
-    await refresh()
-  }
 
   return (
     <div
@@ -47,16 +41,11 @@ export const AlertBanner = () => {
           — {first.message}
         </span>
       </div>
-      <div className="flex shrink-0 gap-2">
-        <Button size="xs" color="failure" onClick={handleAck}>
-          Acknowledge
+      <Link to="/alerts">
+        <Button size="xs" color="dark">
+          View all
         </Button>
-        <Link to="/alerts">
-          <Button size="xs" color="dark">
-            View all
-          </Button>
-        </Link>
-      </div>
+      </Link>
     </div>
   )
 }

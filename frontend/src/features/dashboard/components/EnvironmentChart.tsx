@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Card } from 'flowbite-react'
 import {
   Area,
   AreaChart,
@@ -9,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { TimeWindowToggle } from '../../../shared/ui/TimeWindowToggle'
 import { bucketByMinute, sortByTimestamp, type WindowKey } from '../../telemetry/transforms'
 import { useTelemetryQuery } from '../../telemetry/api'
 
@@ -28,8 +30,6 @@ const DEFAULT_THRESHOLDS: Thresholds = {
   soil: { low: 20 },
 }
 
-const WINDOW_OPTIONS: WindowKey[] = ['2h', 'today', '7d']
-const WINDOW_LABELS: Record<WindowKey, string> = { '2h': '2 h', today: 'Today', '7d': '7 d' }
 
 const formatTimeTick = (value: number) =>
   new Date(value).toLocaleTimeString([], {
@@ -118,7 +118,7 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
       unit: '°C',
       stroke: '#f97316',
       fill: 'rgba(249,115,22,0.1)',
-      domain: ['auto', 'auto'],
+      domain: [t.temp.low - 4, t.temp.high + 4],
       thresholds: [
         { value: t.temp.low, stroke: '#f97316' },
         { value: t.temp.high, stroke: '#f97316' },
@@ -153,7 +153,7 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
       unit: ' lux',
       stroke: '#eab308',
       fill: 'rgba(234,179,8,0.1)',
-      domain: ['auto', 'auto'],
+      domain: [0, 'auto'],
     },
   ]
 
@@ -170,48 +170,22 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
   const overlayMessage = loading ? 'Loading…' : fetchError ? `Error: ${fetchError}` : samples.length === 0 ? 'No data' : null
 
   return (
-    <div className="space-y-4">
+    <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
       {/* Header row */}
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm font-semibold text-slate-100">Environment trends</p>
 
-        {/* Time window toggle */}
-        <div
-          className="relative inline-flex rounded-lg p-0.5"
-          style={{ backgroundColor: '#1e293b' }}
-          role="group"
-          aria-label="Time window"
-        >
-          {WINDOW_OPTIONS.map((w) => {
-            const isActive = w === timeWindow
-            return (
-              <button
-                key={w}
-                type="button"
-                onClick={() => setTimeWindow(w)}
-                aria-pressed={isActive}
-                className="relative z-10 cursor-pointer rounded-md px-4 py-1.5 text-sm font-medium transition-all duration-200"
-                style={{
-                  color: isActive ? '#fff' : '#94a3b8',
-                  backgroundColor: isActive ? '#10b981' : 'transparent',
-                  boxShadow: isActive ? '0 2px 8px rgba(16,185,129,0.4)' : 'none',
-                }}
-              >
-                {WINDOW_LABELS[w]}
-              </button>
-            )
-          })}
-        </div>
+        <TimeWindowToggle value={timeWindow} onChange={setTimeWindow} />
       </div>
 
       {/* 2x2 chart grid */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1">
         {metrics.map((m) => {
           const chartData = dataForMetric(m.key)
           return (
             <div
               key={m.key}
-              className="rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-4 shadow-[0_12px_30px_rgba(8,20,38,0.25)]"
+              className="rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4"
             >
               <p className="mb-2 text-xs font-medium text-slate-400">{m.label}</p>
               <div className="relative" style={{ height: 160 }}>
@@ -279,6 +253,6 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
           )
         })}
       </div>
-    </div>
+    </Card>
   )
 }

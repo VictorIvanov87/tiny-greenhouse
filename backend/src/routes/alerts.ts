@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { AlertListResponseSchema } from '../lib/schemas';
 import { ok } from '../lib/respond';
 import {
-  acknowledgeAlert,
   getActiveAlerts,
   getAlertHistory,
   recomputeAlerts,
@@ -43,18 +42,6 @@ const alertsRoutes: FastifyPluginAsync = async (app) => {
     },
   );
 
-  app.post(
-    '/api/alerts/:id/ack',
-    {
-      preHandler: app.auth,
-    },
-    async (req) => {
-      const uid = req.user!.uid;
-      const params = z.object({ id: z.string() }).parse(req.params);
-      acknowledgeAlert(uid, params.id);
-      return ok({ id: params.id });
-    },
-  );
 };
 
 export default alertsRoutes;

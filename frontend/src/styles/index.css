@@ -86,6 +86,22 @@
 	transform: rotateY(180deg);
 }
 
+@keyframes shimmer {
+	0% {
+		background-position: -400px 0;
+	}
+	100% {
+		background-position: 400px 0;
+	}
+}
+
+.skeleton {
+	background: linear-gradient(90deg, #1f2a3d 25%, #2a3a52 50%, #1f2a3d 75%);
+	background-size: 800px 100%;
+	animation: shimmer 1.5s ease-in-out infinite;
+	border-radius: 0.5rem;
+}
+
 @keyframes toastPopIn {
 	0% {
 		opacity: 0;

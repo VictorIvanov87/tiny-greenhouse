@@ -1,7 +1,6 @@
-import { Badge, Button, Card } from 'flowbite-react'
-import { Link } from 'react-router-dom'
+import { Badge, Card } from 'flowbite-react'
+import { InternalLink } from '../../shared/ui/InternalLink'
 import { useAlerts } from './AlertsProvider'
-import { ackAlert } from './api'
 
 const severityColor: Record<string, string> = {
   info: 'info',
@@ -12,12 +11,7 @@ const severityColor: Record<string, string> = {
 const capitalize = (value: string) => value.replace(/_/g, ' ').toLowerCase()
 
 export const AlertPanel = () => {
-  const { active, refresh } = useAlerts()
-
-  const handleAck = async (id: string) => {
-    await ackAlert(id)
-    await refresh()
-  }
+  const { active } = useAlerts()
 
   return (
     <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
@@ -40,15 +34,8 @@ export const AlertPanel = () => {
                 <Badge color={severityColor[alert.severity]}>{alert.severity}</Badge>
               </div>
               <p className="mt-1 text-sm text-slate-300">{alert.message}</p>
-              <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
+              <div className="mt-2 text-xs text-slate-400">
                 <span>{new Date(alert.startedAt).toLocaleString()}</span>
-                {!alert.acknowledged ? (
-                  <Button size="xs" color="light" onClick={() => handleAck(alert.id)}>
-                    Acknowledge
-                  </Button>
-                ) : (
-                  <span className="text-emerald-400">Acknowledged</span>
-                )}
               </div>
             </li>
           ))}
@@ -56,18 +43,14 @@ export const AlertPanel = () => {
           {active.length > 5 ? (
             <p className="text-xs text-slate-400">
               {active.length - 5} more alerts.{' '}
-              <Link to="/alerts" className="text-emerald-400 underline">
-                View all
-              </Link>
+              <InternalLink to="/alerts">View all</InternalLink>
             </p>
           ) : null}
         </ul>
       )}
 
-      <div className="mt-4 text-right text-sm">
-        <Link to="/alerts" className="text-emerald-400 underline">
-          Go to alerts
-        </Link>
+      <div className="mt-4 text-right">
+        <InternalLink to="/alerts">Go to alerts</InternalLink>
       </div>
     </Card>
   )

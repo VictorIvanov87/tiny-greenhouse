@@ -32,7 +32,7 @@ const findActiveByType = (store: Store, type: AlertType) =>
 
 const nextId = (type: AlertType) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-const upsertAlert = (uid: string, alert: Omit<Alert, 'id' | 'acknowledged' | 'resolvedAt'>) => {
+const upsertAlert = (uid: string, alert: Omit<Alert, 'id' | 'resolvedAt'>) => {
   const store = getStore(uid);
   const existing = findActiveByType(store, alert.type);
 
@@ -47,7 +47,6 @@ const upsertAlert = (uid: string, alert: Omit<Alert, 'id' | 'acknowledged' | 're
 
   const record: Alert = {
     id: nextId(alert.type),
-    acknowledged: false,
     resolvedAt: undefined,
     ...alert,
   };
@@ -152,10 +151,3 @@ export const getAlertHistory = (uid: string, limit = 100): Alert[] => {
   return getStore(uid).history.slice(0, limit);
 };
 
-export const acknowledgeAlert = (uid: string, id: string) => {
-  const store = getStore(uid);
-  const alert = store.active.get(id);
-  if (alert) {
-    alert.acknowledged = true;
-  }
-};

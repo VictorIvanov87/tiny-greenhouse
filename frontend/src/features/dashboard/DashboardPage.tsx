@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Spinner } from 'flowbite-react';
+import { Alert, Button, Card } from 'flowbite-react';
 import { useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { AlertPanel } from '../alerts/AlertPanel';
@@ -7,6 +7,7 @@ import { sortByTimestamp } from '../telemetry/transforms';
 import { useTelemetryQuery } from '../telemetry/api';
 import type { SetupProfile } from '../setup/state';
 import { AlertBanner } from './components/AlertBanner';
+import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { EnvironmentChart } from './components/EnvironmentChart';
 import { RecentReadings } from './components/RecentReadings';
 import { SensorCard } from './components/SensorCard';
@@ -56,9 +57,7 @@ const DashboardPage = () => {
       />
 
       {loading ? (
-        <Card className="flex min-h-[280px] items-center justify-center rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
-          <Spinner size="xl" />
-        </Card>
+        <DashboardSkeleton />
       ) : error ? (
         <Card className="space-y-4 rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
           <Alert color="failure">
@@ -72,36 +71,39 @@ const DashboardPage = () => {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <SensorCard
-              label="Temperature"
-              unit="°C"
-              current={latestSample?.temperature ?? null}
-              low={18}
-              high={26}
-            />
-            <SensorCard
-              label="Humidity"
-              unit="%"
-              current={latestSample?.humidity ?? null}
-              low={40}
-              high={70}
-            />
-            <SensorCard
-              label="Soil moisture"
-              unit="%"
-              current={latestSample?.soilMoisture || null}
-              low={20}
-              high={80}
-            />
-            <SensorCard
-              label="Light"
-              unit=" lux"
-              current={latestSample?.lightLux || null}
-              low={100}
-              high={50000}
-            />
-          </div>
+          <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
+            <p className="text-sm font-semibold text-slate-100">Current readings</p>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <SensorCard
+                label="Temperature"
+                unit="°C"
+                current={latestSample?.temperature ?? null}
+                low={18}
+                high={26}
+              />
+              <SensorCard
+                label="Humidity"
+                unit="%"
+                current={latestSample?.humidity ?? null}
+                low={40}
+                high={70}
+              />
+              <SensorCard
+                label="Soil moisture"
+                unit="%"
+                current={latestSample?.soilMoisture || null}
+                low={20}
+                high={80}
+              />
+              <SensorCard
+                label="Light"
+                unit=" lux"
+                current={latestSample?.lightLux || null}
+                low={100}
+                high={50000}
+              />
+            </div>
+          </Card>
 
           <EnvironmentChart />
 

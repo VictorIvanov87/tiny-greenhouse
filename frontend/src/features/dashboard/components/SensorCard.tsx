@@ -1,4 +1,3 @@
-import { Card } from 'flowbite-react'
 
 type SensorCardProps = {
   label: string
@@ -145,8 +144,8 @@ export const SensorCard = ({
   const Icon = STATUS_ICON[status]
 
   return (
-    <Card
-      className={`flex flex-col rounded-3xl border ${BORDER_CLASS[status]} bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]`}
+    <div
+      className={`flex flex-col rounded-2xl border ${BORDER_CLASS[status]} bg-[#0b1220] p-4`}
     >
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-slate-100">{label}</p>
@@ -169,6 +168,6 @@ export const SensorCard = ({
           <span className="text-xs text-slate-500">Sensor offline or not connected</span>
         </div>
       )}
-    </Card>
+    </div>
   )
 }

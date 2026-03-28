@@ -10,7 +10,6 @@ export type Alert = {
   message: string
   startedAt: string
   resolvedAt?: string
-  acknowledged: boolean
   sensor?: string
   value?: number
   threshold?: number
@@ -41,7 +40,3 @@ export const getAlertHistory = async (limit = 100): Promise<Alert[]> => {
   return ensureOk(data).items
 }
 
-export const ackAlert = async (id: string): Promise<void> => {
-  const { data } = await api.post<Envelope<{ id: string }>>(`/alerts/${id}/ack`, {})
-  ensureOk(data)
-}

@@ -14,7 +14,7 @@ import {
   TableHeadCell,
   TableRow,
 } from 'flowbite-react'
-import { ackAlert, getActiveAlerts, getAlertHistory, type Alert } from './api'
+import { getActiveAlerts, getAlertHistory, type Alert } from './api'
 
 const severityColor: Record<Alert['severity'], string> = {
   info: 'info',
@@ -25,15 +25,7 @@ const severityColor: Record<Alert['severity'], string> = {
 const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—'
 
-const AlertsTable = ({
-  items,
-  isHistory = false,
-  onAck,
-}: {
-  items: Alert[]
-  isHistory?: boolean
-  onAck?: (id: string) => void
-}) => {
+const AlertsTable = ({ items }: { items: Alert[] }) => {
   if (!items.length) {
     return <p className="text-sm text-slate-500">No alerts to show.</p>
   }
@@ -48,7 +40,6 @@ const AlertsTable = ({
             <TableHeadCell>Message</TableHeadCell>
             <TableHeadCell>Started</TableHeadCell>
             <TableHeadCell>Resolved</TableHeadCell>
-            {!isHistory && <TableHeadCell>Acknowledge</TableHeadCell>}
           </TableRow>
         </TableHead>
         <TableBody className="divide-y">
@@ -63,17 +54,6 @@ const AlertsTable = ({
               <TableCell>{alert.message}</TableCell>
               <TableCell>{formatDate(alert.startedAt)}</TableCell>
               <TableCell>{formatDate(alert.resolvedAt)}</TableCell>
-              {!isHistory && (
-                <TableCell>
-                  {alert.acknowledged ? (
-                    <span className="text-sm text-emerald-600">Acknowledged</span>
-                  ) : (
-                    <Button size="sm" onClick={() => onAck?.(alert.id)}>
-                      Ack
-                    </Button>
-                  )}
-                </TableCell>
-              )}
             </TableRow>
           ))}
         </TableBody>
@@ -124,17 +104,12 @@ const AlertsPage = () => {
     loadHistory()
   }, [loadHistory])
 
-  const handleAck = async (id: string) => {
-    await ackAlert(id)
-    loadActive()
-  }
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">Alerts</h1>
         <p className="text-sm text-slate-400">
-          Monitor environment issues and acknowledge them as you act.
+          Monitor environment issues and sensor status.
         </p>
       </div>
 
@@ -152,7 +127,7 @@ const AlertsPage = () => {
         ) : error ? (
           <FlowbiteAlert color="failure">{error}</FlowbiteAlert>
         ) : (
-          <AlertsTable items={active} onAck={handleAck} />
+          <AlertsTable items={active} />
         )}
       </Card>
 
@@ -182,7 +157,7 @@ const AlertsPage = () => {
             <Spinner />
           </div>
         ) : (
-          <AlertsTable items={history} isHistory />
+          <AlertsTable items={history} />
         )}
       </Card>
     </div>

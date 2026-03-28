@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Toast, ToastToggle } from 'flowbite-react';
-import { ackAlert, getActiveAlerts, type Alert } from './api';
+import { getActiveAlerts, type Alert } from './api';
 import { useAuth } from '../auth/hooks/useAuth';
 
 type AlertsContextValue = {
@@ -96,16 +96,6 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
-  const handleAck = async (id: string) => {
-    try {
-      await ackAlert(id);
-      await refresh();
-      handleToastDismiss(id);
-    } catch (error) {
-      console.error('Failed to acknowledge alert', error);
-    }
-  };
-
   const value = useMemo<AlertsContextValue>(
     () => ({
       active,
@@ -177,10 +167,7 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
                     </Badge>
                   </div>
                   <p className="mt-1 text-sm text-slate-300">{alert.message}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Button size="xs" onClick={() => handleAck(alert.id)}>
-                      Acknowledge
-                    </Button>
+                  <div className="mt-2">
                     <Button size="xs" color="light" onClick={() => handleToastDismiss(alert.id)}>
                       Dismiss
                     </Button>

@@ -111,7 +111,6 @@ export const AlertSchema = z.object({
   message: z.string(),
   startedAt: ISODate,
   resolvedAt: ISODate.optional(),
-  acknowledged: z.boolean(),
   sensor: z.string().optional(),
   value: z.number().optional(),
   threshold: z.number().optional(),
