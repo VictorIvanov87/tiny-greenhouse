@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Button,
@@ -14,7 +14,7 @@ import {
   TableRow,
   TextInput,
 } from 'flowbite-react';
-import { getTelemetry, type TelemetrySample } from './api';
+import { useTelemetryQuery } from './api';
 
 type SortKey = 'timestamp' | 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
 type SortDirection = 'asc' | 'desc' | null;
@@ -39,45 +39,29 @@ const LIMIT_OPTIONS = ['25', '50', '100', '200'];
 const formatTimestamp = (value: string) =>
   new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
+const buildQueryParams = (state: FormState) => ({
+  limit: Number(state.limit) || 100,
+  from: state.from.trim() || undefined,
+  to: state.to.trim() || undefined,
+  sensor: state.sensor.trim() || undefined,
+});
+
 const SensorDataPage = () => {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [query, setQuery] = useState<FormState>(DEFAULT_FORM);
-  const [items, setItems] = useState<TelemetrySample[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('timestamp');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(25);
 
-  const buildQueryParams = (state: FormState) => ({
-    limit: Number(state.limit) || 100,
-    from: state.from.trim() || undefined,
-    to: state.to.trim() || undefined,
-    sensor: state.sensor.trim() || undefined,
-  });
+  const { data, isLoading: loading, error: queryError, refetch } = useTelemetryQuery(buildQueryParams(query));
+  const total = data?.total ?? 0;
+  const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
 
-  const fetchTelemetry = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await getTelemetry(buildQueryParams(query));
-      setItems(response.items ?? []);
-      setTotal(response.total ?? 0);
-      setPage(1);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load telemetry';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [query]);
-
+  // Reset to page 1 when data changes (new query)
   useEffect(() => {
-    fetchTelemetry();
-  }, [fetchTelemetry]);
+    setPage(1);
+  }, [data]);
 
   const toggleSort = (key: SortKey) => {
     if (key !== sortKey) {
@@ -100,12 +84,13 @@ const SensorDataPage = () => {
   };
 
   const sortedItems = useMemo(() => {
+    const items = data?.items ?? [];
     if (!sortDirection) {
       return items;
     }
 
-    const data = [...items];
-    data.sort((a, b) => {
+    const sorted = [...items];
+    sorted.sort((a, b) => {
       if (sortKey === 'timestamp') {
         const ta = Date.parse(a.timestamp);
         const tb = Date.parse(b.timestamp);
@@ -117,8 +102,8 @@ const SensorDataPage = () => {
       return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
     });
 
-    return data;
-  }, [items, sortDirection, sortKey]);
+    return sorted;
+  }, [data, sortDirection, sortKey]);
 
   const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -192,7 +177,7 @@ const SensorDataPage = () => {
           <Alert color="failure">
             <span className="font-semibold">Unable to load sensor data.</span> {error}
           </Alert>
-          <Button onClick={fetchTelemetry}>Retry</Button>
+          <Button onClick={() => refetch()}>Retry</Button>
         </Card>
       );
     }

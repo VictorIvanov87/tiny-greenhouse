@@ -8,6 +8,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Toast, ToastToggle } from 'flowbite-react';
 import { ackAlert, getActiveAlerts, type Alert } from './api';
 import { useAuth } from '../auth/hooks/useAuth';
@@ -26,75 +27,70 @@ type AlertsProviderProps = PropsWithChildren & {
 
 const POLL_INTERVAL = 30_000;
 
+const alertKeys = {
+  active: ['alerts', 'active'] as const,
+};
+
 export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsProviderProps) => {
-  const { user, loading } = useAuth();
-  const [active, setActive] = useState<Alert[]>([]);
-  const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   const [toasts, setToasts] = useState<Alert[]>([]);
   const seenIdsRef = useRef<Set<string>>(new Set());
-  const timerRef = useRef<number | null>(null);
-
   const initialFetchRef = useRef(true);
 
-  const refresh = useCallback(async () => {
-    if (!user) {
-      return;
-    }
-    try {
-      const alerts = await getActiveAlerts();
-      setActive(alerts);
-      setLastFetchedAt(new Date());
+  const {
+    data: active = [],
+    dataUpdatedAt,
+    refetch,
+  } = useQuery({
+    queryKey: alertKeys.active,
+    queryFn: getActiveAlerts,
+    enabled: !!user && !authLoading,
+    refetchInterval: intervalMs,
+    staleTime: 0,
+  });
 
-      const seen = seenIdsRef.current;
+  const lastFetchedAt = useMemo(
+    () => (dataUpdatedAt ? new Date(dataUpdatedAt) : null),
+    [dataUpdatedAt],
+  );
 
-      // On first fetch, mark all existing alerts as seen without showing toasts
-      if (initialFetchRef.current) {
-        initialFetchRef.current = false;
-        alerts.forEach((alert) => seen.add(alert.id));
-        return;
-      }
-
-      const newAlerts = alerts.filter((alert) => !seen.has(alert.id));
-
-      if (newAlerts.length > 0) {
-        newAlerts.forEach((alert) => seen.add(alert.id));
-        setToasts((prev) => [...prev, ...newAlerts]);
-      }
-
-      const activeIds = new Set(alerts.map((alert) => alert.id));
-      seenIdsRef.current = new Set([...seen].filter((id) => activeIds.has(id)));
-    } catch (error) {
-      console.error('Failed to fetch alerts', error);
-    }
-  }, [user]);
-
+  // Diff active alerts to show toasts for new ones
   useEffect(() => {
-    if (loading) {
+    if (!dataUpdatedAt) return;
+
+    const seen = seenIdsRef.current;
+
+    // On first fetch, mark all existing alerts as seen without showing toasts
+    if (initialFetchRef.current) {
+      initialFetchRef.current = false;
+      active.forEach((alert) => seen.add(alert.id));
       return;
     }
 
+    const newAlerts = active.filter((alert) => !seen.has(alert.id));
+    if (newAlerts.length > 0) {
+      newAlerts.forEach((alert) => seen.add(alert.id));
+      setToasts((prev) => [...prev, ...newAlerts]);
+    }
+
+    const activeIds = new Set(active.map((a) => a.id));
+    seenIdsRef.current = new Set([...seen].filter((id) => activeIds.has(id)));
+  }, [active, dataUpdatedAt]);
+
+  // Reset state when user logs out
+  useEffect(() => {
     if (!user) {
-      setActive([]);
-      setLastFetchedAt(null);
       setToasts([]);
       seenIdsRef.current = new Set();
-      if (timerRef.current) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
+      initialFetchRef.current = true;
+      queryClient.removeQueries({ queryKey: alertKeys.active });
     }
+  }, [user, queryClient]);
 
-    refresh();
-    timerRef.current = window.setInterval(refresh, intervalMs);
-
-    return () => {
-      if (timerRef.current) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [intervalMs, refresh, user, loading]);
+  const refresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const handleToastDismiss = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));

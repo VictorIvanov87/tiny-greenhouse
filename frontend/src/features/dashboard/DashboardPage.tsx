@@ -1,10 +1,10 @@
 import { Alert, Button, Card, Spinner } from 'flowbite-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { AlertPanel } from '../alerts/AlertPanel';
 import { useAlerts } from '../alerts/AlertsProvider';
 import { sortByTimestamp } from '../telemetry/transforms';
-import { getTelemetry, type TelemetrySample } from '../telemetry/api';
+import { useTelemetryQuery } from '../telemetry/api';
 import type { SetupProfile } from '../setup/state';
 import { AlertBanner } from './components/AlertBanner';
 import { EnvironmentChart } from './components/EnvironmentChart';
@@ -19,46 +19,11 @@ type DashboardContext = {
 const DashboardPage = () => {
   const { profile } = useOutletContext<DashboardContext>();
   const { active } = useAlerts();
-  const [samples, setSamples] = useState<TelemetrySample[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const isMounted = useRef(false);
 
-  const fetchTelemetry = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const { data, isLoading: loading, error: queryError, refetch } = useTelemetryQuery({ limit: 100 });
+  const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
 
-    try {
-      const result = await getTelemetry({ limit: 100 });
-
-      if (!isMounted.current) {
-        return;
-      }
-
-      setSamples(result.items);
-    } catch (err) {
-      if (!isMounted.current) {
-        return;
-      }
-
-      setError(err instanceof Error ? err.message : 'Failed to load telemetry');
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    isMounted.current = true;
-    fetchTelemetry();
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, [fetchTelemetry]);
-
-  const sortedSamples = useMemo(() => sortByTimestamp(samples), [samples]);
+  const sortedSamples = useMemo(() => sortByTimestamp(data?.items ?? []), [data]);
 
   const latestSample = sortedSamples.at(-1);
 
@@ -100,7 +65,7 @@ const DashboardPage = () => {
             <span className="font-medium">Unable to load telemetry.</span> {error}
           </Alert>
           <div>
-            <Button color="dark" onClick={() => fetchTelemetry()}>
+            <Button color="dark" onClick={() => refetch()}>
               Retry
             </Button>
           </div>

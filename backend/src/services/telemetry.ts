@@ -9,6 +9,28 @@ const TELEMETRY_COLLECTION = 'telemetry';
 const DEVICES_COLLECTION = 'devices';
 
 // ---------------------------------------------------------------------------
+// In-memory TTL cache for Firestore reads (follows crops.ts pattern)
+// ---------------------------------------------------------------------------
+
+const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = Number(process.env.TELEMETRY_CACHE_TTL_MS) || DEFAULT_CACHE_TTL_MS;
+
+type CachedQuery = { expiresAt: number; payload: TelemetryAcceptedSample[] };
+type CachedLatest = { expiresAt: number; payload: TelemetrySample | null };
+
+const queryCache = new Map<string, CachedQuery>();
+const latestCache = new Map<string, CachedLatest>();
+
+const invalidateCachesForOwner = (ownerId: string) => {
+  for (const key of queryCache.keys()) {
+    if (key.startsWith(`query:${ownerId}:`)) {
+      queryCache.delete(key);
+    }
+  }
+  latestCache.delete(`latest:${ownerId}`);
+};
+
+// ---------------------------------------------------------------------------
 // Firestore helpers
 // ---------------------------------------------------------------------------
 
@@ -105,6 +127,7 @@ export const insertTelemetry = async (
       receivedAt,
       expiresAt,
     });
+    invalidateCachesForOwner(ownership.ownerId);
     return;
   }
 
@@ -144,6 +167,16 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       .slice(0, opts.limit);
   }
 
+  // Cache check
+  const cacheKey = `query:${opts.ownerId ?? ''}:${opts.deviceId ?? ''}:${opts.from ?? ''}:${opts.to ?? ''}:${opts.limit}`;
+  const cached = queryCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.payload;
+  }
+  if (cached) {
+    queryCache.delete(cacheKey);
+  }
+
   let query = db().collection(TELEMETRY_COLLECTION).orderBy('receivedAt', 'desc');
 
   if (opts.ownerId) {
@@ -161,7 +194,7 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
 
   const snap = await query.limit(opts.limit).get();
 
-  return snap.docs.map((doc) => {
+  const payload = snap.docs.map((doc) => {
     const d = doc.data();
     return {
       deviceId: d.deviceId,
@@ -174,6 +207,9 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
     };
   });
+
+  queryCache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
+  return payload;
 };
 
 // ---------------------------------------------------------------------------
@@ -198,8 +234,19 @@ export const getTelemetrySamples = async (uid: string): Promise<TelemetrySample[
 
 export const getLatestTelemetry = async (uid: string): Promise<TelemetrySample | null> => {
   if (STORAGE_MODE === 'firestore') {
+    const latestKey = `latest:${uid}`;
+    const cached = latestCache.get(latestKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.payload;
+    }
+    if (cached) {
+      latestCache.delete(latestKey);
+    }
+
     const [latest] = await queryTelemetry({ ownerId: uid, limit: 1 });
-    return latest ? toTelemetrySample(latest) : null;
+    const payload = latest ? toTelemetrySample(latest) : null;
+    latestCache.set(latestKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
+    return payload;
   }
 
   const samples = await getTelemetrySamples(uid);

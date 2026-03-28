@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { appConstants } from '../../shared/config/constants'
 import { api } from '../../shared/hooks/useApi'
 
@@ -39,4 +40,20 @@ export const getTelemetry = async (params: GetTelemetryParams = {}): Promise<Tel
   }
 
   return data.data
+}
+
+// ---------------------------------------------------------------------------
+// React Query
+// ---------------------------------------------------------------------------
+
+export const telemetryKeys = {
+  all: ['telemetry'] as const,
+  list: (params: GetTelemetryParams) => ['telemetry', 'list', params] as const,
+}
+
+export const useTelemetryQuery = (params: GetTelemetryParams = {}) => {
+  return useQuery({
+    queryKey: telemetryKeys.list(params),
+    queryFn: () => getTelemetry(params),
+  })
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   CartesianGrid,
   ComposedChart,
@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import { ChartCard } from '../../../shared/ui/ChartCard'
 import { bucketByMinute, sortByTimestamp, type WindowKey } from '../../telemetry/transforms'
-import { getTelemetry, type TelemetrySample } from '../../telemetry/api'
+import { useTelemetryQuery } from '../../telemetry/api'
 
 type Thresholds = {
   temp: { low: number; high: number }
@@ -63,31 +63,21 @@ const windowFrom = (window: WindowKey): string => {
 
 export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
   const [timeWindow, setTimeWindow] = useState<WindowKey>('2h')
-  const [samples, setSamples] = useState<TelemetrySample[]>([])
-  const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    setFetchError(null)
-    getTelemetry({ from: windowFrom(timeWindow), limit: 2000 })
-      .then((result) => {
-        if (active) {
-          setSamples(sortByTimestamp(result.items))
-          setLoading(false)
-        }
-      })
-      .catch((err: unknown) => {
-        if (active) {
-          setFetchError(err instanceof Error ? err.message : String(err))
-          setLoading(false)
-        }
-      })
-    return () => {
-      active = false
-    }
-  }, [timeWindow])
+  // Stabilize `from` so the query key only changes when timeWindow changes
+  const from = useMemo(() => windowFrom(timeWindow), [timeWindow])
+
+  const { data, isLoading: loading, error: queryError } = useTelemetryQuery({
+    from,
+    limit: 2000,
+  })
+
+  const samples = useMemo(
+    () => sortByTimestamp(data?.items ?? []),
+    [data],
+  )
+
+  const fetchError = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null
 
   const t = { ...DEFAULT_THRESHOLDS, ...thresholds }
 
