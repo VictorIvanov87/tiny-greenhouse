@@ -9,7 +9,7 @@
 Adafruit_BME280 bme;
 
 static const uint8_t BH1750_ADDR = 0x23;
-static const unsigned long READ_INTERVAL_MS = 3000;
+static const unsigned long READ_INTERVAL_MS = 300000; // 5 minutes
 
 static const char* WIFI_SSID = "A1_A3D2";
 static const char* WIFI_PASSWORD = "61450653";
