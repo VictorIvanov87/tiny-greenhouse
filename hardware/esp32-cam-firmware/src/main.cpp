@@ -26,6 +26,10 @@ static const char* WIFI_PASSWORD = "61450653";
 static const char* UPLOAD_URL = "http://192.168.0.4:3000/api/camera/upload";
 static const char* DEVICE_ID = "esp32-cam-1";
 
+static const unsigned long SNAPSHOT_INTERVAL_MS = 3600000; // 1 hour
+
+unsigned long lastSnapshotMs = 0;
+
 static bool initCamera() {
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -48,20 +52,28 @@ static bool initCamera() {
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
-  config.frame_size = FRAMESIZE_XGA;
+  config.frame_size = FRAMESIZE_VGA;
   config.jpeg_quality = 8;
   config.fb_count = 1;
   config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
 
   esp_err_t err = esp_camera_init(&config);
+  if (err != ESP_OK) {
+    return false;
+  }
 
-  sensor_t * s = esp_camera_sensor_get();
-  s->set_brightness(s, 0);
-  s->set_contrast(s, 1);
-  s->set_saturation(s, 0);
-  s->set_whitebal(s, 1);
-  s->set_awb_gain(s, 1);
-  return err == ESP_OK;
+  sensor_t* s = esp_camera_sensor_get();
+  if (s) {
+    s->set_brightness(s, 0);
+    s->set_contrast(s, 1);
+    s->set_saturation(s, 0);
+    s->set_whitebal(s, 1);
+    s->set_awb_gain(s, 1);
+    s->set_exposure_ctrl(s, 1);
+    s->set_gain_ctrl(s, 1);
+  }
+
+  return true;
 }
 
 static void connectWifi() {
@@ -87,16 +99,28 @@ static void connectWifi() {
   Serial.println(WiFi.localIP());
 }
 
-static void uploadSnapshot() {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Wi-Fi not connected, upload skipped");
+static void ensureWifiConnected() {
+  if (WiFi.status() == WL_CONNECTED) {
     return;
+  }
+
+  Serial.println("Wi-Fi disconnected, reconnecting...");
+  WiFi.disconnect();
+  connectWifi();
+}
+
+static bool uploadSnapshotOnce() {
+  ensureWifiConnected();
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Upload skipped: Wi-Fi not connected");
+    return false;
   }
 
   camera_fb_t* fb = esp_camera_fb_get();
   if (!fb) {
     Serial.println("Capture failed");
-    return;
+    return false;
   }
 
   Serial.print("Snapshot captured, size_bytes=");
@@ -109,13 +133,17 @@ static void uploadSnapshot() {
   http.addHeader("x-uptime-ms", String(millis()));
 
   int httpCode = http.POST(fb->buf, fb->len);
+
   Serial.print("HTTP status: ");
   Serial.println(httpCode);
+
+  bool ok = false;
 
   if (httpCode > 0) {
     String response = http.getString();
     Serial.println("Response body:");
     Serial.println(response);
+    ok = (httpCode >= 200 && httpCode < 300);
   } else {
     Serial.print("HTTP POST failed: ");
     Serial.println(http.errorToString(httpCode));
@@ -123,6 +151,31 @@ static void uploadSnapshot() {
 
   http.end();
   esp_camera_fb_return(fb);
+
+  return ok;
+}
+
+static void uploadSnapshotWithRetry() {
+  const int maxAttempts = 3;
+
+  for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+    Serial.print("Snapshot upload attempt ");
+    Serial.print(attempt);
+    Serial.print("/");
+    Serial.println(maxAttempts);
+
+    if (uploadSnapshotOnce()) {
+      Serial.println("Snapshot upload OK");
+      return;
+    }
+
+    if (attempt < maxAttempts) {
+      Serial.println("Retrying in 3 seconds...");
+      delay(3000);
+    }
+  }
+
+  Serial.println("Snapshot upload failed after 3 attempts");
 }
 
 void setup() {
@@ -130,7 +183,7 @@ void setup() {
   delay(2000);
 
   Serial.println();
-  Serial.println("ESP32-CAM upload test starting...");
+  Serial.println("ESP32-CAM periodic upload mode starting...");
 
   if (!initCamera()) {
     Serial.println("Camera init failed");
@@ -143,14 +196,17 @@ void setup() {
 
   connectWifi();
 
-  Serial.println("Send 's' in Serial Monitor to capture and upload a snapshot.");
+  // Do first upload shortly after boot
+  lastSnapshotMs = millis() - SNAPSHOT_INTERVAL_MS;
 }
 
 void loop() {
-  if (Serial.available()) {
-    char cmd = Serial.read();
-    if (cmd == 's' || cmd == 'S') {
-      uploadSnapshot();
-    }
+  unsigned long now = millis();
+
+  if (now - lastSnapshotMs >= SNAPSHOT_INTERVAL_MS) {
+    lastSnapshotMs = now;
+    uploadSnapshotWithRetry();
   }
+
+  delay(100);
 }
