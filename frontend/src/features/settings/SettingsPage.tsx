@@ -75,7 +75,7 @@ const SettingsPage = () => {
     );
   } else if (config) {
     content = (
-      <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
         <div className="space-y-4">
           {error && (
             <Alert color="failure">
@@ -89,12 +89,23 @@ const SettingsPage = () => {
             disabled={saving}
           />
           <div className="flex flex-wrap gap-3 pt-4">
-            <Button onClick={handleSave} disabled={saving}>
-              Save changes
-            </Button>
-            <Button color="light" onClick={fetchConfig} disabled={saving}>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: '#10b981' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#059669'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; }}
+            >
+              {saving ? 'Saving...' : 'Save changes'}
+            </button>
+            <button
+              onClick={fetchConfig}
+              disabled={saving}
+              className="rounded-lg border border-[#22324a] bg-transparent px-5 py-2 text-sm text-slate-400 transition-colors hover:border-[#2d3f5d] hover:text-slate-200 disabled:opacity-50"
+            >
               Reset
-            </Button>
+            </button>
           </div>
         </div>
       </Card>
@@ -112,7 +123,7 @@ const SettingsPage = () => {
         </p>
       </div>
       {content}
-      <Card className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Need to rerun the setup wizard?</h2>
