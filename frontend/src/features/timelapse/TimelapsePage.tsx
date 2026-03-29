@@ -146,7 +146,7 @@ const TimelapsePage = () => {
           <Alert color="failure" className="mb-4">
             <span className="font-semibold">Unable to load timelapse.</span> {error}
           </Alert>
-          <Button onClick={fetchFrames}>Retry</Button>
+          <Button color="gray" outline={true} onClick={fetchFrames}>Retry</Button>
         </Card>
       )
     }
@@ -162,11 +162,12 @@ const TimelapsePage = () => {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {items.map((frame, index) => (
-          <button
+          <Button
             key={frame.id}
-            type="button"
+            color="gray"
+            outline={true}
             onClick={() => handleOpenModal(index)}
-            className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            className="group relative !overflow-hidden !rounded-2xl !bg-slate-50 !p-0 transition hover:-translate-y-1 hover:!shadow-lg"
           >
             <img
               src={frame.url}
@@ -178,7 +179,7 @@ const TimelapsePage = () => {
             <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs text-white">
               {new Date(frame.timestamp).toLocaleDateString()}
             </div>
-          </button>
+          </Button>
         ))}
       </div>
     )
@@ -207,19 +208,19 @@ const TimelapsePage = () => {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Button color="light" onClick={handlePrev}>
+              <Button color="gray" outline={true} onClick={handlePrev}>
                 Prev
               </Button>
               {playing ? (
-                <Button color="warning" onClick={() => setPlaying(false)}>
+                <Button color="gray" outline={true} onClick={() => setPlaying(false)}>
                   Pause
                 </Button>
               ) : (
-                <Button onClick={() => setPlaying(true)} disabled={items.length <= 1}>
+                <Button color="gray" outline={true} onClick={() => setPlaying(true)} disabled={items.length <= 1}>
                   Play
                 </Button>
               )}
-              <Button color="light" onClick={handleNext}>
+              <Button color="gray" outline={true} onClick={handleNext}>
                 Next
               </Button>
                 <div className="flex items-center gap-2">
@@ -246,7 +247,7 @@ const TimelapsePage = () => {
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button color="light" onClick={handleCloseModal}>
+            <Button color="gray" outline={true} onClick={handleCloseModal}>
               Close
             </Button>
           </ModalFooter>
@@ -299,7 +300,7 @@ const TimelapsePage = () => {
             />
           </div>
           <div className="flex items-end">
-            <Button onClick={handleRefresh} className="w-full">
+            <Button color="gray" outline={true} onClick={handleRefresh} className="w-full">
               Refresh
             </Button>
           </div>

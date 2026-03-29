@@ -127,7 +127,7 @@ const AlertsPage = () => {
           <span className="text-xs text-slate-500">
             Last checked: {formatLastChecked(lastFetchedAt)}
           </span>
-          <Button color="gray" size="sm" onClick={() => refresh()}>
+          <Button color="gray" outline={true} size="sm" onClick={() => refresh()}>
             Refresh
           </Button>
         </div>

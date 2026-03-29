@@ -22,7 +22,8 @@ export const TimeWindowToggle = ({ value, onChange }: TimeWindowToggleProps) => 
         <Button
           key={w}
           size="xs"
-          color={isActive ? 'success' : 'gray'}
+          color={isActive ? 'green' : 'gray'}
+          outline={true}
           onClick={() => onChange(w)}
           className="relative z-10 border-none shadow-none"
           style={{

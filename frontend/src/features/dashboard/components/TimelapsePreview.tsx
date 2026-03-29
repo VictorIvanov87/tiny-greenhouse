@@ -11,8 +11,9 @@ export const TimelapsePreview = () => {
           </p>
         </div>
         <Button
-          color="light"
-          className="w-full border-none bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-[0_14px_36px_rgba(14,70,155,0.4)] transition hover:from-sky-400 hover:to-indigo-400 focus-visible:ring-4 focus-visible:ring-indigo-500/40 md:w-auto"
+          color="gray"
+          outline={true}
+          className="w-full md:w-auto"
         >
           Manage cameras
         </Button>

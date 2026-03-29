@@ -425,7 +425,8 @@ const AssistantPage = () => {
                       <div className="mt-3 flex items-center gap-3 text-xs text-slate-300">
                         <Button
                           size="xs"
-                          color="light"
+                          color="gray"
+                          outline={true}
                           onClick={() => handleRetry(message.id)}
                           disabled={isSending}
                         >
@@ -438,13 +439,15 @@ const AssistantPage = () => {
                     message.retrieval &&
                     message.retrieval.length > 0 ? (
                       <div className="mt-4 space-y-2 border-t border-[#22324a] pt-4">
-                        <button
-                          type="button"
+                        <Button
+                          color="gray"
+                          outline={true}
+                          size="xs"
+                          className="!border-none !bg-transparent !p-0 !text-xs !font-medium !text-emerald-200 !shadow-none !underline !underline-offset-4"
                           onClick={() => toggleRetrieval(message.id)}
-                          className="text-xs font-medium text-emerald-200 underline underline-offset-4"
                         >
                           {expandedRetrieval.has(message.id) ? 'Hide retrieval' : 'Show retrieval'}
-                        </button>
+                        </Button>
                         {expandedRetrieval.has(message.id) ? (
                           <div className="space-y-3 rounded-2xl border border-[#22324a] bg-[#0f1729] p-3 text-xs text-slate-200">
                             {message.retrieval.map((chunk) => (
@@ -484,9 +487,11 @@ const AssistantPage = () => {
             className="border-[#22324a] bg-[#0f1729] text-slate-100 placeholder:text-slate-500"
           />
           <Button
+            color="green"
+            outline={true}
             disabled={!canSend}
             onClick={handleSend}
-            className="w-full border-none bg-gradient-to-r from-emerald-500 to-[#4FA071] text-white shadow-[0_14px_36px_rgba(31,111,74,0.4)] transition hover:from-emerald-400 hover:to-[#5db882] md:w-auto"
+            className="w-full md:w-auto"
           >
             {isSending ? 'Sending…' : 'Send'}
           </Button>

@@ -64,7 +64,7 @@ export const MiniAssist = ({ cropId, variety, disabled }: MiniAssistProps) => {
         placeholder="e.g. How many hours of light should seedlings get?"
         onChange={(event) => setMessage(event.target.value)}
       />
-      <Button onClick={handleSend} disabled={disabled || loading || !message.trim()}>
+      <Button color="green" outline={true} onClick={handleSend} disabled={disabled || loading || !message.trim()}>
         {loading ? 'Asking…' : 'Send'}
       </Button>
       {error ? (

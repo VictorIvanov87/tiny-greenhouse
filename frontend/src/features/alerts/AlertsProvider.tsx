@@ -168,7 +168,7 @@ export const AlertsProvider = ({ children, intervalMs = POLL_INTERVAL }: AlertsP
                   </div>
                   <p className="mt-1 text-sm text-slate-300">{alert.message}</p>
                   <div className="mt-2">
-                    <Button size="xs" color="light" onClick={() => handleToastDismiss(alert.id)}>
+                    <Button size="xs" color="gray" outline={true} onClick={() => handleToastDismiss(alert.id)}>
                       Dismiss
                     </Button>
                   </div>

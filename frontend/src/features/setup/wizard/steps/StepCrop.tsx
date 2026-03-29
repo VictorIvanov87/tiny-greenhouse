@@ -89,14 +89,15 @@ const StageList = ({ defaults }: { defaults: CropDefaults }) => {
 
   return (
     <div className="space-y-3">
-      <button
-        type="button"
+      <Button
+        color="gray"
+        outline={true}
+        className="flex w-full items-center justify-between !rounded-2xl"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-2 text-left text-sm font-medium text-slate-700 transition hover:border-emerald-200"
       >
         <span>Stages ({defaults.stages.length})</span>
         <span className="text-xs text-slate-500">{open ? 'Hide' : 'Show'}</span>
-      </button>
+      </Button>
       {open ? (
         <ListGroup className="rounded-2xl border border-slate-200">
           {defaults.stages.map((stage) => (
@@ -279,39 +280,45 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
             <div className="space-y-4">
               {CROP_LIBRARY.map((crop) => (
                 <div key={crop.id} className="space-y-2 rounded-2xl border border-slate-200 p-4">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectCrop(crop)}
-                    className={`flex w-full flex-col text-left ${
-                      crop.supported ? 'text-slate-900' : 'text-slate-400'
+                  <Button
+                    color="gray"
+                    outline={true}
+                    className={`w-full !justify-start !border-none !bg-transparent !p-0 !text-left !shadow-none ${
+                      crop.supported ? '!text-slate-900' : '!text-slate-400'
                     }`}
+                    onClick={() => handleSelectCrop(crop)}
                   >
-                    <span className="text-base font-semibold">
-                      {crop.label}{' '}
-                      {!crop.supported ? (
-                        <span className="text-xs font-medium text-amber-600">(coming soon)</span>
-                      ) : null}
+                    <span className="flex flex-col text-left">
+                      <span className="text-base font-semibold">
+                        {crop.label}{' '}
+                        {!crop.supported ? (
+                          <span className="text-xs font-medium text-amber-600">(coming soon)</span>
+                        ) : null}
+                      </span>
+                      <span className="text-sm text-slate-500">{crop.description}</span>
                     </span>
-                    <span className="text-sm text-slate-500">{crop.description}</span>
-                  </button>
+                  </Button>
                   <div className="flex flex-wrap gap-2">
                     {crop.varieties.map((variety) => {
                       const isSelected =
                         selection.cropId === crop.id && selection.variety === variety.id;
                       return (
-                        <button
+                        <Button
                           key={variety.id}
-                          type="button"
+                          pill
+                          size="xs"
+                          color="gray"
+                          outline={true}
                           onClick={() => handleSelectVariety(variety, crop)}
                           disabled={!variety.supported || !crop.supported}
-                          className={`rounded-full border px-3 py-1 text-sm transition ${
+                          className={`!transition ${
                             isSelected
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                              : 'border-slate-200 text-slate-600 hover:border-emerald-300'
-                          } ${!variety.supported ? 'opacity-50' : ''}`}
+                              ? '!border-emerald-500 !bg-emerald-50 !text-emerald-700'
+                              : '!border-slate-200 !text-slate-600 hover:!border-emerald-300'
+                          } ${!variety.supported ? '!opacity-50' : ''}`}
                         >
                           {variety.label}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -336,7 +343,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
               <Alert color="failure" className="text-sm">
                 <div className="flex flex-col gap-2">
                   <span>{status.error}</span>
-                  <Button color="light" size="xs" onClick={handleRetry}>
+                  <Button color="gray" outline={true} size="xs" onClick={handleRetry}>
                     Retry
                   </Button>
                 </div>

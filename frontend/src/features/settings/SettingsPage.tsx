@@ -68,7 +68,7 @@ const SettingsPage = () => {
         <Alert color="failure">
           <span className="font-semibold">Unable to load settings.</span> {error}
         </Alert>
-        <Button color="dark" onClick={fetchConfig}>
+        <Button color="gray" outline={true} onClick={fetchConfig}>
           Retry
         </Button>
       </div>
@@ -89,23 +89,12 @@ const SettingsPage = () => {
             disabled={saving}
           />
           <div className="flex flex-wrap gap-3 pt-4">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50"
-              style={{ backgroundColor: '#10b981' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#059669'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; }}
-            >
+            <Button color="green" outline={true} onClick={handleSave} disabled={saving}>
               {saving ? 'Saving...' : 'Save changes'}
-            </button>
-            <button
-              onClick={fetchConfig}
-              disabled={saving}
-              className="rounded-lg border border-[#22324a] bg-transparent px-5 py-2 text-sm text-slate-400 transition-colors hover:border-[#2d3f5d] hover:text-slate-200 disabled:opacity-50"
-            >
+            </Button>
+            <Button color="red" outline={true} onClick={fetchConfig} disabled={saving}>
               Reset
-            </button>
+            </Button>
           </div>
         </div>
       </Card>
@@ -126,12 +115,14 @@ const SettingsPage = () => {
       <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Need to rerun the setup wizard?</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Need to rerun the setup wizard?
+            </h2>
             <p className="text-sm text-slate-500">
               Restarting clears the local wizard progress and takes you back to the onboarding flow.
             </p>
           </div>
-          <Button color="light" onClick={() => navigate('/setup')}>
+          <Button color="gray" outline={true} onClick={() => navigate('/setup')}>
             Restart setup
           </Button>
         </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Card } from 'flowbite-react';
+import { Button, Card } from 'flowbite-react';
 import { getNotificationPrefs, updateNotificationPrefs } from './api';
 import type { AlertRule, AlertRuleCondition, AlertRuleMetric, NotificationPrefs } from './api';
 import { getCropDefaults } from '../setup/api';
@@ -36,10 +36,10 @@ const CONDITIONS: { value: AlertRuleCondition; label: string }[] = [
   { value: 'above', label: 'Above' },
 ];
 
-const metricUnit = (metric: AlertRuleMetric) =>
-  METRICS.find((m) => m.value === metric)?.unit ?? '';
+const metricUnit = (metric: AlertRuleMetric) => METRICS.find((m) => m.value === metric)?.unit ?? '';
 
-const newRuleId = () => crypto.randomUUID?.() ?? `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+const newRuleId = () =>
+  crypto.randomUUID?.() ?? `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
 // ---------------------------------------------------------------------------
 // Components
@@ -54,28 +54,31 @@ const Toggle = ({
   onChange: (v: boolean) => void;
   disabled?: boolean;
 }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    disabled={disabled}
-    onClick={() => onChange(!checked)}
-    className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50"
-    style={{ backgroundColor: checked ? '#10b981' : '#374151' }}
-  >
-    <span
-      className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200"
-      style={{ transform: checked ? 'translateX(1.25rem)' : 'translateX(0)' }}
+  <label className="inline-flex cursor-pointer items-center">
+    <input
+      type="checkbox"
+      className="peer sr-only"
+      checked={checked}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.checked)}
     />
-  </button>
+    <div className="peer relative h-6 w-11 rounded-full bg-gray-700 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-600 after:bg-white after:transition-all after:content-[''] peer-checked:bg-green-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-800 rtl:peer-checked:after:-translate-x-full" />
+  </label>
 );
 
-const getBoundsForMetric = (metric: AlertRuleMetric, bounds: SafetyBounds): BoundedMetric | null => {
+const getBoundsForMetric = (
+  metric: AlertRuleMetric,
+  bounds: SafetyBounds
+): BoundedMetric | null => {
   switch (metric) {
-    case 'temperature': return bounds.temperature_c ?? null;
-    case 'humidity': return bounds.humidity_pct ?? null;
-    case 'lightLux': return bounds.light_hours ?? null;
-    default: return null;
+    case 'temperature':
+      return bounds.temperature_c ?? null;
+    case 'humidity':
+      return bounds.humidity_pct ?? null;
+    case 'lightLux':
+      return bounds.light_hours ?? null;
+    default:
+      return null;
   }
 };
 
@@ -150,25 +153,30 @@ const RuleRow = ({
           <span className="text-xs text-slate-400">{unit}</span>
         </div>
 
-        <button
-          type="button"
+        <Button
           onClick={onDelete}
           disabled={disabled}
-          className="ml-auto cursor-pointer rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-[#1a2740] disabled:opacity-50"
-          style={{ color: undefined }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = '#f43f5e'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
+          color="gray"
+          outline={true}
+          className="ml-auto"
           title="Delete rule"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
-        </button>
+        </Button>
       </div>
 
       {range && (
         <p className="mt-2 text-xs text-slate-500">
-          Recommended range for {plantLabel} is: {range.min}–{range.max}{unit}
+          Recommended range for {plantLabel} is: {range.min}–{range.max}
+          {unit}
         </p>
       )}
     </div>
@@ -267,7 +275,9 @@ const NotificationsPage = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">Notification preferences</h1>
+          <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">
+            Notification preferences
+          </h1>
           <p className="text-sm text-slate-400">Configure how and when you get alerted.</p>
         </div>
         <Card className={CARD_CLASS}>
@@ -284,14 +294,16 @@ const NotificationsPage = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">Notification preferences</h1>
+          <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">
+            Notification preferences
+          </h1>
           <p className="text-sm text-slate-400">Configure how and when you get alerted.</p>
         </div>
         <Card className={CARD_CLASS}>
           <p className="text-sm text-rose-400">{error}</p>
-          <button onClick={fetchPrefs} className="mt-3 rounded-lg border border-[#22324a] bg-[#1a2740] px-3 py-1.5 text-sm text-slate-200 hover:border-[#2d3f5d]">
+          <Button color="gray" outline={true} onClick={fetchPrefs} className="mt-3">
             Retry
-          </button>
+          </Button>
         </Card>
       </div>
     );
@@ -302,7 +314,9 @@ const NotificationsPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">Notification preferences</h1>
+        <h1 className="text-2xl font-semibold text-slate-100 sm:text-3xl">
+          Notification preferences
+        </h1>
         <p className="text-sm text-slate-400">Configure how and when you get alerted.</p>
       </div>
 
@@ -313,7 +327,14 @@ const NotificationsPage = () => {
         </div>
       )}
       {error && prefs && (
-        <div className="rounded-xl px-4 py-3 text-sm" style={{ border: '1px solid rgba(244,63,94,0.3)', backgroundColor: 'rgba(136,19,55,0.3)', color: '#fda4af' }}>
+        <div
+          className="rounded-xl px-4 py-3 text-sm"
+          style={{
+            border: '1px solid rgba(244,63,94,0.3)',
+            backgroundColor: 'rgba(136,19,55,0.3)',
+            color: '#fda4af',
+          }}
+        >
           Save failed: {error}
         </div>
       )}
@@ -328,7 +349,11 @@ const NotificationsPage = () => {
               <p className="text-sm font-medium text-slate-100">Email alerts</p>
               <p className="text-xs text-slate-400">Send urgent events directly to your inbox.</p>
             </div>
-            <Toggle checked={prefs.email} onChange={(v) => setPrefs({ ...prefs, email: v })} disabled={saving} />
+            <Toggle
+              checked={prefs.email}
+              onChange={(v) => setPrefs({ ...prefs, email: v })}
+              disabled={saving}
+            />
           </div>
 
           <div className={`${INNER_CLASS} flex items-center justify-between gap-3`}>
@@ -339,7 +364,11 @@ const NotificationsPage = () => {
                 <span className="italic text-slate-500">Coming soon</span>
               </p>
             </div>
-            <Toggle checked={prefs.push} onChange={(v) => setPrefs({ ...prefs, push: v })} disabled={saving} />
+            <Toggle
+              checked={prefs.push}
+              onChange={(v) => setPrefs({ ...prefs, push: v })}
+              disabled={saving}
+            />
           </div>
         </div>
       </Card>
@@ -349,16 +378,13 @@ const NotificationsPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-slate-100">Alert rules</p>
-            <p className="text-xs text-slate-400">Get alerted when a sensor value crosses a threshold.</p>
+            <p className="text-xs text-slate-400">
+              Get alerted when a sensor value crosses a threshold.
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={addRule}
-            disabled={saving}
-            className="rounded-lg border border-[#22324a] bg-[#1a2740] px-3 py-1.5 text-sm text-slate-200 transition-colors hover:border-[#2d3f5d] hover:bg-[#1f2f4d] disabled:opacity-50"
-          >
+          <Button color="gray" outline={true} onClick={addRule} disabled={saving}>
             + Add rule
-          </button>
+          </Button>
         </div>
 
         {prefs.rules.length === 0 ? (
@@ -384,23 +410,12 @@ const NotificationsPage = () => {
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-3">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50"
-          style={{ backgroundColor: '#10b981' }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#059669'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; }}
-        >
+        <Button onClick={handleSave} color="green" outline={true} disabled={saving}>
           {saving ? 'Saving...' : 'Save preferences'}
-        </button>
-        <button
-          onClick={fetchPrefs}
-          disabled={saving}
-          className="rounded-lg border border-[#22324a] bg-transparent px-5 py-2 text-sm text-slate-400 transition-colors hover:border-[#2d3f5d] hover:text-slate-200 disabled:opacity-50"
-        >
+        </Button>
+        <Button color="red" outline={true} onClick={fetchPrefs} disabled={saving}>
           Reset
-        </button>
+        </Button>
       </div>
     </div>
   );

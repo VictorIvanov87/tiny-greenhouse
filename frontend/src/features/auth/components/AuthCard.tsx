@@ -188,11 +188,9 @@ export function AuthCard() {
           <Button
             type="submit"
             disabled={submitting || !signInPasswordValid}
-            color="light"
-            className="w-full !border-none !text-white !shadow-[0_20px_48px_rgba(31,111,74,0.32)] !transition !duration-200 hover:!-translate-y-0.5 hover:!shadow-[0_26px_60px_rgba(31,111,74,0.4)] hover:!bg-[color:var(--color-evergreen-dark)] focus-visible:!ring-4 focus-visible:!ring-[rgba(79,160,113,0.35)] focus-visible:!outline-none disabled:!cursor-not-allowed disabled:!opacity-80"
-            style={{
-              backgroundColor: palette.evergreen,
-            }}
+            color="green"
+            outline={true}
+            className="w-full"
           >
             {submitting && face === 'signIn' ? 'Signing in...' : 'Sign in and continue'}
           </Button>
@@ -207,8 +205,9 @@ export function AuthCard() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={submitting}
-            color="light"
-            className="w-full !border !border-[rgba(31,111,74,0.2)] !bg-white !text-[color:var(--color-soil)] !transition !duration-200 hover:!-translate-y-0.5 hover:!border-[rgba(31,111,74,0.35)] hover:!bg-[rgba(79,160,113,0.08)] focus-visible:!ring-4 focus-visible:!ring-[rgba(79,160,113,0.25)] focus-visible:!outline-none disabled:!cursor-not-allowed disabled:!opacity-80"
+            color="gray"
+            outline={true}
+            className="w-full"
           >
             {submitting && face === 'signIn' ? 'Connecting...' : 'Continue with Google'}
           </Button>
@@ -216,14 +215,16 @@ export function AuthCard() {
 
         <div className="text-center text-sm text-[color:var(--color-soil-70)]">
           Looking to join?
-          <button
-            type="button"
-            className="ml-2 font-semibold text-[color:var(--color-evergreen)] hover:underline"
+          <Button
+            color="gray"
+            outline={true}
+            size="xs"
+            className="ml-2 !inline !border-none !bg-transparent !p-0 !font-semibold !text-[color:var(--color-evergreen)] !shadow-none hover:!underline"
             onClick={() => handleFlip('signUp')}
             disabled={submitting}
           >
             Create an account
-          </button>
+          </Button>
         </div>
       </div>
     </Card>
@@ -311,11 +312,9 @@ export function AuthCard() {
           <Button
             type="submit"
             disabled={submitting || !signUpPasswordValid}
-            color="light"
-            className="w-full !border-none !text-white !shadow-[0_20px_48px_rgba(79,160,113,0.28)] !transition !duration-200 hover:!-translate-y-0.5 hover:!shadow-[0_26px_60px_rgba(79,160,113,0.35)] hover:!brightness-95 focus-visible:!ring-4 focus-visible:!ring-[rgba(79,160,113,0.35)] focus-visible:!outline-none disabled:!cursor-not-allowed disabled:!opacity-80"
-            style={{
-              backgroundColor: palette.moss,
-            }}
+            color="green"
+            outline={true}
+            className="w-full"
           >
             {submitting && face === 'signUp' ? 'Creating account...' : 'Create account'}
           </Button>
@@ -323,14 +322,16 @@ export function AuthCard() {
 
         <div className="text-center text-sm text-[color:var(--color-soil-70)]">
           Already have an account?
-          <button
-            type="button"
-            className="ml-2 font-semibold text-[color:var(--color-evergreen)] hover:underline"
+          <Button
+            color="gray"
+            outline={true}
+            size="xs"
+            className="ml-2 !inline !border-none !bg-transparent !p-0 !font-semibold !text-[color:var(--color-evergreen)] !shadow-none hover:!underline"
             onClick={() => handleFlip('signIn')}
             disabled={submitting}
           >
             Sign in instead
-          </button>
+          </Button>
         </div>
       </div>
     </Card>

@@ -27,7 +27,15 @@ const fieldStyle: React.CSSProperties = {
 };
 
 const DATEPICKER_THEME: DatepickerProps['theme'] = {
-  root: { input: { field: { input: { base: 'block w-full border disabled:cursor-not-allowed disabled:opacity-50 rounded-lg border-[#22324a] bg-[#0b1220] text-[#e2e8f0] text-sm focus:border-[#3b5998] focus:ring-0' } } } },
+  root: {
+    input: {
+      field: {
+        input: {
+          base: 'block w-full border disabled:cursor-not-allowed disabled:opacity-50 rounded-lg border-[#22324a] bg-[#0b1220] text-[#e2e8f0] text-sm focus:border-[#3b5998] focus:ring-0',
+        },
+      },
+    },
+  },
   popup: {
     root: { inner: 'inline-block rounded-lg p-4 shadow-lg bg-[#111c2d] border border-[#1f2a3d]' },
     header: {
@@ -40,15 +48,20 @@ const DATEPICKER_THEME: DatepickerProps['theme'] = {
     },
     footer: {
       button: {
-        today: 'bg-emerald-600 text-white hover:bg-emerald-700 w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
-        clear: 'border border-[#22324a] bg-[#1a2740] text-slate-200 hover:bg-[#1f2f4d] w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
+        today:
+          'bg-emerald-600 text-white hover:bg-emerald-700 w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
+        clear:
+          'border border-[#22324a] bg-[#1a2740] text-slate-200 hover:bg-[#1f2f4d] w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
       },
     },
     view: { base: 'p-1' },
   },
   views: {
     days: {
-      header: { base: 'mb-1 grid grid-cols-7', title: 'h-6 text-center text-sm font-medium leading-6 text-slate-500' },
+      header: {
+        base: 'mb-1 grid grid-cols-7',
+        title: 'h-6 text-center text-sm font-medium leading-6 text-slate-500',
+      },
       items: {
         base: 'grid w-64 grid-cols-7',
         item: {
@@ -113,19 +126,15 @@ const DarkDatepicker = (props: DatepickerProps) => {
     const headerText = headerBtn?.textContent?.trim() ?? '';
     const viewingCurrent =
       headerText.includes(String(todayYear)) &&
-      headerText.toLowerCase().includes(
-        today.toLocaleString('en', { month: 'long' }).toLowerCase(),
-      );
+      headerText
+        .toLowerCase()
+        .includes(today.toLocaleString('en', { month: 'long' }).toLowerCase());
 
     const buttons = dayGrid.querySelectorAll('button');
     buttons.forEach((btn) => {
       btn.style.removeProperty('box-shadow');
       btn.style.removeProperty('border');
-      if (
-        viewingCurrent &&
-        btn.textContent?.trim() === String(todayDate) &&
-        !btn.disabled
-      ) {
+      if (viewingCurrent && btn.textContent?.trim() === String(todayDate) && !btn.disabled) {
         // Only match the first occurrence that is within the current month range
         // (buttons 0-13 are likely prev month overflow for months starting late in the week)
         const idx = Array.from(buttons).indexOf(btn);
@@ -155,7 +164,13 @@ const DarkDatepicker = (props: DatepickerProps) => {
   );
 };
 
-type SortKey = 'timestamp' | 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
+type SortKey =
+  | 'timestamp'
+  | 'temperature'
+  | 'humidity'
+  | 'soilMoisture'
+  | 'lightLux'
+  | 'pressureHpa';
 type SortDirection = 'asc' | 'desc' | null;
 
 type MetricKey = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
@@ -192,18 +207,24 @@ const RANGES = {
   pressureHpa: { low: 950, high: 1050 },
 };
 
-const isInRange = (value: number | null | undefined, key: keyof typeof RANGES): 'ok' | 'warn' | null => {
+const isInRange = (
+  value: number | null | undefined,
+  key: keyof typeof RANGES
+): 'ok' | 'warn' | null => {
   if (value == null) return null;
   const { low, high } = RANGES[key];
   return value >= low && value <= high ? 'ok' : 'warn';
 };
 
 const VALUE_COLOR = {
-  ok: '#34d399',   // emerald-400
+  ok: '#34d399', // emerald-400
   warn: '#fb7185', // rose-400
 };
 
-const valueStyle = (value: number | null | undefined, key: keyof typeof RANGES): React.CSSProperties => {
+const valueStyle = (
+  value: number | null | undefined,
+  key: keyof typeof RANGES
+): React.CSSProperties => {
   const status = isInRange(value, key);
   return { color: status ? VALUE_COLOR[status] : '#94a3b8' };
 };
@@ -244,9 +265,15 @@ const SensorDataPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(25);
 
-  const { data, isLoading: loading, error: queryError, refetch } = useTelemetryQuery(buildQueryParams(query));
+  const {
+    data,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useTelemetryQuery(buildQueryParams(query));
   const total = data?.total ?? 0;
-  const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
+  const error =
+    queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
 
   const showColumn = (key: MetricKey) => !form.metric || form.metric === key;
 
@@ -336,7 +363,8 @@ const SensorDataPage = () => {
         if (showColumn('humidity')) cells.push(row.humidity.toString());
         if (showColumn('soilMoisture')) cells.push(row.soilMoisture.toString());
         if (showColumn('lightLux')) cells.push(row.lightLux != null ? row.lightLux.toString() : '');
-        if (showColumn('pressureHpa')) cells.push(row.pressureHpa != null ? row.pressureHpa.toString() : '');
+        if (showColumn('pressureHpa'))
+          cells.push(row.pressureHpa != null ? row.pressureHpa.toString() : '');
         return cells;
       }),
     ];
@@ -376,14 +404,19 @@ const SensorDataPage = () => {
           <Alert color="failure">
             <span className="font-semibold">Unable to load sensor data.</span> {error}
           </Alert>
-          <Button onClick={() => refetch()}>Retry</Button>
+          <Button color="gray" outline={true} onClick={() => refetch()}>
+            Retry
+          </Button>
         </Card>
       );
     }
 
     if (!sortedItems.length) {
       return (
-        <Alert color="info" className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-300">
+        <Alert
+          color="info"
+          className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-300"
+        >
           No telemetry samples match the selected filters. Try adjusting the date range.
         </Alert>
       );
@@ -417,7 +450,7 @@ const SensorDataPage = () => {
                 </option>
               ))}
             </Select>
-            <Button color="gray" size="xs" onClick={handleExportCsv}>
+            <Button color="gray" outline={true} onClick={handleExportCsv}>
               Export CSV
             </Button>
           </div>
@@ -428,67 +461,73 @@ const SensorDataPage = () => {
             <TableHead>
               <TableRow>
                 <TableHeadCell>
-                  <button
-                    type="button"
-                    className="flex items-center text-left text-sm font-semibold"
+                  <Button
+                    color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
                     onClick={() => toggleSort('timestamp')}
                   >
-                    Time {renderSortIndicator('timestamp')}
-                  </button>
+                    <span className="flex items-center text-sm font-semibold">
+                      Time {renderSortIndicator('timestamp')}
+                    </span>
+                  </Button>
                 </TableHeadCell>
                 {showColumn('temperature') && (
                   <TableHeadCell>
-                    <button
-                      type="button"
-                      className="flex items-center text-left text-sm font-semibold"
+                    <Button
+                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('temperature')}
                     >
-                      Temperature (°C) {renderSortIndicator('temperature')}
-                    </button>
+                      <span className="flex items-center text-sm font-semibold">
+                        Temperature (°C) {renderSortIndicator('temperature')}
+                      </span>
+                    </Button>
                   </TableHeadCell>
                 )}
                 {showColumn('humidity') && (
                   <TableHeadCell>
-                    <button
-                      type="button"
-                      className="flex items-center text-left text-sm font-semibold"
+                    <Button
+                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('humidity')}
                     >
-                      Humidity (%) {renderSortIndicator('humidity')}
-                    </button>
+                      <span className="flex items-center text-sm font-semibold">
+                        Humidity (%) {renderSortIndicator('humidity')}
+                      </span>
+                    </Button>
                   </TableHeadCell>
                 )}
                 {showColumn('soilMoisture') && (
                   <TableHeadCell>
-                    <button
-                      type="button"
-                      className="flex items-center text-left text-sm font-semibold"
+                    <Button
+                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('soilMoisture')}
                     >
-                      Soil moisture (%) {renderSortIndicator('soilMoisture')}
-                    </button>
+                      <span className="flex items-center text-sm font-semibold">
+                        Soil moisture (%) {renderSortIndicator('soilMoisture')}
+                      </span>
+                    </Button>
                   </TableHeadCell>
                 )}
                 {showColumn('lightLux') && (
                   <TableHeadCell>
-                    <button
-                      type="button"
-                      className="flex items-center text-left text-sm font-semibold"
+                    <Button
+                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('lightLux')}
                     >
-                      Light (lux) {renderSortIndicator('lightLux')}
-                    </button>
+                      <span className="flex items-center text-sm font-semibold">
+                        Light (lux) {renderSortIndicator('lightLux')}
+                      </span>
+                    </Button>
                   </TableHeadCell>
                 )}
                 {showColumn('pressureHpa') && (
                   <TableHeadCell>
-                    <button
-                      type="button"
-                      className="flex items-center text-left text-sm font-semibold"
+                    <Button
+                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('pressureHpa')}
                     >
-                      Pressure (hPa) {renderSortIndicator('pressureHpa')}
-                    </button>
+                      <span className="flex items-center text-sm font-semibold">
+                        Pressure (hPa) {renderSortIndicator('pressureHpa')}
+                      </span>
+                    </Button>
                   </TableHeadCell>
                 )}
               </TableRow>
@@ -499,11 +538,31 @@ const SensorDataPage = () => {
                   <TableCell className="whitespace-nowrap font-medium text-slate-100">
                     {formatTimestamp(item.timestamp)}
                   </TableCell>
-                  {showColumn('temperature') && <TableCell style={valueStyle(item.temperature, 'temperature')}>{item.temperature.toFixed(1)}</TableCell>}
-                  {showColumn('humidity') && <TableCell style={valueStyle(item.humidity, 'humidity')}>{item.humidity.toFixed(1)}</TableCell>}
-                  {showColumn('soilMoisture') && <TableCell style={valueStyle(item.soilMoisture, 'soilMoisture')}>{item.soilMoisture.toFixed(1)}</TableCell>}
-                  {showColumn('lightLux') && <TableCell style={valueStyle(item.lightLux, 'lightLux')}>{item.lightLux != null ? item.lightLux.toFixed(1) : '—'}</TableCell>}
-                  {showColumn('pressureHpa') && <TableCell style={valueStyle(item.pressureHpa, 'pressureHpa')}>{item.pressureHpa != null ? item.pressureHpa.toFixed(1) : '—'}</TableCell>}
+                  {showColumn('temperature') && (
+                    <TableCell style={valueStyle(item.temperature, 'temperature')}>
+                      {item.temperature.toFixed(1)}
+                    </TableCell>
+                  )}
+                  {showColumn('humidity') && (
+                    <TableCell style={valueStyle(item.humidity, 'humidity')}>
+                      {item.humidity.toFixed(1)}
+                    </TableCell>
+                  )}
+                  {showColumn('soilMoisture') && (
+                    <TableCell style={valueStyle(item.soilMoisture, 'soilMoisture')}>
+                      {item.soilMoisture.toFixed(1)}
+                    </TableCell>
+                  )}
+                  {showColumn('lightLux') && (
+                    <TableCell style={valueStyle(item.lightLux, 'lightLux')}>
+                      {item.lightLux != null ? item.lightLux.toFixed(1) : '—'}
+                    </TableCell>
+                  )}
+                  {showColumn('pressureHpa') && (
+                    <TableCell style={valueStyle(item.pressureHpa, 'pressureHpa')}>
+                      {item.pressureHpa != null ? item.pressureHpa.toFixed(1) : '—'}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -517,7 +576,7 @@ const SensorDataPage = () => {
           <div className="flex gap-2">
             <Button
               color="gray"
-              size="sm"
+              outline={true}
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
@@ -525,7 +584,7 @@ const SensorDataPage = () => {
             </Button>
             <Button
               color="gray"
-              size="sm"
+              outline={true}
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
             >
@@ -550,50 +609,55 @@ const SensorDataPage = () => {
         <p className="text-sm font-semibold text-slate-100">Filters</p>
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-0 flex-1">
-            <Label htmlFor="from" className="mb-1 text-xs text-slate-400">From</Label>
+            <Label htmlFor="from" className="mb-1 text-xs text-slate-400">
+              From
+            </Label>
             <DarkDatepicker
               id="from"
               value={parseDate(form.from)}
-              onChange={(date) => setForm((prev) => ({ ...prev, from: date ? dateToLocal(date) : '' }))}
+              onChange={(date) =>
+                setForm((prev) => ({ ...prev, from: date ? dateToLocal(date) : '' }))
+              }
             />
           </div>
           <div className="min-w-0 flex-1">
-            <Label htmlFor="to" className="mb-1 text-xs text-slate-400">To</Label>
+            <Label htmlFor="to" className="mb-1 text-xs text-slate-400">
+              To
+            </Label>
             <DarkDatepicker
               id="to"
               value={parseDate(form.to)}
-              onChange={(date) => setForm((prev) => ({ ...prev, to: date ? dateToLocal(date, true) : '' }))}
+              onChange={(date) =>
+                setForm((prev) => ({ ...prev, to: date ? dateToLocal(date, true) : '' }))
+              }
             />
           </div>
           <div className="w-44">
-            <Label htmlFor="metric" className="mb-1 text-xs text-slate-400">Metric</Label>
+            <Label htmlFor="metric" className="mb-1 text-xs text-slate-400">
+              Metric
+            </Label>
             <Select
               id="metric"
               value={form.metric}
-              onChange={(event) => setForm((prev) => ({ ...prev, metric: event.target.value as MetricKey | '' }))}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, metric: event.target.value as MetricKey | '' }))
+              }
               style={fieldStyle}
             >
               {METRIC_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </Select>
           </div>
           <div className="flex items-end gap-2">
-            <button
-              onClick={handleApplyFilters}
-              className="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors"
-              style={{ backgroundColor: '#10b981' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#059669'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; }}
-            >
+            <Button color="green" outline={true} onClick={handleApplyFilters}>
               Apply
-            </button>
-            <button
-              onClick={handleResetFilters}
-              className="rounded-lg border border-[#22324a] bg-transparent px-5 py-2 text-sm text-slate-400 transition-colors hover:border-[#2d3f5d] hover:text-slate-200"
-            >
+            </Button>
+            <Button color="red" outline={true} onClick={handleResetFilters}>
               Reset
-            </button>
+            </Button>
           </div>
         </div>
       </Card>

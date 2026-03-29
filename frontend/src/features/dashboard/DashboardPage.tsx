@@ -64,7 +64,7 @@ const DashboardPage = () => {
             <span className="font-medium">Unable to load telemetry.</span> {error}
           </Alert>
           <div>
-            <Button color="dark" onClick={() => refetch()}>
+            <Button color="gray" outline={true} onClick={() => refetch()}>
               Retry
             </Button>
           </div>

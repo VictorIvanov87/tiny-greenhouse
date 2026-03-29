@@ -227,18 +227,18 @@ const WizardViewport = () => {
                 <footer className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-sm text-slate-500">{stepLabel}</div>
                   <div className="flex flex-wrap gap-2">
-                    <Button color="light" onClick={handleCancel} disabled={saving}>
+                    <Button color="red" outline={true} onClick={handleCancel} disabled={saving}>
                       Cancel
                     </Button>
-                    <Button color="light" onClick={handleBack} disabled={step === 0 || saving}>
+                    <Button color="gray" outline={true} onClick={handleBack} disabled={step === 0 || saving}>
                       Back
                     </Button>
                     {!isLastStep ? (
-                      <Button onClick={handleNext} disabled={!canProceed || saving}>
+                      <Button color="green" outline={true} onClick={handleNext} disabled={!canProceed || saving}>
                         Next
                       </Button>
                     ) : (
-                      <Button onClick={handleFinish} disabled={saving || !canProceed}>
+                      <Button color="green" outline={true} onClick={handleFinish} disabled={saving || !canProceed}>
                         {saving ? 'Finishing…' : 'Confirm'}
                       </Button>
                     )}
@@ -259,10 +259,10 @@ const WizardViewport = () => {
               Your progress will be cleared and you'll be taken back to the dashboard.
             </p>
             <div className="flex justify-center gap-3 pt-2">
-              <Button color="failure" onClick={handleConfirmCancel}>
+              <Button color="red" outline={true} onClick={handleConfirmCancel}>
                 Yes, cancel setup
               </Button>
-              <Button color="light" onClick={() => setCancelModalOpen(false)}>
+              <Button color="gray" outline={true} onClick={() => setCancelModalOpen(false)}>
                 Keep going
               </Button>
             </div>

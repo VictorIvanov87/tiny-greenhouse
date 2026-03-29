@@ -38,7 +38,7 @@ export const AlertBanner = () => {
       }}
       additionalContent={
         <Link to="/alerts">
-          <Button size="xs" color="dark">
+          <Button size="xs" color="gray" outline={true}>
             View all
           </Button>
         </Link>
