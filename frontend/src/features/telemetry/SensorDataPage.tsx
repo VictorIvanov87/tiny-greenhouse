@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
   Card,
+  Datepicker,
   Label,
   Select,
   Spinner,
@@ -12,8 +13,8 @@ import {
   TableHead,
   TableHeadCell,
   TableRow,
-  TextInput,
 } from 'flowbite-react';
+import type { DatepickerProps } from 'flowbite-react';
 import { useTelemetryQuery } from './api';
 
 const CARD_CLASS =
@@ -25,25 +26,187 @@ const fieldStyle: React.CSSProperties = {
   borderColor: '#22324a',
 };
 
+const DATEPICKER_THEME: DatepickerProps['theme'] = {
+  root: { input: { field: { input: { base: 'block w-full border disabled:cursor-not-allowed disabled:opacity-50 rounded-lg border-[#22324a] bg-[#0b1220] text-[#e2e8f0] text-sm focus:border-[#3b5998] focus:ring-0' } } } },
+  popup: {
+    root: { inner: 'inline-block rounded-lg p-4 shadow-lg bg-[#111c2d] border border-[#1f2a3d]' },
+    header: {
+      title: 'px-2 py-3 text-center font-semibold text-slate-100',
+      selectors: {
+        button: {
+          base: 'rounded-lg px-5 py-2.5 text-sm font-semibold text-slate-200 bg-[#1a2740] hover:bg-[#1f2f4d] focus:outline-none focus:ring-2 focus:ring-[#22324a]',
+        },
+      },
+    },
+    footer: {
+      button: {
+        today: 'bg-emerald-600 text-white hover:bg-emerald-700 w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
+        clear: 'border border-[#22324a] bg-[#1a2740] text-slate-200 hover:bg-[#1f2f4d] w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
+      },
+    },
+    view: { base: 'p-1' },
+  },
+  views: {
+    days: {
+      header: { base: 'mb-1 grid grid-cols-7', title: 'h-6 text-center text-sm font-medium leading-6 text-slate-500' },
+      items: {
+        base: 'grid w-64 grid-cols-7',
+        item: {
+          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
+          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
+          disabled: 'text-slate-600 cursor-not-allowed',
+        },
+      },
+    },
+    months: {
+      items: {
+        base: 'grid w-64 grid-cols-4',
+        item: {
+          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
+          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
+          disabled: 'text-slate-600',
+        },
+      },
+    },
+    years: {
+      items: {
+        base: 'grid w-64 grid-cols-4',
+        item: {
+          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
+          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
+          disabled: 'text-slate-600',
+        },
+      },
+    },
+    decades: {
+      items: {
+        base: 'grid w-64 grid-cols-4',
+        item: {
+          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
+          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
+          disabled: 'text-slate-600',
+        },
+      },
+    },
+  },
+};
+
+/** Thin wrapper that highlights today's cell in the Flowbite Datepicker popup. */
+const DarkDatepicker = (props: DatepickerProps) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const highlightToday = useCallback(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    // Find the day-grid (last grid-cols-7 div — the first is the weekday header)
+    const grids = el.querySelectorAll<HTMLDivElement>('[class*="grid-cols-7"]');
+    const dayGrid = grids[grids.length - 1];
+    if (!dayGrid) return;
+
+    const today = new Date();
+    const todayDate = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+
+    // Read the header to check if we're viewing the current month
+    const headerBtn = el.querySelector<HTMLButtonElement>('[class*="view"]');
+    const headerText = headerBtn?.textContent?.trim() ?? '';
+    const viewingCurrent =
+      headerText.includes(String(todayYear)) &&
+      headerText.toLowerCase().includes(
+        today.toLocaleString('en', { month: 'long' }).toLowerCase(),
+      );
+
+    const buttons = dayGrid.querySelectorAll('button');
+    buttons.forEach((btn) => {
+      btn.style.removeProperty('box-shadow');
+      btn.style.removeProperty('border');
+      if (
+        viewingCurrent &&
+        btn.textContent?.trim() === String(todayDate) &&
+        !btn.disabled
+      ) {
+        // Only match the first occurrence that is within the current month range
+        // (buttons 0-13 are likely prev month overflow for months starting late in the week)
+        const idx = Array.from(buttons).indexOf(btn);
+        const dayNum = todayDate;
+        // If today is e.g. 28 and index < 14 it's probably prev-month overflow, skip
+        if (dayNum > 20 && idx < 7) return;
+        if (dayNum < 10 && idx > 34) return;
+        btn.style.boxShadow = 'inset 0 0 0 2px #10b981';
+        btn.style.border = 'none';
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const observer = new MutationObserver(highlightToday);
+    observer.observe(el, { childList: true, subtree: true, attributes: true });
+    highlightToday();
+    return () => observer.disconnect();
+  }, [highlightToday]);
+
+  return (
+    <div ref={wrapperRef}>
+      <Datepicker theme={DATEPICKER_THEME} showTodayButton showClearButton {...props} />
+    </div>
+  );
+};
+
 type SortKey = 'timestamp' | 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
 type SortDirection = 'asc' | 'desc' | null;
 
+type MetricKey = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
+
+const METRIC_OPTIONS: { value: MetricKey | ''; label: string }[] = [
+  { value: '', label: 'All metrics' },
+  { value: 'temperature', label: 'Temperature (°C)' },
+  { value: 'humidity', label: 'Humidity (%)' },
+  { value: 'soilMoisture', label: 'Soil moisture (%)' },
+  { value: 'lightLux', label: 'Light (lux)' },
+  { value: 'pressureHpa', label: 'Pressure (hPa)' },
+];
+
 type FormState = {
-  limit: string;
   from: string;
   to: string;
-  sensor: string;
+  metric: MetricKey | '';
 };
 
 const DEFAULT_FORM: FormState = {
-  limit: '100',
   from: '',
   to: '',
-  sensor: '',
+  metric: '',
 };
 
 const PAGE_SIZE_OPTIONS = [25, 50] as const;
-const LIMIT_OPTIONS = ['25', '50', '100', '200'];
+
+// Thresholds for color coding (must match dashboard components)
+const RANGES = {
+  temperature: { low: 18, high: 26 },
+  humidity: { low: 40, high: 70 },
+  soilMoisture: { low: 20, high: 80 },
+  lightLux: { low: 100, high: 50000 },
+  pressureHpa: { low: 950, high: 1050 },
+};
+
+const isInRange = (value: number | null | undefined, key: keyof typeof RANGES): 'ok' | 'warn' | null => {
+  if (value == null) return null;
+  const { low, high } = RANGES[key];
+  return value >= low && value <= high ? 'ok' : 'warn';
+};
+
+const VALUE_COLOR = {
+  ok: '#34d399',   // emerald-400
+  warn: '#fb7185', // rose-400
+};
+
+const valueStyle = (value: number | null | undefined, key: keyof typeof RANGES): React.CSSProperties => {
+  const status = isInRange(value, key);
+  return { color: status ? VALUE_COLOR[status] : '#94a3b8' };
+};
 
 const formatTimestamp = (value: string) =>
   new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
@@ -51,16 +214,26 @@ const formatTimestamp = (value: string) =>
 const toISOIfPresent = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
-  // datetime-local gives "YYYY-MM-DDTHH:mm", convert to ISO
   const date = new Date(trimmed);
   return Number.isNaN(date.getTime()) ? trimmed : date.toISOString();
 };
 
+const dateToLocal = (date: Date, endOfDay = false): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}T${endOfDay ? '23:59' : '00:00'}`;
+};
+
+const parseDate = (value: string): Date | undefined => {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+};
+
 const buildQueryParams = (state: FormState) => ({
-  limit: Number(state.limit) || 100,
   from: toISOIfPresent(state.from),
   to: toISOIfPresent(state.to),
-  sensor: state.sensor.trim() || undefined,
 });
 
 const SensorDataPage = () => {
@@ -75,11 +248,7 @@ const SensorDataPage = () => {
   const total = data?.total ?? 0;
   const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
 
-  const sensorOptions = useMemo(() => {
-    const items = data?.items ?? [];
-    const unique = new Set(items.map((i) => i.sensor).filter(Boolean) as string[]);
-    return [...unique].sort();
-  }, [data]);
+  const showColumn = (key: MetricKey) => !form.metric || form.metric === key;
 
   // Reset to page 1 when data changes (new query)
   useEffect(() => {
@@ -152,17 +321,24 @@ const SensorDataPage = () => {
       return;
     }
 
+    const header = ['timestamp'];
+    if (showColumn('temperature')) header.push('temperature');
+    if (showColumn('humidity')) header.push('humidity');
+    if (showColumn('soilMoisture')) header.push('soilMoisture');
+    if (showColumn('lightLux')) header.push('lightLux');
+    if (showColumn('pressureHpa')) header.push('pressureHpa');
+
     const rows = [
-      ['timestamp', 'temperature', 'humidity', 'soilMoisture', 'lightLux', 'pressureHpa', 'sensor'],
-      ...pageItems.map((row) => [
-        row.timestamp,
-        row.temperature.toString(),
-        row.humidity.toString(),
-        row.soilMoisture.toString(),
-        row.lightLux != null ? row.lightLux.toString() : '',
-        row.pressureHpa != null ? row.pressureHpa.toString() : '',
-        row.sensor ?? '',
-      ]),
+      header,
+      ...pageItems.map((row) => {
+        const cells = [row.timestamp];
+        if (showColumn('temperature')) cells.push(row.temperature.toString());
+        if (showColumn('humidity')) cells.push(row.humidity.toString());
+        if (showColumn('soilMoisture')) cells.push(row.soilMoisture.toString());
+        if (showColumn('lightLux')) cells.push(row.lightLux != null ? row.lightLux.toString() : '');
+        if (showColumn('pressureHpa')) cells.push(row.pressureHpa != null ? row.pressureHpa.toString() : '');
+        return cells;
+      }),
     ];
 
     const csv = rows.map((row) => row.join(',')).join('\n');
@@ -208,7 +384,7 @@ const SensorDataPage = () => {
     if (!sortedItems.length) {
       return (
         <Alert color="info" className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-300">
-          No telemetry samples match the selected filters. Try adjusting the time range or limit.
+          No telemetry samples match the selected filters. Try adjusting the date range.
         </Alert>
       );
     }
@@ -260,52 +436,61 @@ const SensorDataPage = () => {
                     Time {renderSortIndicator('timestamp')}
                   </button>
                 </TableHeadCell>
-                <TableHeadCell>
-                  <button
-                    type="button"
-                    className="flex items-center text-left text-sm font-semibold"
-                    onClick={() => toggleSort('temperature')}
-                  >
-                    Temperature (°C) {renderSortIndicator('temperature')}
-                  </button>
-                </TableHeadCell>
-                <TableHeadCell>
-                  <button
-                    type="button"
-                    className="flex items-center text-left text-sm font-semibold"
-                    onClick={() => toggleSort('humidity')}
-                  >
-                    Humidity (%) {renderSortIndicator('humidity')}
-                  </button>
-                </TableHeadCell>
-                <TableHeadCell>
-                  <button
-                    type="button"
-                    className="flex items-center text-left text-sm font-semibold"
-                    onClick={() => toggleSort('soilMoisture')}
-                  >
-                    Soil moisture (%) {renderSortIndicator('soilMoisture')}
-                  </button>
-                </TableHeadCell>
-                <TableHeadCell>
-                  <button
-                    type="button"
-                    className="flex items-center text-left text-sm font-semibold"
-                    onClick={() => toggleSort('lightLux')}
-                  >
-                    Light (lux) {renderSortIndicator('lightLux')}
-                  </button>
-                </TableHeadCell>
-                <TableHeadCell>
-                  <button
-                    type="button"
-                    className="flex items-center text-left text-sm font-semibold"
-                    onClick={() => toggleSort('pressureHpa')}
-                  >
-                    Pressure (hPa) {renderSortIndicator('pressureHpa')}
-                  </button>
-                </TableHeadCell>
-                <TableHeadCell>Sensor</TableHeadCell>
+                {showColumn('temperature') && (
+                  <TableHeadCell>
+                    <button
+                      type="button"
+                      className="flex items-center text-left text-sm font-semibold"
+                      onClick={() => toggleSort('temperature')}
+                    >
+                      Temperature (°C) {renderSortIndicator('temperature')}
+                    </button>
+                  </TableHeadCell>
+                )}
+                {showColumn('humidity') && (
+                  <TableHeadCell>
+                    <button
+                      type="button"
+                      className="flex items-center text-left text-sm font-semibold"
+                      onClick={() => toggleSort('humidity')}
+                    >
+                      Humidity (%) {renderSortIndicator('humidity')}
+                    </button>
+                  </TableHeadCell>
+                )}
+                {showColumn('soilMoisture') && (
+                  <TableHeadCell>
+                    <button
+                      type="button"
+                      className="flex items-center text-left text-sm font-semibold"
+                      onClick={() => toggleSort('soilMoisture')}
+                    >
+                      Soil moisture (%) {renderSortIndicator('soilMoisture')}
+                    </button>
+                  </TableHeadCell>
+                )}
+                {showColumn('lightLux') && (
+                  <TableHeadCell>
+                    <button
+                      type="button"
+                      className="flex items-center text-left text-sm font-semibold"
+                      onClick={() => toggleSort('lightLux')}
+                    >
+                      Light (lux) {renderSortIndicator('lightLux')}
+                    </button>
+                  </TableHeadCell>
+                )}
+                {showColumn('pressureHpa') && (
+                  <TableHeadCell>
+                    <button
+                      type="button"
+                      className="flex items-center text-left text-sm font-semibold"
+                      onClick={() => toggleSort('pressureHpa')}
+                    >
+                      Pressure (hPa) {renderSortIndicator('pressureHpa')}
+                    </button>
+                  </TableHeadCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody className="divide-y">
@@ -314,12 +499,11 @@ const SensorDataPage = () => {
                   <TableCell className="whitespace-nowrap font-medium text-slate-100">
                     {formatTimestamp(item.timestamp)}
                   </TableCell>
-                  <TableCell>{item.temperature.toFixed(1)}</TableCell>
-                  <TableCell>{item.humidity.toFixed(1)}</TableCell>
-                  <TableCell>{item.soilMoisture.toFixed(1)}</TableCell>
-                  <TableCell>{item.lightLux != null ? item.lightLux.toFixed(1) : '—'}</TableCell>
-                  <TableCell>{item.pressureHpa != null ? item.pressureHpa.toFixed(1) : '—'}</TableCell>
-                  <TableCell>{item.sensor ?? '—'}</TableCell>
+                  {showColumn('temperature') && <TableCell style={valueStyle(item.temperature, 'temperature')}>{item.temperature.toFixed(1)}</TableCell>}
+                  {showColumn('humidity') && <TableCell style={valueStyle(item.humidity, 'humidity')}>{item.humidity.toFixed(1)}</TableCell>}
+                  {showColumn('soilMoisture') && <TableCell style={valueStyle(item.soilMoisture, 'soilMoisture')}>{item.soilMoisture.toFixed(1)}</TableCell>}
+                  {showColumn('lightLux') && <TableCell style={valueStyle(item.lightLux, 'lightLux')}>{item.lightLux != null ? item.lightLux.toFixed(1) : '—'}</TableCell>}
+                  {showColumn('pressureHpa') && <TableCell style={valueStyle(item.pressureHpa, 'pressureHpa')}>{item.pressureHpa != null ? item.pressureHpa.toFixed(1) : '—'}</TableCell>}
                 </TableRow>
               ))}
             </TableBody>
@@ -365,62 +549,51 @@ const SensorDataPage = () => {
       <Card className={CARD_CLASS}>
         <p className="text-sm font-semibold text-slate-100">Filters</p>
         <div className="flex flex-wrap items-end gap-4">
-          <div className="w-24">
-            <Label htmlFor="limit" className="mb-1 text-xs text-slate-400">Limit</Label>
-            <Select
-              id="limit"
-              value={form.limit}
-              onChange={(event) => setForm((prev) => ({ ...prev, limit: event.target.value }))}
-              style={fieldStyle}
-            >
-              {LIMIT_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </Select>
-          </div>
           <div className="min-w-0 flex-1">
             <Label htmlFor="from" className="mb-1 text-xs text-slate-400">From</Label>
-            <TextInput
+            <DarkDatepicker
               id="from"
-              type="datetime-local"
-              value={form.from}
-              onChange={(event) => setForm((prev) => ({ ...prev, from: event.target.value }))}
-              style={fieldStyle}
+              value={parseDate(form.from)}
+              onChange={(date) => setForm((prev) => ({ ...prev, from: date ? dateToLocal(date) : '' }))}
             />
           </div>
           <div className="min-w-0 flex-1">
             <Label htmlFor="to" className="mb-1 text-xs text-slate-400">To</Label>
-            <TextInput
+            <DarkDatepicker
               id="to"
-              type="datetime-local"
-              value={form.to}
-              onChange={(event) => setForm((prev) => ({ ...prev, to: event.target.value }))}
-              style={fieldStyle}
+              value={parseDate(form.to)}
+              onChange={(date) => setForm((prev) => ({ ...prev, to: date ? dateToLocal(date, true) : '' }))}
             />
           </div>
-          <div className="w-36">
-            <Label htmlFor="sensor" className="mb-1 text-xs text-slate-400">Sensor</Label>
+          <div className="w-44">
+            <Label htmlFor="metric" className="mb-1 text-xs text-slate-400">Metric</Label>
             <Select
-              id="sensor"
-              value={form.sensor}
-              onChange={(event) => setForm((prev) => ({ ...prev, sensor: event.target.value }))}
+              id="metric"
+              value={form.metric}
+              onChange={(event) => setForm((prev) => ({ ...prev, metric: event.target.value as MetricKey | '' }))}
               style={fieldStyle}
             >
-              <option value="">All sensors</option>
-              {sensorOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
+              {METRIC_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </Select>
           </div>
           <div className="flex items-end gap-2">
-            <Button color="success" onClick={handleApplyFilters}>
+            <button
+              onClick={handleApplyFilters}
+              className="rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors"
+              style={{ backgroundColor: '#10b981' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#059669'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; }}
+            >
               Apply
-            </Button>
-            <Button color="gray" onClick={handleResetFilters}>
+            </button>
+            <button
+              onClick={handleResetFilters}
+              className="rounded-lg border border-[#22324a] bg-transparent px-5 py-2 text-sm text-slate-400 transition-colors hover:border-[#2d3f5d] hover:text-slate-200"
+            >
               Reset
-            </Button>
+            </button>
           </div>
         </div>
       </Card>

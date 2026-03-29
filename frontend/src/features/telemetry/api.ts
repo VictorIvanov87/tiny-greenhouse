@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { appConstants } from '../../shared/config/constants'
 import { api } from '../../shared/hooks/useApi'
 
 export type TelemetrySample = {
@@ -19,19 +18,15 @@ export type TelemetryList = {
 }
 
 export type GetTelemetryParams = {
-  limit?: number
   from?: string
   to?: string
-  sensor?: string
 }
 
 export const getTelemetry = async (params: GetTelemetryParams = {}): Promise<TelemetryList> => {
   const { data } = await api.get<{ ok: boolean; data: TelemetryList }>('/telemetry', {
     params: {
-      limit: params.limit ?? appConstants.TELEMETRY_DEFAULT_LIMIT,
       from: params.from,
       to: params.to,
-      sensor: params.sensor,
     },
   })
 
