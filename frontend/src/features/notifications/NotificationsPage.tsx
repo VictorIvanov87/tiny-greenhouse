@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Button, Card } from 'flowbite-react';
+import { Button, Card, Select, TextInput } from 'flowbite-react';
 import { getNotificationPrefs, updateNotificationPrefs } from './api';
 import type { AlertRule, AlertRuleCondition, AlertRuleMetric, NotificationPrefs } from './api';
 import { getCropDefaults } from '../setup/api';
@@ -11,12 +11,6 @@ type PageContext = { profile: SetupProfile };
 const CARD_CLASS =
   'rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]';
 const INNER_CLASS = 'rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4';
-
-const fieldStyle: React.CSSProperties = {
-  backgroundColor: '#0b1220',
-  color: '#e2e8f0',
-  borderColor: '#22324a',
-};
 
 type SafetyBounds = {
   temperature_c?: BoundedMetric;
@@ -110,36 +104,34 @@ const RuleRow = ({
           disabled={disabled}
         />
 
-        <select
+        <Select
           value={rule.metric}
           onChange={(e) => onChange({ ...rule, metric: e.target.value as AlertRuleMetric })}
           disabled={disabled}
-          className="w-36 rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[#3b5998]"
-          style={fieldStyle}
+          className="w-36"
         >
           {METRICS.map((m) => (
             <option key={m.value} value={m.value}>
               {m.label}
             </option>
           ))}
-        </select>
+        </Select>
 
-        <select
+        <Select
           value={rule.condition}
           onChange={(e) => onChange({ ...rule, condition: e.target.value as AlertRuleCondition })}
           disabled={disabled}
-          className="w-24 rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[#3b5998]"
-          style={fieldStyle}
+          className="w-24"
         >
           {CONDITIONS.map((c) => (
             <option key={c.value} value={c.value}>
               {c.label}
             </option>
           ))}
-        </select>
+        </Select>
 
         <div className="flex items-center gap-1.5">
-          <input
+          <TextInput
             type="number"
             value={rule.value}
             onChange={(e) => {
@@ -147,8 +139,7 @@ const RuleRow = ({
               if (!Number.isNaN(v)) onChange({ ...rule, value: v });
             }}
             disabled={disabled}
-            className="w-24 rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-[#3b5998]"
-            style={fieldStyle}
+            className="w-24"
           />
           <span className="text-xs text-slate-400">{unit}</span>
         </div>

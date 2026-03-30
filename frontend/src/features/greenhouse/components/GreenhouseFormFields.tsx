@@ -140,13 +140,12 @@ export const GreenhouseFormFields = ({
         </div>
         <div className="space-y-2">
           <Label htmlFor="greenhouse-timelapse-hour">Capture time</Label>
-          <input
+          <TextInput
             id="greenhouse-timelapse-hour"
             type="time"
             value={`${String(value.timelapse.hour).padStart(2, '0')}:00`}
             onChange={handleTimelapseTimeChange}
             disabled={disabled || !value.timelapse.enabled}
-            className="block w-full rounded-lg border border-gray-600 bg-gray-700 p-2.5 text-sm leading-none text-white focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>

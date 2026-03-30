@@ -393,8 +393,8 @@ const AssistantPage = () => {
                       {message.role === 'assistant' && message.status === 'pending'
                         ? 'Thinking...'
                         : message.role === 'assistant' && message.status === 'error'
-                        ? message.errorMessage ?? 'Assistant failed to reply.'
-                        : message.content}
+                          ? (message.errorMessage ?? 'Assistant failed to reply.')
+                          : message.content}
                     </div>
 
                     {message.role === 'assistant' && message.status === 'pending' ? (
@@ -478,13 +478,12 @@ const AssistantPage = () => {
             placeholder={
               greenhouseLoading
                 ? 'Loading greenhouse context...'
-                : 'Describe what you need and I’ll cite the docs that apply'
+                : 'Describe what you need and I will cite the docs that apply'
             }
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isSending || greenhouseLoading}
-            className="border-[#22324a] bg-[#0f1729] text-slate-100 placeholder:text-slate-500"
           />
           <Button
             color="green"

@@ -6,6 +6,7 @@ import {
   Label,
   ListGroup,
   ListGroupItem,
+  RangeSlider,
   TextInput,
   ToggleSwitch,
 } from 'flowbite-react';
@@ -190,9 +191,8 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
                 >
                   {(prefs.lightHours ?? 12).toFixed(0)}h
                 </div>
-                <input
+                <RangeSlider
                   id="light-hours"
-                  type="range"
                   min={6}
                   max={20}
                   value={prefs.lightHours ?? 12}
@@ -202,7 +202,6 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
                       lightStartHour: prefs.lightStartHour,
                     })
                   }
-                  className="w-full accent-emerald-500"
                 />
               </div>
               <div className="flex justify-between text-xs text-slate-500">
@@ -352,9 +351,8 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
                 >
                   {prefs.soilMoistureLowPct}%
                 </div>
-                <input
+                <RangeSlider
                   id="moisture-low"
-                  type="range"
                   min={20}
                   max={60}
                   step={1}
@@ -362,7 +360,6 @@ export const StepPrefs = ({ data, onChange }: StepProps) => {
                   onChange={(event) =>
                     updatePrefs({ soilMoistureLowPct: Number(event.target.value) })
                   }
-                  className="w-full accent-emerald-500"
                 />
               </div>
               <div className="flex justify-between text-xs text-slate-500">

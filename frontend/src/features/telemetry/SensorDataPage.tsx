@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Button,
@@ -14,155 +14,11 @@ import {
   TableHeadCell,
   TableRow,
 } from 'flowbite-react';
-import type { DatepickerProps } from 'flowbite-react';
 import { useTelemetryQuery } from './api';
 
 const CARD_CLASS =
   'rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]';
 
-const fieldStyle: React.CSSProperties = {
-  backgroundColor: '#0b1220',
-  color: '#e2e8f0',
-  borderColor: '#22324a',
-};
-
-const DATEPICKER_THEME: DatepickerProps['theme'] = {
-  root: {
-    input: {
-      field: {
-        input: {
-          base: 'block w-full border disabled:cursor-not-allowed disabled:opacity-50 rounded-lg border-[#22324a] bg-[#0b1220] text-[#e2e8f0] text-sm focus:border-[#3b5998] focus:ring-0',
-        },
-      },
-    },
-  },
-  popup: {
-    root: { inner: 'inline-block rounded-lg p-4 shadow-lg bg-[#111c2d] border border-[#1f2a3d]' },
-    header: {
-      title: 'px-2 py-3 text-center font-semibold text-slate-100',
-      selectors: {
-        button: {
-          base: 'rounded-lg px-5 py-2.5 text-sm font-semibold text-slate-200 bg-[#1a2740] hover:bg-[#1f2f4d] focus:outline-none focus:ring-2 focus:ring-[#22324a]',
-        },
-      },
-    },
-    footer: {
-      button: {
-        today:
-          'bg-emerald-600 text-white hover:bg-emerald-700 w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
-        clear:
-          'border border-[#22324a] bg-[#1a2740] text-slate-200 hover:bg-[#1f2f4d] w-full rounded-lg px-5 py-2 text-center text-sm font-medium',
-      },
-    },
-    view: { base: 'p-1' },
-  },
-  views: {
-    days: {
-      header: {
-        base: 'mb-1 grid grid-cols-7',
-        title: 'h-6 text-center text-sm font-medium leading-6 text-slate-500',
-      },
-      items: {
-        base: 'grid w-64 grid-cols-7',
-        item: {
-          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
-          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
-          disabled: 'text-slate-600 cursor-not-allowed',
-        },
-      },
-    },
-    months: {
-      items: {
-        base: 'grid w-64 grid-cols-4',
-        item: {
-          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
-          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
-          disabled: 'text-slate-600',
-        },
-      },
-    },
-    years: {
-      items: {
-        base: 'grid w-64 grid-cols-4',
-        item: {
-          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
-          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
-          disabled: 'text-slate-600',
-        },
-      },
-    },
-    decades: {
-      items: {
-        base: 'grid w-64 grid-cols-4',
-        item: {
-          base: 'block flex-1 cursor-pointer rounded-lg border-0 text-center text-sm font-semibold leading-9 text-slate-300 hover:bg-[#1a2740]',
-          selected: 'bg-emerald-600 text-white hover:bg-emerald-500',
-          disabled: 'text-slate-600',
-        },
-      },
-    },
-  },
-};
-
-/** Thin wrapper that highlights today's cell in the Flowbite Datepicker popup. */
-const DarkDatepicker = (props: DatepickerProps) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  const highlightToday = useCallback(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    // Find the day-grid (last grid-cols-7 div — the first is the weekday header)
-    const grids = el.querySelectorAll<HTMLDivElement>('[class*="grid-cols-7"]');
-    const dayGrid = grids[grids.length - 1];
-    if (!dayGrid) return;
-
-    const today = new Date();
-    const todayDate = today.getDate();
-    const todayMonth = today.getMonth();
-    const todayYear = today.getFullYear();
-
-    // Read the header to check if we're viewing the current month
-    const headerBtn = el.querySelector<HTMLButtonElement>('[class*="view"]');
-    const headerText = headerBtn?.textContent?.trim() ?? '';
-    const viewingCurrent =
-      headerText.includes(String(todayYear)) &&
-      headerText
-        .toLowerCase()
-        .includes(today.toLocaleString('en', { month: 'long' }).toLowerCase());
-
-    const buttons = dayGrid.querySelectorAll('button');
-    buttons.forEach((btn) => {
-      btn.style.removeProperty('box-shadow');
-      btn.style.removeProperty('border');
-      if (viewingCurrent && btn.textContent?.trim() === String(todayDate) && !btn.disabled) {
-        // Only match the first occurrence that is within the current month range
-        // (buttons 0-13 are likely prev month overflow for months starting late in the week)
-        const idx = Array.from(buttons).indexOf(btn);
-        const dayNum = todayDate;
-        // If today is e.g. 28 and index < 14 it's probably prev-month overflow, skip
-        if (dayNum > 20 && idx < 7) return;
-        if (dayNum < 10 && idx > 34) return;
-        btn.style.boxShadow = 'inset 0 0 0 2px #10b981';
-        btn.style.border = 'none';
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const observer = new MutationObserver(highlightToday);
-    observer.observe(el, { childList: true, subtree: true, attributes: true });
-    highlightToday();
-    return () => observer.disconnect();
-  }, [highlightToday]);
-
-  return (
-    <div ref={wrapperRef}>
-      <Datepicker theme={DATEPICKER_THEME} showTodayButton showClearButton {...props} />
-    </div>
-  );
-};
 
 type SortKey =
   | 'timestamp'
@@ -442,7 +298,6 @@ const SensorDataPage = () => {
                 setPage(1);
               }}
               className="w-24"
-              style={fieldStyle}
             >
               {PAGE_SIZE_OPTIONS.map((size) => (
                 <option key={size} value={size}>
@@ -612,7 +467,7 @@ const SensorDataPage = () => {
             <Label htmlFor="from" className="mb-1 text-xs text-slate-400">
               From
             </Label>
-            <DarkDatepicker
+            <Datepicker
               id="from"
               value={parseDate(form.from)}
               onChange={(date) =>
@@ -624,7 +479,7 @@ const SensorDataPage = () => {
             <Label htmlFor="to" className="mb-1 text-xs text-slate-400">
               To
             </Label>
-            <DarkDatepicker
+            <Datepicker
               id="to"
               value={parseDate(form.to)}
               onChange={(date) =>
@@ -642,7 +497,6 @@ const SensorDataPage = () => {
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, metric: event.target.value as MetricKey | '' }))
               }
-              style={fieldStyle}
             >
               {METRIC_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
