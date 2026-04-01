@@ -3,6 +3,7 @@ import {
   Alert,
   Button,
   Card,
+  Datepicker,
   Label,
   Modal,
   ModalBody,
@@ -10,20 +11,37 @@ import {
   ModalHeader,
   Select,
   Spinner,
-  TextInput,
 } from 'flowbite-react'
 import { getTimelapse, type TimelapseFrame } from './api'
 
 type FilterFormState = {
-  limit: string
   from: string
   to: string
 }
 
 const defaultFormState: FilterFormState = {
-  limit: '50',
   from: '',
   to: '',
+}
+
+const dateToLocal = (date: Date, endOfDay = false): string => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}T${endOfDay ? '23:59' : '00:00'}`
+}
+
+const parseDate = (value: string): Date | undefined => {
+  if (!value) return undefined
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? undefined : d
+}
+
+const toISOIfPresent = (value: string): string | undefined => {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const date = new Date(trimmed)
+  return Number.isNaN(date.getTime()) ? trimmed : date.toISOString()
 }
 
 const timestampFormatter = new Intl.DateTimeFormat(undefined, {
@@ -39,9 +57,7 @@ const speedOptions = [
 
 const TimelapsePage = () => {
   const [form, setForm] = useState<FilterFormState>(defaultFormState)
-  const [query, setQuery] = useState<{ limit: number; from?: string; to?: string }>({
-    limit: 50,
-  })
+  const [query, setQuery] = useState<{ from?: string; to?: string }>({})
   const [items, setItems] = useState<TimelapseFrame[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -96,9 +112,8 @@ const TimelapsePage = () => {
 
   const handleRefresh = () => {
     setQuery({
-      limit: Number(form.limit) || 50,
-      from: form.from.trim() || undefined,
-      to: form.to.trim() || undefined,
+      from: toISOIfPresent(form.from),
+      to: toISOIfPresent(form.to),
     })
   }
 
@@ -142,7 +157,7 @@ const TimelapsePage = () => {
 
     if (error) {
       return (
-        <Card className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] p-6 shadow-sm">
           <Alert color="failure" className="mb-4">
             <span className="font-semibold">Unable to load timelapse.</span> {error}
           </Alert>
@@ -153,7 +168,7 @@ const TimelapsePage = () => {
 
     if (items.length === 0) {
       return (
-        <Alert color="info" className="rounded-3xl border border-slate-200 bg-white text-slate-700">
+        <Alert color="info" className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-300">
           No timelapse frames yet. Once your cameras upload, they’ll appear here automatically.
         </Alert>
       )
@@ -269,38 +284,34 @@ const TimelapsePage = () => {
         </p>
       </div>
 
-      <Card className="rounded-3xl border border-slate-200 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-4">
-          <div>
-            <Label htmlFor="limit">Limit</Label>
-            <Select
-              id="limit"
-              value={form.limit}
-              onChange={(event) => setForm((prev) => ({ ...prev, limit: event.target.value }))}
-            >
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="from">From (ISO)</Label>
-            <TextInput
+      <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-sm">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="from" className="mb-1 text-xs">
+              From
+            </Label>
+            <Datepicker
               id="from"
-              value={form.from}
-              onChange={(event) => setForm((prev) => ({ ...prev, from: event.target.value }))}
+              value={parseDate(form.from)}
+              onChange={(date) =>
+                setForm((prev) => ({ ...prev, from: date ? dateToLocal(date) : '' }))
+              }
             />
           </div>
-          <div>
-            <Label htmlFor="to">To (ISO)</Label>
-            <TextInput
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="to" className="mb-1 text-xs">
+              To
+            </Label>
+            <Datepicker
               id="to"
-              value={form.to}
-              onChange={(event) => setForm((prev) => ({ ...prev, to: event.target.value }))}
+              value={parseDate(form.to)}
+              onChange={(date) =>
+                setForm((prev) => ({ ...prev, to: date ? dateToLocal(date, true) : '' }))
+              }
             />
           </div>
           <div className="flex items-end">
-            <Button color="gray" outline={true} onClick={handleRefresh} className="w-full">
+            <Button color="gray" outline={true} onClick={handleRefresh}>
               Refresh
             </Button>
           </div>

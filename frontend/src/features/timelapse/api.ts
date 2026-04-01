@@ -2,7 +2,6 @@ import { api } from '../../shared/hooks/useApi'
 
 export type TimelapseFrame = {
   id: string
-  greenhouseId: string
   timestamp: string
   url: string
 }
@@ -13,7 +12,6 @@ export type TimelapseList = {
 }
 
 export type GetTimelapseParams = {
-  limit?: number
   from?: string
   to?: string
 }
@@ -45,7 +43,6 @@ const ensureOk = <T>(payload: Envelope<T>): T => {
 export const getTimelapse = async (params: GetTimelapseParams = {}): Promise<TimelapseList> => {
   const { data } = await api.get<Envelope<TimelapseList>>('/timelapse', {
     params: {
-      limit: params.limit ?? 50,
       from: params.from,
       to: params.to,
     },

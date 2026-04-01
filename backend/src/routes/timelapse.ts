@@ -3,9 +3,13 @@ import { z } from 'zod';
 import { TimelapseFrame, TimelapseListResponseSchema } from '../lib/schemas';
 import { ok } from '../lib/respond';
 import { readMock } from '../lib/file';
+import { listCameraImages } from '../services/camera';
+
+const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 
 const TimelapseQuery = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(10),
+  from: z.string().optional(),
+  to: z.string().optional(),
 });
 
 const timelapseRoutes: FastifyPluginAsync = async (app) => {
@@ -16,14 +20,32 @@ const timelapseRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const query = TimelapseQuery.parse(req.query);
-      const frames = TimelapseFrame.array().parse(
+
+      if (STORAGE_MODE === 'firestore') {
+        const images = await listCameraImages({ from: query.from, to: query.to });
+        const items = images.map((img) => ({
+          id: img.id,
+          timestamp: img.capturedAt,
+          url: img.blobUrl,
+        }));
+        return ok({ items, total: items.length });
+      }
+
+      // Mock mode: read from JSON, filter by from/to, add synthetic id
+      const raw = TimelapseFrame.omit({ id: true }).array().parse(
         await readMock<unknown>('timelapse.json'),
       );
 
-      const items = frames.slice(-query.limit);
-      const total = frames.length;
+      const fromMs = query.from ? Date.parse(query.from) : -Infinity;
+      const toMs = query.to ? Date.parse(query.to) : Infinity;
 
-      return ok({ items, total });
+      const filtered = raw.filter((f) => {
+        const t = Date.parse(f.timestamp);
+        return t >= fromMs && t <= toMs;
+      });
+
+      const items = filtered.map((f, i) => ({ id: String(i), ...f }));
+      return ok({ items, total: items.length });
     },
   );
 };

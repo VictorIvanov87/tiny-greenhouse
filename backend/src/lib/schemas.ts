@@ -61,6 +61,7 @@ export type TelemetryList = z.infer<typeof TelemetryList>;
 export const TelemetryListResponseSchema = okResponse(TelemetryList);
 
 export const TimelapseFrame = z.object({
+  id: z.string(),
   timestamp: ISODate,
   url: z.string(),
 });
@@ -325,8 +326,11 @@ export const CameraUploadResultSchema = z.object({
   deviceId: z.string(),
   uptimeMs: z.number(),
   sizeBytes: z.number(),
-  filename: z.string(),
   contentType: z.string(),
+  blobPath: z.string(),
+  blobUrl: z.string(),
+  analysisStatus: z.string(),
+  capturedAt: ISODate,
 });
 export type CameraUploadResult = z.infer<typeof CameraUploadResultSchema>;
 export const CameraUploadResponseSchema = okResponse(CameraUploadResultSchema);
