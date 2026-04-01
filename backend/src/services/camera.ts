@@ -22,6 +22,7 @@ export interface CameraImageMetadata {
 export interface CameraImageListing {
   id: string;
   capturedAt: string;
+  blobPath: string;
   blobUrl: string;
 }
 
@@ -51,7 +52,7 @@ export const listCameraImages = async (
       data['capturedAt'] instanceof Timestamp
         ? data['capturedAt'].toDate().toISOString()
         : String(data['capturedAt']);
-    return { id: doc.id, capturedAt, blobUrl: String(data['blobUrl']) };
+    return { id: doc.id, capturedAt, blobPath: String(data['blobPath']), blobUrl: String(data['blobUrl']) };
   });
 };
 

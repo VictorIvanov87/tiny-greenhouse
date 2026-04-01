@@ -130,18 +130,14 @@ const TimelapsePage = () => {
 
   const handlePrev = () => {
     setActiveIndex((prev) => {
-      if (items.length === 0) {
-        return prev
-      }
+      if (items.length === 0) return prev
       return (prev - 1 + items.length) % items.length
     })
   }
 
   const handleNext = () => {
     setActiveIndex((prev) => {
-      if (items.length === 0) {
-        return prev
-      }
+      if (items.length === 0) return prev
       return (prev + 1) % items.length
     })
   }
@@ -161,7 +157,9 @@ const TimelapsePage = () => {
           <Alert color="failure" className="mb-4">
             <span className="font-semibold">Unable to load timelapse.</span> {error}
           </Alert>
-          <Button color="gray" outline={true} onClick={fetchFrames}>Retry</Button>
+          <Button color="gray" outline={true} onClick={fetchFrames}>
+            Retry
+          </Button>
         </Card>
       )
     }
@@ -169,32 +167,40 @@ const TimelapsePage = () => {
     if (items.length === 0) {
       return (
         <Alert color="info" className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-300">
-          No timelapse frames yet. Once your cameras upload, they’ll appear here automatically.
+          No timelapse frames yet. Once your cameras upload, they'll appear here automatically.
         </Alert>
       )
     }
 
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {items.map((frame, index) => (
-          <Button
+          <button
             key={frame.id}
-            color="gray"
-            outline={true}
+            type="button"
             onClick={() => handleOpenModal(index)}
-            className="group relative !overflow-hidden !rounded-2xl !bg-slate-50 !p-0 transition hover:-translate-y-1 hover:!shadow-lg"
+            className="group relative overflow-hidden rounded-2xl border border-[#1f2a3d] bg-[#0b1220] transition hover:-translate-y-1 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             <img
               src={frame.url}
               alt={parsedTimestamp(frame)}
-              className="h-32 w-full object-cover"
+              className="aspect-video w-full object-cover"
               loading="lazy"
+              onError={(e) => {
+                const target = e.currentTarget
+                target.style.display = 'none'
+                const placeholder = target.nextElementSibling as HTMLElement | null
+                if (placeholder) placeholder.style.display = 'flex'
+              }}
             />
+            <div className="hidden aspect-video w-full items-center justify-center bg-[#0b1220] text-xs text-slate-500">
+              Image unavailable
+            </div>
             <div className="absolute inset-0 bg-black/10 opacity-0 transition group-hover:opacity-100" />
             <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-xs text-white">
               {new Date(frame.timestamp).toLocaleDateString()}
             </div>
-          </Button>
+          </button>
         ))}
       </div>
     )
@@ -238,12 +244,12 @@ const TimelapsePage = () => {
               <Button color="gray" outline={true} onClick={handleNext}>
                 Next
               </Button>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="timelapse-speed" className="text-sm">
-                    Speed
-                  </Label>
-                  <Select
-                    id="timelapse-speed"
+              <div className="flex items-center gap-2">
+                <Label htmlFor="timelapse-speed" className="text-sm">
+                  Speed
+                </Label>
+                <Select
+                  id="timelapse-speed"
                   value={String(speed)}
                   onChange={(event) => setSpeed(Number(event.target.value))}
                   className="w-24"
@@ -259,35 +265,35 @@ const TimelapsePage = () => {
                 Frame {activeIndex + 1} of {items.length}
               </span>
             </div>
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button color="gray" outline={true} onClick={handleCloseModal}>
-              Close
-            </Button>
-          </ModalFooter>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="gray" outline={true} onClick={handleCloseModal}>
+            Close
+          </Button>
+        </ModalFooter>
       </Modal>
     )
   }
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">Timelapse gallery</h1>
           <p className="text-sm text-slate-400">
             Review recent frames captured by your greenhouse cameras.
           </p>
         </div>
-        <p className="text-sm text-slate-400">
-          Showing {items.length} of {total} frames
+        <p className="text-sm tabular-nums text-slate-400">
+          {items.length} of {total} frames
         </p>
       </div>
 
       <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-sm">
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="min-w-0 flex-1">
-            <Label htmlFor="from" className="mb-1 text-xs">
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="w-full sm:min-w-0 sm:flex-1">
+            <Label htmlFor="from" className="mb-1 text-xs text-slate-400">
               From
             </Label>
             <Datepicker
@@ -298,8 +304,8 @@ const TimelapsePage = () => {
               }
             />
           </div>
-          <div className="min-w-0 flex-1">
-            <Label htmlFor="to" className="mb-1 text-xs">
+          <div className="w-full sm:min-w-0 sm:flex-1">
+            <Label htmlFor="to" className="mb-1 text-xs text-slate-400">
               To
             </Label>
             <Datepicker
@@ -310,8 +316,8 @@ const TimelapsePage = () => {
               }
             />
           </div>
-          <div className="flex items-end">
-            <Button color="gray" outline={true} onClick={handleRefresh}>
+          <div>
+            <Button color="gray" outline={true} onClick={handleRefresh} className="w-full sm:w-auto">
               Refresh
             </Button>
           </div>

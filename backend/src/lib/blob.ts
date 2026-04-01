@@ -1,4 +1,4 @@
-import { BlobServiceClient } from '@azure/storage-blob';
+import { BlobServiceClient, BlobSASPermissions } from '@azure/storage-blob';
 
 const connectionString = (): string => {
   const cs = process.env.AZURE_STORAGE_CONNECTION_STRING;
@@ -26,4 +26,21 @@ export async function uploadBlob(
     blobHTTPHeaders: { blobContentType: contentType },
   });
   return blob.url;
+}
+
+/**
+ * Generate a short-lived SAS URL for a blob path.
+ * The URL is valid for `ttlMinutes` minutes (default: 60).
+ */
+export async function getBlobSasUrl(blobPath: string, ttlMinutes = 60): Promise<string> {
+  const client = BlobServiceClient.fromConnectionString(connectionString());
+  const container = client.getContainerClient(containerName());
+  const blob = container.getBlockBlobClient(blobPath);
+
+  const expiresOn = new Date(Date.now() + ttlMinutes * 60 * 1000);
+
+  return blob.generateSasUrl({
+    permissions: BlobSASPermissions.parse('r'),
+    expiresOn,
+  });
 }

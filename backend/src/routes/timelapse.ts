@@ -4,6 +4,7 @@ import { TimelapseFrame, TimelapseListResponseSchema } from '../lib/schemas';
 import { ok } from '../lib/respond';
 import { readMock } from '../lib/file';
 import { listCameraImages } from '../services/camera';
+import { getBlobSasUrl } from '../lib/blob';
 
 const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 
@@ -23,11 +24,13 @@ const timelapseRoutes: FastifyPluginAsync = async (app) => {
 
       if (STORAGE_MODE === 'firestore') {
         const images = await listCameraImages({ from: query.from, to: query.to });
-        const items = images.map((img) => ({
-          id: img.id,
-          timestamp: img.capturedAt,
-          url: img.blobUrl,
-        }));
+        const items = await Promise.all(
+          images.map(async (img) => ({
+            id: img.id,
+            timestamp: img.capturedAt,
+            url: await getBlobSasUrl(img.blobPath),
+          })),
+        );
         return ok({ items, total: items.length });
       }
 
