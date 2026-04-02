@@ -8,6 +8,8 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react';
+import type { AlertRule } from '../notifications/api';
+import { CHECKLIST_KEYS } from './wizard/data/checklistItems';
 
 export type LanguageOption = 'bg' | 'en';
 
@@ -107,6 +109,8 @@ export type SetupWizardState = {
   step: WizardStep;
   selection: WizardSelection;
   prefs: WizardPreferences;
+  alarmRules: AlertRule[];
+  checklist: Record<string, boolean>;
 };
 
 const STORAGE_KEY = 'tg-setup-v1';
@@ -127,6 +131,8 @@ const DEFAULT_STATE: SetupWizardState = {
     digestHour: 9,
     quietHours: null,
   },
+  alarmRules: [],
+  checklist: {},
 };
 
 const hasWindow = () => typeof window !== 'undefined' && 'localStorage' in window;
@@ -181,6 +187,11 @@ const hydrateState = (): SetupWizardState => {
         ...DEFAULT_STATE.prefs.notifications,
         ...persisted.prefs?.notifications,
       },
+    },
+    alarmRules: persisted.alarmRules ?? DEFAULT_STATE.alarmRules,
+    checklist: {
+      ...DEFAULT_STATE.checklist,
+      ...persisted.checklist,
     },
   };
 };
@@ -237,16 +248,9 @@ export const isStepValid = (state: SetupWizardState, step: WizardStep): boolean 
           state.selection.defaults.overview,
       );
     case 2:
-      return (
-        typeof state.prefs.lightHours === 'number' &&
-        typeof state.prefs.temperatureDay === 'number' &&
-        typeof state.prefs.temperatureNight === 'number' &&
-        typeof state.prefs.humidityTarget === 'number' &&
-        state.prefs.lightHours >= 6 &&
-        state.prefs.lightHours <= 20
-      );
+      return state.alarmRules.some((rule) => rule.enabled);
     case 3:
-      return true;
+      return CHECKLIST_KEYS.every((key) => state.checklist[key]);
     default:
       return false;
   }

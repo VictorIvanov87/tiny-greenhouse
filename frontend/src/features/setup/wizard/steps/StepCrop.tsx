@@ -1,81 +1,18 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { Alert, Badge, Button, Card, ListGroup, ListGroupItem, Spinner } from 'flowbite-react';
+import { Alert, Badge, Button, Spinner } from 'flowbite-react';
 import type { SetupWizardState, CropDefaults } from '../../state';
 import { getCropDefaults } from '../../api';
-import { MiniAssist } from '../../../assistant/MiniAssist';
 import { ApiError } from '../../../../shared/hooks/useApi';
 import { coerceNumber, parseHours } from '../../../../shared/utils/formatters';
+import { CROP_LIBRARY, findCrop, findVariety, type CropOption, type VarietyOption } from '../data/cropLibrary';
+import { generateDefaultAlarms } from '../data/defaultAlarms';
+import WizardLayout from '../WizardLayout';
+import WizardAssist from '../WizardAssist';
 
 type StepProps = {
   data: SetupWizardState;
   onChange: Dispatch<SetStateAction<SetupWizardState>>;
 };
-
-type VarietyOption = {
-  id: string;
-  label: string;
-  description: string;
-  supported: boolean;
-};
-
-type CropOption = {
-  id: string;
-  label: string;
-  description: string;
-  supported: boolean;
-  varieties: VarietyOption[];
-};
-
-const CROP_LIBRARY: CropOption[] = [
-  {
-    id: 'chillies',
-    label: 'Chillies',
-    description: 'Compact heat lovers suited for balconies or small rigs.',
-    supported: true,
-    varieties: [
-      {
-        id: 'basket-of-fire',
-        label: 'Basket of Fire',
-        description: 'Trailing compact plants bred for baskets.',
-        supported: true,
-      },
-      {
-        id: 'prairie-fire',
-        label: 'Prairie Fire',
-        description: 'Windowsill ornamental with multi-color pods.',
-        supported: true,
-      },
-    ],
-  },
-  {
-    id: 'basil',
-    label: 'Basil',
-    description: 'Leafy herbs that prefer even moisture and pruning.',
-    supported: true,
-    varieties: [
-      {
-        id: 'genovese',
-        label: 'Genovese',
-        description: 'Classic sweet basil—tender leaves and fast rebounds.',
-        supported: true,
-      },
-    ],
-  },
-  {
-    id: 'mushrooms',
-    label: 'Mushrooms',
-    description: 'Humidity-forward fruiting blocks (coming soon).',
-    supported: false,
-    varieties: [
-      { id: 'oyster', label: 'Oyster', description: 'Fruiting blocks', supported: false },
-      { id: 'shiitake', label: 'Shiitake', description: 'Logs & blocks', supported: false },
-    ],
-  },
-];
-
-const findCrop = (cropId?: string) => CROP_LIBRARY.find((crop) => crop.id === cropId);
-const findVariety = (cropId?: string, varietyId?: string) =>
-  findCrop(cropId)?.varieties.find((variety) => variety.id === varietyId);
 
 const firstParagraph = (value?: string | null) =>
   value?.split('\n').map((part) => part.trim()).filter(Boolean).at(0) ?? null;
@@ -83,9 +20,7 @@ const firstParagraph = (value?: string | null) =>
 const StageList = ({ defaults }: { defaults: CropDefaults }) => {
   const [open, setOpen] = useState(false);
 
-  if (!defaults.stages.length) {
-    return null;
-  }
+  if (!defaults.stages.length) return null;
 
   return (
     <div className="space-y-3">
@@ -96,24 +31,26 @@ const StageList = ({ defaults }: { defaults: CropDefaults }) => {
         onClick={() => setOpen((prev) => !prev)}
       >
         <span>Stages ({defaults.stages.length})</span>
-        <span className="text-xs text-slate-500">{open ? 'Hide' : 'Show'}</span>
+        <span className="text-xs text-slate-400">{open ? 'Hide' : 'Show'}</span>
       </Button>
       {open ? (
-        <ListGroup className="rounded-2xl border border-slate-200">
-          {defaults.stages.map((stage) => (
-            <ListGroupItem
+        <div className="rounded-2xl border border-[#1f2a3d] bg-[#0f1729]">
+          {defaults.stages.map((stage, idx) => (
+            <div
               key={stage.id}
-              className="flex flex-col gap-1 rounded-none border-0 border-b border-slate-100 text-sm last:border-b-0"
+              className={`flex flex-col gap-1 px-4 py-3 text-sm ${
+                idx < defaults.stages.length - 1 ? 'border-b border-[#1f2a3d]' : ''
+              }`}
             >
-              <span className="font-medium text-slate-900">
+              <span className="font-medium text-slate-100">
                 {stage.label ?? stage.id.replace(/-/g, ' ')}
               </span>
               {stage.cues && stage.cues.length > 0 ? (
-                <span className="text-xs text-slate-500">{stage.cues[0]}</span>
+                <span className="text-xs text-slate-400">{stage.cues[0]}</span>
               ) : null}
-            </ListGroupItem>
+            </div>
           ))}
-        </ListGroup>
+        </div>
       ) : null}
     </div>
   );
@@ -148,9 +85,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
 
     getCropDefaults(cropId, variety)
       .then((payload) => {
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
         onChange((prev) => ({
           ...prev,
           selection: {
@@ -161,13 +96,12 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
             defaults: payload,
           },
           prefs: seedPrefsFromDefaults(prev.prefs, payload),
+          alarmRules: generateDefaultAlarms(payload),
         }));
         setStatus({ loading: false, error: null });
       })
       .catch((error) => {
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
         const message =
           error instanceof ApiError && error.status === 404
             ? 'The selected variety has no dataset yet.'
@@ -175,17 +109,11 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
         setStatus({ loading: false, error: message });
         onChange((prev) => ({
           ...prev,
-          selection: {
-            ...prev.selection,
-            defaults: undefined,
-          },
+          selection: { ...prev.selection, defaults: undefined },
         }));
       });
 
-    return () => {
-      cancelled = true;
-    };
-    // Including reloadToken gives us a manual retry knob without mutating selection
+    return () => { cancelled = true; };
   }, [selection.cropId, selection.variety, reloadToken, onChange]);
 
   const overview = firstParagraph(selection.defaults?.overview);
@@ -193,18 +121,14 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   const irrigation = selection.defaults?.defaults?.irrigation;
   const container = selection.defaults?.defaults?.container;
   const safety = selection.defaults?.safety_bounds;
-
   const showPreview = Boolean(selection.defaults) && !status.loading;
 
   const handleSelectCrop = (option: CropOption) => {
-    if (!option.supported) {
-      return;
-    }
-
+    if (!option.supported) return;
     setStatus((prev) => ({ ...prev, error: null }));
     onChange((prev) => {
       const keepVariety = option.varieties.some(
-        (variety) => variety.id === prev.selection.variety && variety.supported,
+        (v) => v.id === prev.selection.variety && v.supported,
       );
       return {
         ...prev,
@@ -220,10 +144,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   };
 
   const handleSelectVariety = (option: VarietyOption, parent: CropOption) => {
-    if (!option.supported || !parent.supported) {
-      return;
-    }
-
+    if (!option.supported || !parent.supported) return;
     setStatus((prev) => ({ ...prev, error: null }));
     onChange((prev) => ({
       ...prev,
@@ -243,11 +164,9 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   };
 
   const formatBounds = (label: string, metric?: { min?: number; max?: number }) => {
-    if (!metric || typeof metric.min !== 'number' || typeof metric.max !== 'number') {
-      return null;
-    }
+    if (!metric || typeof metric.min !== 'number' || typeof metric.max !== 'number') return null;
     return (
-      <Badge key={label} color="light" className="border border-slate-200 text-xs text-slate-600">
+      <Badge key={label} color="gray" className="text-xs">
         {label}: {metric.min}–{metric.max}
       </Badge>
     );
@@ -263,160 +182,183 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
     [safety],
   );
 
-  const handleRetry = () => setReloadToken((token) => token + 1);
+  const handleRetry = () => setReloadToken((t) => t + 1);
 
   return (
-    <section className="grid gap-6 lg:grid-cols-[minmax(0,_2fr)_minmax(0,_1.2fr)]">
-      <div className="space-y-6">
-        <Card className="border border-slate-200 shadow-sm">
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900">Crop selector</h2>
-              <p className="text-sm text-slate-500">
-                Choose a crop family and variety to preview deterministic defaults from the seed
-                pack.
-              </p>
-            </div>
-            <div className="space-y-4">
-              {CROP_LIBRARY.map((crop) => (
-                <div key={crop.id} className="space-y-2 rounded-2xl border border-slate-200 p-4">
-                  <Button
-                    color="gray"
-                    outline={true}
-                    className={`w-full !justify-start !border-none !bg-transparent !p-0 !text-left !shadow-none ${
-                      crop.supported ? '!text-slate-900' : '!text-slate-400'
-                    }`}
-                    onClick={() => handleSelectCrop(crop)}
-                  >
-                    <span className="flex flex-col text-left">
-                      <span className="text-base font-semibold">
-                        {crop.label}{' '}
-                        {!crop.supported ? (
-                          <span className="text-xs font-medium text-amber-600">(coming soon)</span>
-                        ) : null}
-                      </span>
-                      <span className="text-sm text-slate-500">{crop.description}</span>
-                    </span>
-                  </Button>
-                  <div className="flex flex-wrap gap-2">
-                    {crop.varieties.map((variety) => {
-                      const isSelected =
-                        selection.cropId === crop.id && selection.variety === variety.id;
-                      return (
-                        <Button
-                          key={variety.id}
-                          pill
-                          size="xs"
-                          color="gray"
-                          outline={true}
-                          onClick={() => handleSelectVariety(variety, crop)}
-                          disabled={!variety.supported || !crop.supported}
-                          className={`!transition ${
-                            isSelected
-                              ? '!border-emerald-500 !bg-emerald-50 !text-emerald-700'
-                              : '!border-slate-200 !text-slate-600 hover:!border-emerald-300'
-                          } ${!variety.supported ? '!opacity-50' : ''}`}
-                        >
-                          {variety.label}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="border border-slate-200 shadow-sm">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Crop defaults preview</h3>
-                <p className="text-sm text-slate-500">
-                  Read-only excerpt pulled from `/api/crops/:cropId/:variety/defaults`.
-                </p>
-              </div>
-              {status.loading ? <Spinner size="sm" /> : null}
-            </div>
-            {status.error ? (
-              <Alert color="failure" className="text-sm">
-                <div className="flex flex-col gap-2">
-                  <span>{status.error}</span>
-                  <Button color="gray" outline={true} size="xs" onClick={handleRetry}>
-                    Retry
-                  </Button>
-                </div>
-              </Alert>
-            ) : null}
-
-            {!selection.variety ? (
-              <p className="text-sm text-slate-500">
-                Pick a supported variety to hydrate the defaults panel.
-              </p>
-            ) : null}
-
-            {showPreview && selection.defaults ? (
-              <div className="space-y-5">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-emerald-600">
-                    {selection.defaults.displayName ?? selection.varietyLabel}
-                  </p>
-                  {overview ? <p className="text-sm text-slate-600">{overview}</p> : null}
-                </div>
-                {safetyBadges.length ? (
-                  <div className="flex flex-wrap gap-2">{safetyBadges}</div>
-                ) : null}
-                <ListGroup className="rounded-2xl border border-slate-200 text-sm text-slate-700">
-                  {environment ? (
-                    <ListGroupItem className="flex flex-col gap-1 rounded-none border-0 border-b border-slate-100">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Environment
-                      </span>
-                      <span>Day temp: {environment.temperature_day ?? '—'}</span>
-                      <span>Night temp: {environment.temperature_night ?? '—'}</span>
-                      <span>Humidity: {environment.humidity ?? '—'}</span>
-                      <span>Light hours: {environment.light_hours ?? '—'}</span>
-                    </ListGroupItem>
-                  ) : null}
-                  {irrigation ? (
-                    <ListGroupItem className="flex flex-col gap-1 rounded-none border-0 border-b border-slate-100">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Irrigation
-                      </span>
-                      <span>Method: {irrigation.method ?? '—'}</span>
-                      <span>Frequency: {irrigation.frequency ?? '—'}</span>
-                      {irrigation.notes ? (
-                        <span className="text-slate-500">{irrigation.notes}</span>
-                      ) : null}
-                    </ListGroupItem>
-                  ) : null}
-                  {container ? (
-                    <ListGroupItem className="flex flex-col gap-1 rounded-none border-0">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Container
-                      </span>
-                      <span>Volume: {container.volume_liters ?? '—'}</span>
-                      <span>Diameter: {container.diameter_cm ?? '—'}</span>
-                      <span>Depth: {container.depth_cm ?? '—'}</span>
-                    </ListGroupItem>
-                  ) : null}
-                </ListGroup>
-                <StageList defaults={selection.defaults} />
-              </div>
-            ) : null}
-          </div>
-        </Card>
-      </div>
-
-      <Card className="border border-slate-200 shadow-sm">
-        <MiniAssist
+    <WizardLayout
+      aside={
+        <WizardAssist
           cropId={selection.cropId}
           variety={selection.variety}
+          stepContext="crop-selection"
           disabled={!selection.cropId || !selection.variety}
         />
-      </Card>
-    </section>
+      }
+    >
+      <div className="space-y-6">
+        {/* Crop selector */}
+        <div className="rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-5">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-slate-100">🌱 Choose your crop</h2>
+            <p className="text-sm text-slate-400">
+              Pick a crop family and variety to load smart defaults.
+            </p>
+          </div>
+          <div className="space-y-3">
+            {CROP_LIBRARY.map((crop) => {
+              const isActive = selection.cropId === crop.id;
+              return (
+                <div
+                  key={crop.id}
+                  className={`cursor-pointer rounded-xl border p-4 transition ${
+                    isActive
+                      ? 'border-emerald-500 bg-emerald-900/20'
+                      : crop.supported
+                        ? 'border-[#22324a] bg-[#0f1729] hover:border-emerald-500/30'
+                        : 'border-[#22324a] bg-[#0f1729] opacity-50'
+                  }`}
+                  onClick={() => handleSelectCrop(crop)}
+                  role="button"
+                  tabIndex={crop.supported ? 0 : -1}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectCrop(crop); }}
+                >
+                  <div className="flex items-center gap-3">
+                    {crop.imageUrl ? (
+                      <img
+                        src={crop.imageUrl}
+                        alt={crop.label}
+                        className="h-12 w-12 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#1a2740] text-2xl">
+                        {crop.emoji}
+                      </span>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-100">{crop.label}</span>
+                        {!crop.supported ? (
+                          <span className="rounded-full bg-amber-900/30 px-2 py-0.5 text-[11px] font-medium text-amber-400">
+                            coming soon
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-sm text-slate-400">{crop.description}</p>
+                    </div>
+                  </div>
+
+                  {isActive && crop.supported ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {crop.varieties.map((variety) => {
+                        const isSelected = selection.variety === variety.id;
+                        return (
+                          <button
+                            key={variety.id}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleSelectVariety(variety, crop); }}
+                            disabled={!variety.supported}
+                            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+                              isSelected
+                                ? 'border border-emerald-500 bg-emerald-600/20 text-emerald-300'
+                                : variety.supported
+                                  ? 'border border-[#22324a] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300'
+                                  : 'border border-[#22324a] text-slate-500 opacity-50'
+                            }`}
+                          >
+                            {variety.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Crop defaults preview */}
+        <div className="rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-100">📋 Crop defaults</h3>
+              <p className="text-sm text-slate-400">
+                Smart defaults loaded from the seed pack database.
+              </p>
+            </div>
+            {status.loading ? <Spinner size="sm" color="success" /> : null}
+          </div>
+
+          {status.error ? (
+            <Alert color="failure" className="text-sm">
+              <div className="flex flex-col gap-2">
+                <span>{status.error}</span>
+                <Button color="gray" outline={true} size="xs" onClick={handleRetry}>
+                  Retry
+                </Button>
+              </div>
+            </Alert>
+          ) : null}
+
+          {!selection.variety ? (
+            <p className="text-sm text-slate-400">
+              Pick a supported variety above to see its defaults.
+            </p>
+          ) : null}
+
+          {showPreview && selection.defaults ? (
+            <div className="space-y-5">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-emerald-400">
+                  {selection.defaults.displayName ?? selection.varietyLabel}
+                </p>
+                {overview ? <p className="text-sm text-slate-300">{overview}</p> : null}
+              </div>
+
+              {safetyBadges.length ? (
+                <div className="flex flex-wrap gap-2">{safetyBadges}</div>
+              ) : null}
+
+              <div className="rounded-xl border border-[#1f2a3d] bg-[#0f1729]">
+                {environment ? (
+                  <div className="flex flex-col gap-1 border-b border-[#1f2a3d] px-4 py-3 text-sm">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Environment
+                    </span>
+                    <span className="text-slate-200">Day temp: {environment.temperature_day ?? '—'}</span>
+                    <span className="text-slate-200">Night temp: {environment.temperature_night ?? '—'}</span>
+                    <span className="text-slate-200">Humidity: {environment.humidity ?? '—'}</span>
+                    <span className="text-slate-200">Light hours: {environment.light_hours ?? '—'}</span>
+                  </div>
+                ) : null}
+                {irrigation ? (
+                  <div className="flex flex-col gap-1 border-b border-[#1f2a3d] px-4 py-3 text-sm">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Irrigation
+                    </span>
+                    <span className="text-slate-200">Method: {irrigation.method ?? '—'}</span>
+                    <span className="text-slate-200">Frequency: {irrigation.frequency ?? '—'}</span>
+                    {irrigation.notes ? <span className="text-slate-400">{irrigation.notes}</span> : null}
+                  </div>
+                ) : null}
+                {container ? (
+                  <div className="flex flex-col gap-1 px-4 py-3 text-sm">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Container
+                    </span>
+                    <span className="text-slate-200">Volume: {container.volume_liters ?? '—'}</span>
+                    <span className="text-slate-200">Diameter: {container.diameter_cm ?? '—'}</span>
+                    <span className="text-slate-200">Depth: {container.depth_cm ?? '—'}</span>
+                  </div>
+                ) : null}
+              </div>
+
+              <StageList defaults={selection.defaults} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </WizardLayout>
   );
 };
 

@@ -1,5 +1,5 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { Alert, Button, Card, Modal, ModalBody, ModalFooter, ModalHeader, Spinner } from 'flowbite-react';
+import { Alert, Button, Modal, ModalBody, ModalFooter, ModalHeader, Spinner } from 'flowbite-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import {
   getNextStep,
@@ -13,15 +13,15 @@ import {
 import Stepper from './Stepper';
 import StepWelcome from './steps/StepWelcome';
 import StepCrop from './steps/StepCrop';
-import StepPrefs from './steps/StepPrefs';
-import StepReview from './steps/StepReview';
+import StepAlarms from './steps/StepAlarms';
+import StepFinish from './steps/StepFinish';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { saveUserSettings, updateGreenhouse, updateNotificationPrefs } from '../api';
 import type { GreenhouseConfig } from '../../greenhouse/types';
 import type { NotificationPrefs } from '../../notifications/api';
 
-const TITLES = ['Welcome', 'Crop & Variety', 'Alarms & prefs', 'Finish'];
+const TITLES = ['🌿 Welcome', '🌶️ Crop & Variety', '🔔 Alarms', '✅ Finish'];
 
 const StepContent = ({
   step,
@@ -38,10 +38,10 @@ const StepContent = ({
     case 1:
       return <StepCrop data={data} onChange={onChange} />;
     case 2:
-      return <StepPrefs data={data} onChange={onChange} />;
+      return <StepAlarms data={data} onChange={onChange} />;
     case 3:
     default:
-      return <StepReview data={data} />;
+      return <StepFinish data={data} onChange={onChange} />;
   }
 };
 
@@ -61,9 +61,7 @@ const WizardViewport = () => {
   const stepLabel = useMemo(() => `Step ${step + 1} of ${TITLES.length}`, [step]);
 
   const handleNext = () => {
-    if (!canProceed) {
-      return;
-    }
+    if (!canProceed) return;
     setState((prev) => ({
       ...prev,
       step: getNextStep(prev.step ?? 0),
@@ -135,13 +133,12 @@ const WizardViewport = () => {
       digestHour: state.prefs.digestHour,
       quietHours: quietHoursPayload,
     };
+
+    const enabledRules = state.alarmRules.filter((r) => r.enabled);
     const notificationPrefsPayload: NotificationPrefs = {
       email: state.prefs.notifications.email,
       push: state.prefs.notifications.push,
-      rules: [
-        { id: 'setup-soil', metric: 'soilMoisture', condition: 'below', value: state.prefs.soilMoistureLowPct, enabled: true },
-        { id: 'setup-temp', metric: 'temperature', condition: 'above', value: state.prefs.temperatureDay ?? 30, enabled: true },
-      ],
+      rules: enabledRules,
     };
 
     const greenhousePayload: GreenhouseConfig = {
@@ -205,16 +202,16 @@ const WizardViewport = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4 text-slate-900">
-        <div className="mx-auto flex h-full max-w-3xl flex-col gap-8 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4">
+        <div className="mx-auto flex h-full max-w-6xl flex-col gap-8 px-4">
           <header className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-500">
               Setup wizard
             </p>
             <Stepper current={step as WizardStep} titles={TITLES} />
           </header>
           <main className="flex-1">
-            <Card className="h-full w-full border border-slate-200 shadow-none">
+            <div className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] p-6 shadow-[0_24px_60px_rgba(8,20,38,0.35)] sm:p-8">
               <div className="space-y-6">
                 {error ? <Alert color="failure">{error}</Alert> : null}
                 {notificationWarning ? (
@@ -224,8 +221,8 @@ const WizardViewport = () => {
                   </Alert>
                 ) : null}
                 <StepContent step={step as WizardStep} data={state} onChange={setState} />
-                <footer className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="text-sm text-slate-500">{stepLabel}</div>
+                <footer className="flex flex-col gap-4 border-t border-[#1f2a3d] pt-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-slate-400">{stepLabel}</div>
                   <div className="flex flex-wrap gap-2">
                     <Button color="red" outline={true} onClick={handleCancel} disabled={saving}>
                       Cancel
@@ -245,7 +242,7 @@ const WizardViewport = () => {
                   </div>
                 </footer>
               </div>
-            </Card>
+            </div>
           </main>
         </div>
       </div>

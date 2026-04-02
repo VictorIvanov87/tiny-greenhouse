@@ -1,4 +1,3 @@
-import { Badge } from 'flowbite-react';
 import type { WizardStep } from '../state';
 
 type StepperProps = {
@@ -12,21 +11,43 @@ export const Stepper = ({ current, titles }: StepperProps) => {
       {titles.map((title, index) => {
         const isCurrent = index === current;
         const isComplete = index < current;
-        const badgeColor = isComplete ? 'success' : isCurrent ? 'info' : 'gray';
         return (
           <li key={title} className="flex flex-1 items-center gap-3">
             <div className="flex items-center gap-2">
-              <Badge color={badgeColor} size="sm" aria-current={isCurrent ? 'step' : undefined}>
-                {index + 1}
-              </Badge>
-              <span className={isCurrent ? 'font-semibold text-slate-900' : 'text-slate-500'}>
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                  isComplete
+                    ? 'bg-emerald-600 text-white'
+                    : isCurrent
+                      ? 'bg-emerald-500/20 text-emerald-400 ring-2 ring-emerald-500/50'
+                      : 'bg-[#1f2a3d] text-slate-500'
+                }`}
+                aria-current={isCurrent ? 'step' : undefined}
+              >
+                {isComplete ? (
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
+                    <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  index + 1
+                )}
+              </span>
+              <span
+                className={`hidden text-sm sm:inline ${
+                  isCurrent
+                    ? 'font-semibold text-slate-100'
+                    : isComplete
+                      ? 'text-slate-300'
+                      : 'text-slate-500'
+                }`}
+              >
                 {title}
               </span>
             </div>
             {index < titles.length - 1 && (
               <div
                 className={`hidden flex-1 rounded-full sm:block ${
-                  isComplete ? 'bg-emerald-500/80' : 'bg-slate-200'
+                  isComplete ? 'bg-emerald-500/60' : 'bg-[#1f2a3d]'
                 } h-0.5`}
               />
             )}
