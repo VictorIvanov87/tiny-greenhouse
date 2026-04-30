@@ -9,6 +9,7 @@ import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import 'dotenv/config';
+import { startIotConsumer, stopIotConsumer } from './iot/consumer';
 import authPlugin from './plugins/auth';
 import healthRoutes from './routes/health';
 import telemetryRoutes from './routes/telemetry';
@@ -81,8 +82,28 @@ if (process.env.NODE_ENV !== 'test') {
 
   app
     .listen({ port, host: '0.0.0.0' })
+    .then(async () => {
+      if (process.env.IOT_HUB_ENABLED === 'true') {
+        try {
+          await startIotConsumer(app.log);
+        } catch (err) {
+          app.log.error(err, 'Failed to start IoT Hub consumer');
+        }
+      }
+    })
     .catch((error) => {
       app.log.error(error);
       process.exit(1);
     });
+
+  // Graceful shutdown: close HTTP server + IoT Hub consumer
+  const shutdown = async (signal: string) => {
+    app.log.info(`${signal} received, shutting down...`);
+    await stopIotConsumer(app.log);
+    await app.close();
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }

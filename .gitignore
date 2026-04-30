@@ -33,6 +33,10 @@ Thumbs.db
 .vscode/
 *.swp
 
+# Hardware secrets (Wi-Fi, IoT Hub SAS tokens)
+**/secrets.h
+!**/secrets.example.h
+
 # Local data & uploads (keep repo light)
 data/timelapse/
 data/raw/

@@ -1,4 +1,9 @@
 {
+  "hosting": {
+    "public": "frontend/dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
   "firestore": {
     "indexes": "backend/firestore.indexes.json"
   }

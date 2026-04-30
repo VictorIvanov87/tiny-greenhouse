@@ -4,14 +4,13 @@ import {
   ISODate,
   TelemetrySample,
   TelemetryListResponseSchema,
-  TelemetryIngestBody,
   TelemetryIngestResponseSchema,
   ErrorResponseSchema,
-  type TelemetryAcceptedSample,
 } from '../lib/schemas';
 import { ok, errorBody } from '../lib/respond';
 import { readMock } from '../lib/file';
-import { insertTelemetry, lookupDevice, queryTelemetry } from '../services/telemetry';
+import { queryTelemetry } from '../services/telemetry';
+import { ingestTelemetry } from '../services/telemetry-ingest';
 
 const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 
@@ -114,44 +113,15 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (req, reply) => {
-      const result = TelemetryIngestBody.safeParse(req.body);
-      if (!result.success) {
-        return reply.status(400).send(
-          errorBody('INVALID_TELEMETRY_PAYLOAD', 'Telemetry payload is invalid'),
+      const result = await ingestTelemetry(req.body);
+
+      if (!result.ok) {
+        return reply.status(result.status as 400 | 403 | 500).send(
+          errorBody(result.code, result.message),
         );
       }
 
-      const body = result.data;
-
-      // Resolve device ownership
-      const ownership = await lookupDevice(body.device_id);
-      if (!ownership) {
-        return reply.status(403).send(
-          errorBody('UNKNOWN_DEVICE', `Device '${body.device_id}' is not registered`),
-        );
-      }
-
-      const sample: TelemetryAcceptedSample = {
-        deviceId: body.device_id,
-        uptimeMs: body.uptime_ms,
-        temperatureC: body.temperature_c,
-        humidityPct: body.humidity_pct,
-        pressureHpa: body.pressure_hpa,
-        lightLux: body.light_lux,
-        soilMoistureRaw: body.soil_moisture_raw,
-        receivedAt: new Date().toISOString(),
-      };
-
-      try {
-        await insertTelemetry(sample, ownership);
-      } catch (err) {
-        req.log.error(err, 'Failed to persist telemetry sample');
-        return reply.status(500).send(
-          errorBody('TELEMETRY_PERSIST_FAILED', 'Could not persist telemetry sample'),
-        );
-      }
-
-      return ok({ accepted: true as const, sample });
+      return ok({ accepted: true as const, sample: result.sample });
     },
   );
 };

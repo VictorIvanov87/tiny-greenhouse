@@ -1,7 +1,9 @@
 #include "esp_camera.h"
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+#include "secrets.h"
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -21,10 +23,7 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-static const char* WIFI_SSID = "A1_A3D2";
-static const char* WIFI_PASSWORD = "61450653";
-static const char* UPLOAD_URL = "http://192.168.0.4:3000/api/camera/upload";
-static const char* DEVICE_ID = "esp32-cam-1";
+static const char* DEVICE_ID = CAM_DEVICE_ID;
 
 static const unsigned long SNAPSHOT_INTERVAL_MS = 3600000; // 1 hour
 
@@ -126,8 +125,11 @@ static bool uploadSnapshotOnce() {
   Serial.print("Snapshot captured, size_bytes=");
   Serial.println(fb->len);
 
+  WiFiClientSecure client;
+  client.setInsecure();
+
   HTTPClient http;
-  http.begin(UPLOAD_URL);
+  http.begin(client, UPLOAD_URL);
   http.addHeader("Content-Type", "image/jpeg");
   http.addHeader("x-device-id", DEVICE_ID);
   http.addHeader("x-uptime-ms", String(millis()));

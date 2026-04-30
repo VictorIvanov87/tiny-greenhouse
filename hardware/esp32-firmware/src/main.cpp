@@ -1,22 +1,32 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <WiFi.h>
-#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
 #include <math.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
+#include "secrets.h"
 
 Adafruit_BME280 bme;
 
 static const uint8_t BH1750_ADDR = 0x23;
 static const unsigned long READ_INTERVAL_MS = 300000; // 5 minutes
 
-static const char* WIFI_SSID = "A1_A3D2";
-static const char* WIFI_PASSWORD = "61450653";
-static const char* TELEMETRY_URL = "http://192.168.0.4:3000/api/telemetry";
-static const char* DEVICE_ID = "esp32-main-1";
+static const char* DEVICE_ID = IOT_HUB_DEVICE_ID;
+
+// IoT Hub D2C topic — messageType property lets the backend route the message
+static const char* TELEMETRY_TOPIC = "devices/esp32-main-1/messages/events/$.ct=application%2Fjson&$.ce=utf-8&messageType=telemetry";
+static const char* STATUS_TOPIC = "devices/esp32-main-1/messages/events/$.ct=application%2Fjson&$.ce=utf-8&messageType=status";
+
+WiFiClientSecure wifiClient;
+PubSubClient mqttClient(wifiClient);
 
 unsigned long lastReadMs = 0;
+
+// ---------------------------------------------------------------------------
+// Sensors
+// ---------------------------------------------------------------------------
 
 bool initBme280() {
   return bme.begin(0x76);
@@ -39,6 +49,10 @@ float readLightLux() {
 
   return -1.0f;
 }
+
+// ---------------------------------------------------------------------------
+// Wi-Fi
+// ---------------------------------------------------------------------------
 
 void connectWifi() {
   Serial.print("Connecting to Wi-Fi: ");
@@ -72,6 +86,48 @@ void ensureWifiConnected() {
   WiFi.disconnect();
   connectWifi();
 }
+
+// ---------------------------------------------------------------------------
+// MQTT
+// ---------------------------------------------------------------------------
+
+void connectMqtt() {
+  mqttClient.setServer(IOT_HUB_HOST, 8883);
+
+  while (!mqttClient.connected()) {
+    Serial.print("Connecting to IoT Hub MQTT...");
+
+    if (mqttClient.connect(DEVICE_ID, IOT_HUB_MQTT_USERNAME, IOT_HUB_MQTT_PASSWORD)) {
+      Serial.println(" connected");
+
+      // Publish a status message on connect
+      String status = "{\"status\":\"online\",\"uptime_ms\":";
+      status += String(millis());
+      status += ",\"free_heap\":";
+      status += String(ESP.getFreeHeap());
+      status += "}";
+      mqttClient.publish(STATUS_TOPIC, status.c_str());
+    } else {
+      Serial.print(" failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(", retrying in 5s...");
+      delay(5000);
+    }
+  }
+}
+
+void ensureMqttConnected() {
+  if (mqttClient.connected()) {
+    return;
+  }
+
+  Serial.println("MQTT disconnected, reconnecting...");
+  connectMqtt();
+}
+
+// ---------------------------------------------------------------------------
+// Telemetry
+// ---------------------------------------------------------------------------
 
 void printHumanReadable(float temperatureC, float humidityPct, float pressureHpa, float lightLux) {
   Serial.print("Temperature: ");
@@ -134,38 +190,26 @@ String buildTelemetryJson(
   return json;
 }
 
-void printJsonLine(const String& json) {
-  Serial.println(json);
-}
-
-void postTelemetry(const String& payload) {
+void publishTelemetry(const String& payload) {
   ensureWifiConnected();
-
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Telemetry upload skipped: Wi-Fi not connected");
+    Serial.println("Telemetry skipped: Wi-Fi not connected");
     return;
   }
 
-  HTTPClient http;
-  http.begin(TELEMETRY_URL);
-  http.addHeader("Content-Type", "application/json");
+  ensureMqttConnected();
 
-  int httpCode = http.POST(payload);
-
-  Serial.print("Telemetry HTTP status: ");
-  Serial.println(httpCode);
-
-  if (httpCode > 0) {
-    String response = http.getString();
-    Serial.println("Telemetry response:");
-    Serial.println(response);
+  bool ok = mqttClient.publish(TELEMETRY_TOPIC, payload.c_str());
+  if (ok) {
+    Serial.println("Telemetry published to IoT Hub");
   } else {
-    Serial.print("Telemetry POST failed: ");
-    Serial.println(http.errorToString(httpCode));
+    Serial.println("Telemetry publish failed");
   }
-
-  http.end();
 }
+
+// ---------------------------------------------------------------------------
+// Setup & Loop
+// ---------------------------------------------------------------------------
 
 void setup() {
   Serial.begin(115200);
@@ -188,10 +232,17 @@ void setup() {
 
   connectWifi();
 
-  Serial.println("ESP32 telemetry upload firmware started.");
+  // TLS: skip certificate verification (personal project)
+  wifiClient.setInsecure();
+
+  connectMqtt();
+
+  Serial.println("ESP32 telemetry firmware started (IoT Hub MQTT).");
 }
 
 void loop() {
+  mqttClient.loop();
+
   unsigned long now = millis();
   if (now - lastReadMs < READ_INTERVAL_MS) {
     return;
@@ -224,6 +275,6 @@ void loop() {
     lightLux
   );
 
-  printJsonLine(payload);
-  postTelemetry(payload);
+  Serial.println(payload);
+  publishTelemetry(payload);
 }
