@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/app.ts",
-    "build": "tsup src/app.ts --format esm --dts --out-dir dist --clean",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "start": "node dist/app.js",
     "rag:seed": "tsx src/scripts/rag-seed.ts"
