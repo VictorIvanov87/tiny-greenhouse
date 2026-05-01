@@ -24,6 +24,67 @@ PubSubClient mqttClient(wifiClient);
 
 unsigned long lastReadMs = 0;
 
+const char* mqttStateName(int state) {
+  switch (state) {
+    case MQTT_CONNECTION_TIMEOUT: return "connection timeout";
+    case MQTT_CONNECTION_LOST: return "connection lost";
+    case MQTT_CONNECT_FAILED: return "TCP connect failed";
+    case MQTT_DISCONNECTED: return "disconnected";
+    case MQTT_CONNECTED: return "connected";
+    case MQTT_CONNECT_BAD_PROTOCOL: return "bad protocol";
+    case MQTT_CONNECT_BAD_CLIENT_ID: return "bad client ID";
+    case MQTT_CONNECT_UNAVAILABLE: return "server unavailable";
+    case MQTT_CONNECT_BAD_CREDENTIALS: return "bad username/password";
+    case MQTT_CONNECT_UNAUTHORIZED: return "unauthorized";
+    default: return "unknown";
+  }
+}
+
+void printTlsLastError() {
+  char errorBuf[128];
+  int errorCode = wifiClient.lastError(errorBuf, sizeof(errorBuf));
+  if (errorCode == 0) {
+    Serial.println("TLS last error: none");
+    return;
+  }
+
+  Serial.print("TLS last error: ");
+  Serial.print(errorCode);
+  Serial.print(" ");
+  Serial.println(errorBuf);
+}
+
+void printConnectionDiagnostics() {
+  Serial.print("Wi-Fi status: ");
+  Serial.print(WiFi.status());
+  Serial.print(", RSSI: ");
+  Serial.print(WiFi.RSSI());
+  Serial.print(" dBm, IP: ");
+  Serial.println(WiFi.localIP());
+
+  IPAddress hubIp;
+  if (WiFi.hostByName(IOT_HUB_HOST, hubIp)) {
+    Serial.print("DNS resolved ");
+    Serial.print(IOT_HUB_HOST);
+    Serial.print(" -> ");
+    Serial.println(hubIp);
+  } else {
+    Serial.print("DNS failed for ");
+    Serial.println(IOT_HUB_HOST);
+  }
+
+  Serial.print("Testing TLS socket to ");
+  Serial.print(IOT_HUB_HOST);
+  Serial.print(":8883...");
+  if (wifiClient.connect(IOT_HUB_HOST, 8883)) {
+    Serial.println(" ok");
+    wifiClient.stop();
+  } else {
+    Serial.println(" failed");
+    printTlsLastError();
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Sensors
 // ---------------------------------------------------------------------------
@@ -108,8 +169,15 @@ void connectMqtt() {
       status += "}";
       mqttClient.publish(STATUS_TOPIC, status.c_str());
     } else {
+      int state = mqttClient.state();
       Serial.print(" failed, rc=");
-      Serial.print(mqttClient.state());
+      Serial.print(state);
+      Serial.print(" (");
+      Serial.print(mqttStateName(state));
+      Serial.print(")");
+      Serial.println();
+      printTlsLastError();
+      printConnectionDiagnostics();
       Serial.println(", retrying in 5s...");
       delay(5000);
     }
@@ -234,6 +302,7 @@ void setup() {
 
   // TLS: skip certificate verification (personal project)
   wifiClient.setInsecure();
+  mqttClient.setBufferSize(1024);
 
   connectMqtt();
 
