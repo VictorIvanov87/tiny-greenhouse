@@ -160,7 +160,7 @@ export const SensorCard = ({
             </span>
             <span className="text-base font-medium text-slate-400">{unit}</span>
           </div>
-          <RangeGauge current={current} low={low} high={high} unit={unit} status={status} />
+          <RangeGauge current={current} low={low} high={high} unit={unit} status={status as 'ok' | 'warn' | 'critical'} />
         </>
       ) : (
         <div className="mt-4 flex flex-1 flex-col items-center justify-center gap-1">

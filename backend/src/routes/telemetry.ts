@@ -33,6 +33,7 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
       const uid = req.user!.uid;
 
       if (STORAGE_MODE === 'firestore') {
+        req.log.info({ uid, from: query.from, to: query.to, limit: query.limit }, 'Telemetry query params');
         const samples = await queryTelemetry({
           ownerId: uid,
           deviceId: query.sensor,
@@ -40,6 +41,7 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
           to: query.to,
           limit: query.limit,
         });
+        req.log.info({ resultCount: samples.length }, 'Telemetry query result');
 
         const items: TelemetrySample[] = samples.map((s) => ({
           timestamp: s.receivedAt,
