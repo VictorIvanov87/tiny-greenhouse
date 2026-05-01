@@ -25,7 +25,7 @@
 
 static const char* DEVICE_ID = CAM_DEVICE_ID;
 
-static const unsigned long SNAPSHOT_INTERVAL_MS = 3600000; // 1 hour
+static const unsigned long SNAPSHOT_INTERVAL_MS = 360000; // 6 minutes
 
 unsigned long lastSnapshotMs = 0;
 
