@@ -20,6 +20,7 @@ export type TelemetryList = {
 export type GetTelemetryParams = {
   from?: string
   to?: string
+  limit?: number
 }
 
 export const getTelemetry = async (params: GetTelemetryParams = {}): Promise<TelemetryList> => {
@@ -27,6 +28,7 @@ export const getTelemetry = async (params: GetTelemetryParams = {}): Promise<Tel
     params: {
       from: params.from,
       to: params.to,
+      limit: params.limit,
     },
   })
 
