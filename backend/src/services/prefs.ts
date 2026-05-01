@@ -25,10 +25,23 @@ const db = (): Firestore => {
 // Defaults
 // ---------------------------------------------------------------------------
 
+const HARDCODED_DEFAULTS: NotificationPrefsType = {
+  email: true,
+  push: false,
+  rules: [
+    { id: 'default-soil', metric: 'soilMoisture', condition: 'below', value: 25, enabled: true },
+    { id: 'default-temp', metric: 'temperature', condition: 'above', value: 32, enabled: true },
+  ],
+};
+
 const getDefaultPrefs = async (): Promise<NotificationPrefsType> => {
   if (!defaultPrefs) {
-    const data = await readMock<unknown>('notifications.json');
-    defaultPrefs = NotificationPrefs.parse(data);
+    if (STORAGE_MODE === 'mock') {
+      const data = await readMock<unknown>('notifications.json');
+      defaultPrefs = NotificationPrefs.parse(data);
+    } else {
+      defaultPrefs = HARDCODED_DEFAULTS;
+    }
   }
 
   return defaultPrefs;
