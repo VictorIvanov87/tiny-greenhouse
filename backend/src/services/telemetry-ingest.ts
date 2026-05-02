@@ -16,7 +16,10 @@ export type IngestResult =
  * Validate, resolve device ownership, and persist a telemetry sample.
  * Accepts a raw (snake_case) body — the same shape the ESP32 sends.
  */
-export const ingestTelemetry = async (raw: unknown): Promise<IngestResult> => {
+export const ingestTelemetry = async (
+  raw: unknown,
+  receivedAt?: string,
+): Promise<IngestResult> => {
   const result = TelemetryIngestBody.safeParse(raw);
   if (!result.success) {
     return {
@@ -69,7 +72,7 @@ export const ingestTelemetry = async (raw: unknown): Promise<IngestResult> => {
     lightLux: body.light_lux,
     soilMoistureRaw: body.soil_moisture_raw,
     soilMoistureChannels: channels,
-    receivedAt: new Date().toISOString(),
+    receivedAt: receivedAt ?? new Date().toISOString(),
   };
 
   await insertTelemetry(sample, ownership);

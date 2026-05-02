@@ -59,7 +59,10 @@ async function handleMessage(
           body.device_id = deviceId;
         }
 
-        const result = await ingestTelemetry(body);
+        const result = await ingestTelemetry(
+          body,
+          event.enqueuedTimeUtc?.toISOString(),
+        );
         if (result.ok) {
           log.info({ deviceId }, 'Telemetry ingested via IoT Hub');
         } else {
