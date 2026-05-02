@@ -1,4 +1,7 @@
-import { Registry } from 'azure-iothub';
+import iothub from 'azure-iothub';
+
+const { Registry } = iothub;
+type Registry = InstanceType<typeof Registry>;
 
 let _registry: Registry | null = null;
 
