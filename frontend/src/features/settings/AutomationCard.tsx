@@ -136,11 +136,29 @@ export const AutomationCard = () => {
 
         <Section title="Thresholds">
           <Field
+            id="tempMinC"
+            label="Min temperature"
+            suffix="°C"
+            value={draft.thresholds.tempMinC}
+            onChange={(v) => setT({ tempMinC: v })}
+            disabled={saving}
+          />
+          <Field
             id="tempMaxC"
             label="Max temperature"
             suffix="°C"
             value={draft.thresholds.tempMaxC}
             onChange={(v) => setT({ tempMaxC: v })}
+            disabled={saving}
+          />
+          <Field
+            id="humidityMinPct"
+            label="Min humidity"
+            suffix="%"
+            min={0}
+            max={100}
+            value={draft.thresholds.humidityMinPct}
+            onChange={(v) => setT({ humidityMinPct: v })}
             disabled={saving}
           />
           <Field

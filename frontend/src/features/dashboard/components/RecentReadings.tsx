@@ -5,23 +5,26 @@ import type { WindowKey } from '../../telemetry/transforms'
 import { InternalLink } from '../../../shared/ui/InternalLink'
 import { TimeWindowToggle } from '../../../shared/ui/TimeWindowToggle'
 
+type Range = { low: number; high: number }
+type Ranges = {
+  temperature: Range
+  humidity: Range
+  soilMoisture: Range
+  lightLux: Range
+  pressureHpa: Range
+}
+
 type RecentReadingsProps = {
   items: TelemetrySample[]
+  ranges: Ranges
 }
 
-// Thresholds for color coding (must match SensorCard / EnvironmentChart)
-const RANGES = {
-  temperature: { low: 18, high: 26 },
-  humidity: { low: 40, high: 70 },
-  soilMoisture: { low: 20, high: 80 },
-  lightLux: { low: 100, high: 50000 },
-  pressureHpa: { low: 950, high: 1050 },
-}
-
-const isInRange = (value: number | null | undefined, key: keyof typeof RANGES): 'ok' | 'warn' | null => {
+const isInRange = (
+  value: number | null | undefined,
+  range: Range,
+): 'ok' | 'warn' | null => {
   if (value == null) return null
-  const { low, high } = RANGES[key]
-  if (value >= low && value <= high) return 'ok'
+  if (value >= range.low && value <= range.high) return 'ok'
   return 'warn'
 }
 
@@ -53,7 +56,7 @@ const windowFromMs = (w: WindowKey): number => {
 
 const fmt = (v: number) => v.toFixed(1)
 
-export const RecentReadings = ({ items }: RecentReadingsProps) => {
+export const RecentReadings = ({ items, ranges }: RecentReadingsProps) => {
   const [timeWindow, setTimeWindow] = useState<WindowKey>('2h')
 
   const rows = useMemo(() => {
@@ -66,10 +69,10 @@ export const RecentReadings = ({ items }: RecentReadingsProps) => {
 
   const ValueCell = ({ value, rangeKey, unit }: {
     value: number | null | undefined
-    rangeKey: keyof typeof RANGES
+    rangeKey: keyof Ranges
     unit: string
   }) => {
-    const status = isInRange(value, rangeKey)
+    const status = isInRange(value, ranges[rangeKey])
     return (
       <TableCell
         className="text-right"

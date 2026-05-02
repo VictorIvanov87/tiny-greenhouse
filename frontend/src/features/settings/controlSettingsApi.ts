@@ -4,7 +4,9 @@ import { api } from '../../shared/hooks/useApi'
 export type ControlSettings = {
   version: number
   thresholds: {
+    tempMinC: number
     tempMaxC: number
+    humidityMinPct: number
     humidityMaxPct: number
     soilMoisturePctMin: number
     soilMoisturePctMax: number

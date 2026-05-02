@@ -63,7 +63,9 @@ bool fanOn = false;
 struct ControlSettings {
   uint32_t version = 0;
   struct {
+    float tempMinC = 18.0f;
     float tempMaxC = 26.0f;
+    float humidityMinPct = 40.0f;
     float humidityMaxPct = 70.0f;
     float soilMoisturePctMin = 40.0f;
     float soilMoisturePctMax = 60.0f;
@@ -319,7 +321,9 @@ void applySettings(JsonObjectConst obj) {
 
   JsonObjectConst t = obj["thresholds"];
   if (!t.isNull()) {
+    settings.thresholds.tempMinC = t["tempMinC"] | settings.thresholds.tempMinC;
     settings.thresholds.tempMaxC = t["tempMaxC"] | settings.thresholds.tempMaxC;
+    settings.thresholds.humidityMinPct = t["humidityMinPct"] | settings.thresholds.humidityMinPct;
     settings.thresholds.humidityMaxPct = t["humidityMaxPct"] | settings.thresholds.humidityMaxPct;
     settings.thresholds.soilMoisturePctMin = t["soilMoisturePctMin"] | settings.thresholds.soilMoisturePctMin;
     settings.thresholds.soilMoisturePctMax = t["soilMoisturePctMax"] | settings.thresholds.soilMoisturePctMax;

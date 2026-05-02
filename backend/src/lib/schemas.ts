@@ -338,7 +338,9 @@ export const TelemetryIngestResponseSchema = okResponse(TelemetryIngestResult);
 export const ControlSettings = z.object({
   version: z.number().int().nonnegative(),
   thresholds: z.object({
+    tempMinC: z.number().default(18),
     tempMaxC: z.number(),
+    humidityMinPct: z.number().min(0).max(100).default(40),
     humidityMaxPct: z.number().min(0).max(100),
     soilMoisturePctMin: z.number().min(0).max(100),
     soilMoisturePctMax: z.number().min(0).max(100),

@@ -19,7 +19,9 @@ const db = (): Firestore => {
 const HARDCODED_DEFAULTS: ControlSettingsType = {
   version: 1,
   thresholds: {
+    tempMinC: 18,
     tempMaxC: 26,
+    humidityMinPct: 40,
     humidityMaxPct: 70,
     soilMoisturePctMin: 40,
     soilMoisturePctMax: 60,
