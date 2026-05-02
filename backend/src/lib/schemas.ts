@@ -300,6 +300,7 @@ export const TelemetryIngestBody = z.object({
   pressure_hpa: z.number().finite(),
   light_lux: z.number().finite().nullable(),
   soil_moisture_raw: z.number().finite().nullable(),
+  soil_moisture_channels: z.array(z.number().finite()).nullable().optional(),
 });
 export type TelemetryIngestBody = z.infer<typeof TelemetryIngestBody>;
 
@@ -311,6 +312,7 @@ export const TelemetryAcceptedSample = z.object({
   pressureHpa: z.number(),
   lightLux: z.number().nullable(),
   soilMoistureRaw: z.number().nullable(),
+  soilMoistureChannels: z.array(z.number()).nullable().optional(),
   receivedAt: ISODate,
 });
 export type TelemetryAcceptedSample = z.infer<typeof TelemetryAcceptedSample>;

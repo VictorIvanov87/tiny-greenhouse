@@ -8,6 +8,22 @@ const RETENTION_DAYS = Number(process.env.TELEMETRY_RETENTION_DAYS ?? 90);
 const TELEMETRY_COLLECTION = 'telemetry';
 const DEVICES_COLLECTION = 'devices';
 
+// Capacitive soil moisture sensor calibration. Higher raw ADC = drier soil.
+// Defaults match the Adafruit-style capacitive probe wired to ADS1115 (GAIN_ONE)
+// at 3.3 V on this device; tune via env if your sensors differ.
+const SOIL_RAW_DRY = Number(process.env.SOIL_RAW_DRY ?? 22000);
+const SOIL_RAW_WET = Number(process.env.SOIL_RAW_WET ?? 9500);
+
+export const rawToSoilPercent = (raw: number | null | undefined): number => {
+  if (raw == null || raw <= 0) return 0;
+  const range = SOIL_RAW_DRY - SOIL_RAW_WET;
+  if (range <= 0) return 0;
+  const pct = ((SOIL_RAW_DRY - raw) / range) * 100;
+  // Floor at 0.1 — alerts.ts treats 0 as "sensor broken"; a valid-but-very-dry
+  // reading should not collide with that signal.
+  return Math.min(100, Math.max(0.1, Math.round(pct * 10) / 10));
+};
+
 // ---------------------------------------------------------------------------
 // In-memory TTL cache for Firestore reads (follows crops.ts pattern)
 // ---------------------------------------------------------------------------
@@ -94,7 +110,7 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
   timestamp: s.receivedAt,
   temperature: s.temperatureC,
   humidity: s.humidityPct,
-  soilMoisture: s.soilMoistureRaw ?? 0,
+  soilMoisture: rawToSoilPercent(s.soilMoistureRaw),
   lightLux: s.lightLux,
   pressureHpa: s.pressureHpa,
   sensor: s.deviceId,
@@ -124,6 +140,7 @@ export const insertTelemetry = async (
       pressureHpa: sample.pressureHpa,
       lightLux: sample.lightLux,
       soilMoistureRaw: sample.soilMoistureRaw,
+      soilMoistureChannels: sample.soilMoistureChannels ?? null,
       receivedAt,
       expiresAt,
     });
@@ -204,6 +221,7 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       pressureHpa: d.pressureHpa,
       lightLux: d.lightLux ?? null,
       soilMoistureRaw: d.soilMoistureRaw ?? null,
+      soilMoistureChannels: d.soilMoistureChannels ?? null,
       receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
     };
   });

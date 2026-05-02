@@ -133,21 +133,20 @@ int16_t readSoilChannelRaw(uint8_t channel) {
   return ads.readADC_SingleEnded(channel);
 }
 
-int readSoilMoistureRaw() {
-  if (!adsOk) {
-    return -1;
-  }
+int readSoilMoistureRaw(int16_t outChannels[SOIL_SENSOR_COUNT]) {
+  for (uint8_t i = 0; i < SOIL_SENSOR_COUNT; i++) outChannels[i] = -1;
+  if (!adsOk) return -1;
 
   long total = 0;
   for (uint8_t i = 0; i < SOIL_SENSOR_COUNT; i++) {
-    total += readSoilChannelRaw(SOIL_ADS_CHANNELS[i]);
+    outChannels[i] = readSoilChannelRaw(SOIL_ADS_CHANNELS[i]);
+    total += outChannels[i];
     delay(5);
   }
-
   return total / SOIL_SENSOR_COUNT;
 }
 
-void printSoilChannels() {
+void printSoilChannels(const int16_t channels[SOIL_SENSOR_COUNT]) {
   if (!adsOk) {
     Serial.println("Soil sensors: ADS1115 not available");
     return;
@@ -158,7 +157,7 @@ void printSoilChannels() {
     Serial.print(" A");
     Serial.print(SOIL_ADS_CHANNELS[i]);
     Serial.print("=");
-    Serial.print(readSoilChannelRaw(SOIL_ADS_CHANNELS[i]));
+    Serial.print(channels[i]);
   }
   Serial.println();
 }
@@ -253,7 +252,8 @@ void printHumanReadable(
   float humidityPct,
   float pressureHpa,
   float lightLux,
-  int soilMoistureRaw
+  int soilMoistureRaw,
+  const int16_t soilChannels[SOIL_SENSOR_COUNT]
 ) {
   Serial.print("Temperature: ");
   Serial.print(temperatureC, 2);
@@ -282,7 +282,7 @@ void printHumanReadable(
     Serial.println("read failed");
   }
 
-  printSoilChannels();
+  printSoilChannels(soilChannels);
   Serial.println("---");
 }
 
@@ -292,7 +292,8 @@ String buildTelemetryJson(
   float humidityPct,
   float pressureHpa,
   float lightLux,
-  int soilMoistureRaw
+  int soilMoistureRaw,
+  const int16_t soilChannels[SOIL_SENSOR_COUNT]
 ) {
   String json = "{";
   json += "\"device_id\":\"";
@@ -321,6 +322,18 @@ String buildTelemetryJson(
   json += ",\"soil_moisture_raw\":";
   if (soilMoistureRaw >= 0) {
     json += String(soilMoistureRaw);
+  } else {
+    json += "null";
+  }
+
+  json += ",\"soil_moisture_channels\":";
+  if (soilMoistureRaw >= 0) {
+    json += "[";
+    for (uint8_t i = 0; i < SOIL_SENSOR_COUNT; i++) {
+      if (i > 0) json += ",";
+      json += String(soilChannels[i]);
+    }
+    json += "]";
   } else {
     json += "null";
   }
@@ -404,7 +417,8 @@ void loop() {
   float humidityPct = bme.readHumidity();
   float pressureHpa = bme.readPressure() / 100.0f;
   float lightLux = readLightLux();
-  int soilMoistureRaw = readSoilMoistureRaw();
+  int16_t soilChannels[SOIL_SENSOR_COUNT];
+  int soilMoistureRaw = readSoilMoistureRaw(soilChannels);
 
   bool bmeValid =
     !isnan(temperatureC) &&
@@ -416,7 +430,7 @@ void loop() {
     return;
   }
 
-  printHumanReadable(temperatureC, humidityPct, pressureHpa, lightLux, soilMoistureRaw);
+  printHumanReadable(temperatureC, humidityPct, pressureHpa, lightLux, soilMoistureRaw, soilChannels);
 
   String payload = buildTelemetryJson(
     now,
@@ -424,7 +438,8 @@ void loop() {
     humidityPct,
     pressureHpa,
     lightLux,
-    soilMoistureRaw
+    soilMoistureRaw,
+    soilChannels
   );
 
   Serial.println(payload);

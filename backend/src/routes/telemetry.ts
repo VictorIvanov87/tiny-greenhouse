@@ -9,7 +9,7 @@ import {
 } from '../lib/schemas';
 import { ok, errorBody } from '../lib/respond';
 import { readMock } from '../lib/file';
-import { queryTelemetry } from '../services/telemetry';
+import { queryTelemetry, rawToSoilPercent } from '../services/telemetry';
 import { ingestTelemetry } from '../services/telemetry-ingest';
 
 const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
@@ -47,7 +47,7 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
           timestamp: s.receivedAt,
           temperature: s.temperatureC,
           humidity: s.humidityPct,
-          soilMoisture: s.soilMoistureRaw ?? 0,
+          soilMoisture: rawToSoilPercent(s.soilMoistureRaw),
           lightLux: s.lightLux,
           pressureHpa: s.pressureHpa,
           sensor: s.deviceId,

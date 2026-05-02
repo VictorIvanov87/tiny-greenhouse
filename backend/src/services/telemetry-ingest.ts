@@ -39,6 +39,27 @@ export const ingestTelemetry = async (raw: unknown): Promise<IngestResult> => {
     };
   }
 
+  const channels = body.soil_moisture_channels ?? null;
+
+  if (channels && channels.length > 0) {
+    const bad = channels.filter((v) => v <= 0);
+    if (bad.length > 0) {
+      console.warn(
+        `[telemetry] device=${body.device_id} ${bad.length}/${channels.length} soil channel(s) <= 0:`,
+        channels,
+      );
+    } else {
+      const mean = channels.reduce((a, b) => a + b, 0) / channels.length;
+      const maxDev = Math.max(...channels.map((v) => Math.abs(v - mean)));
+      if (mean > 0 && maxDev / mean > 0.25) {
+        console.warn(
+          `[telemetry] device=${body.device_id} soil channel divergence ${((maxDev / mean) * 100).toFixed(1)}%:`,
+          channels,
+        );
+      }
+    }
+  }
+
   const sample: TelemetryAcceptedSample = {
     deviceId: body.device_id,
     uptimeMs: body.uptime_ms,
@@ -47,6 +68,7 @@ export const ingestTelemetry = async (raw: unknown): Promise<IngestResult> => {
     pressureHpa: body.pressure_hpa,
     lightLux: body.light_lux,
     soilMoistureRaw: body.soil_moisture_raw,
+    soilMoistureChannels: channels,
     receivedAt: new Date().toISOString(),
   };
 
