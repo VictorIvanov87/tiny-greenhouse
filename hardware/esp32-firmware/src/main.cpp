@@ -33,6 +33,12 @@ PubSubClient mqttClient(wifiClient);
 unsigned long lastReadMs = 0;
 bool adsOk = false;
 
+// Actuator state — reported in telemetry. Phase 2 will drive these from the
+// device-twin-driven control loop; for now they remain false.
+bool pumpOn = false;
+bool lightsOn = false;
+bool fanOn = false;
+
 const char* mqttStateName(int state) {
   switch (state) {
     case MQTT_CONNECTION_TIMEOUT: return "connection timeout";
@@ -337,6 +343,15 @@ String buildTelemetryJson(
   } else {
     json += "null";
   }
+
+  json += ",\"pump_on\":";
+  json += pumpOn ? "true" : "false";
+
+  json += ",\"lights_on\":";
+  json += lightsOn ? "true" : "false";
+
+  json += ",\"fan_on\":";
+  json += fanOn ? "true" : "false";
   json += "}";
 
   return json;

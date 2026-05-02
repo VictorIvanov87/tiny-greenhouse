@@ -10,6 +10,9 @@ export type TelemetrySample = {
   pressureHpa?: number | null
   lightHours?: number
   sensor?: string
+  pumpOn?: boolean
+  lightsOn?: boolean
+  fanOn?: boolean
 }
 
 export type TelemetryList = {

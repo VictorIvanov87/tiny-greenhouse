@@ -72,6 +72,9 @@ export const ingestTelemetry = async (
     lightLux: body.light_lux,
     soilMoistureRaw: body.soil_moisture_raw,
     soilMoistureChannels: channels,
+    pumpOn: body.pump_on,
+    lightsOn: body.lights_on,
+    fanOn: body.fan_on,
     receivedAt: receivedAt ?? new Date().toISOString(),
   };
 

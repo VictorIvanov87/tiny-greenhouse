@@ -82,6 +82,20 @@ export const lookupDevice = async (deviceId: string): Promise<DeviceOwnership | 
   return { ownerId: data.ownerId, greenhouseId: data.greenhouseId };
 };
 
+/** Inverse of lookupDevice — list all device IDs owned by a given user. */
+export const listDevicesByOwner = async (ownerId: string): Promise<string[]> => {
+  if (STORAGE_MODE !== 'firestore') {
+    return [];
+  }
+
+  const snap = await db()
+    .collection(DEVICES_COLLECTION)
+    .where('ownerId', '==', ownerId)
+    .get();
+
+  return snap.docs.map((d) => d.id);
+};
+
 // ---------------------------------------------------------------------------
 // Mock (in-memory) storage
 // ---------------------------------------------------------------------------
@@ -114,6 +128,9 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
   lightLux: s.lightLux,
   pressureHpa: s.pressureHpa,
   sensor: s.deviceId,
+  pumpOn: s.pumpOn ?? false,
+  lightsOn: s.lightsOn ?? false,
+  fanOn: s.fanOn ?? false,
 });
 
 // ---------------------------------------------------------------------------
@@ -141,6 +158,9 @@ export const insertTelemetry = async (
       lightLux: sample.lightLux,
       soilMoistureRaw: sample.soilMoistureRaw,
       soilMoistureChannels: sample.soilMoistureChannels ?? null,
+      pumpOn: sample.pumpOn ?? false,
+      lightsOn: sample.lightsOn ?? false,
+      fanOn: sample.fanOn ?? false,
       receivedAt,
       expiresAt,
     });
@@ -222,6 +242,9 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       lightLux: d.lightLux ?? null,
       soilMoistureRaw: d.soilMoistureRaw ?? null,
       soilMoistureChannels: d.soilMoistureChannels ?? null,
+      pumpOn: d.pumpOn ?? false,
+      lightsOn: d.lightsOn ?? false,
+      fanOn: d.fanOn ?? false,
       receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
     };
   });

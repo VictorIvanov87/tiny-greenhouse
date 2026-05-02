@@ -51,6 +51,9 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
           lightLux: s.lightLux,
           pressureHpa: s.pressureHpa,
           sensor: s.deviceId,
+          pumpOn: s.pumpOn ?? false,
+          lightsOn: s.lightsOn ?? false,
+          fanOn: s.fanOn ?? false,
         }));
 
         return ok({ items, total: items.length });

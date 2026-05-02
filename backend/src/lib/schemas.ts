@@ -50,6 +50,9 @@ export const TelemetrySample = z.object({
   pressureHpa: z.number().nullable().optional(),
   lightHours: z.number().optional(),
   sensor: z.string().optional(),
+  pumpOn: z.boolean().optional(),
+  lightsOn: z.boolean().optional(),
+  fanOn: z.boolean().optional(),
 });
 export type TelemetrySample = z.infer<typeof TelemetrySample>;
 
@@ -301,6 +304,9 @@ export const TelemetryIngestBody = z.object({
   light_lux: z.number().finite().nullable(),
   soil_moisture_raw: z.number().finite().nullable(),
   soil_moisture_channels: z.array(z.number().finite()).nullable().optional(),
+  pump_on: z.boolean().optional(),
+  lights_on: z.boolean().optional(),
+  fan_on: z.boolean().optional(),
 });
 export type TelemetryIngestBody = z.infer<typeof TelemetryIngestBody>;
 
@@ -313,6 +319,9 @@ export const TelemetryAcceptedSample = z.object({
   lightLux: z.number().nullable(),
   soilMoistureRaw: z.number().nullable(),
   soilMoistureChannels: z.array(z.number()).nullable().optional(),
+  pumpOn: z.boolean().optional(),
+  lightsOn: z.boolean().optional(),
+  fanOn: z.boolean().optional(),
   receivedAt: ISODate,
 });
 export type TelemetryAcceptedSample = z.infer<typeof TelemetryAcceptedSample>;
@@ -323,6 +332,36 @@ export const TelemetryIngestResult = z.object({
 });
 export type TelemetryIngestResult = z.infer<typeof TelemetryIngestResult>;
 export const TelemetryIngestResponseSchema = okResponse(TelemetryIngestResult);
+
+// --- Control settings (UI source of truth + IoT Hub device twin desired) ---
+
+export const ControlSettings = z.object({
+  version: z.number().int().nonnegative(),
+  thresholds: z.object({
+    tempMaxC: z.number(),
+    humidityMaxPct: z.number().min(0).max(100),
+    soilMoisturePctMin: z.number().min(0).max(100),
+    soilMoisturePctMax: z.number().min(0).max(100),
+  }),
+  lights: z.object({
+    startHour: z.number().int().min(0).max(23),
+    endHour: z.number().int().min(0).max(23),
+  }),
+  fan: z.object({
+    periodicEverySec: z.number().int().nonnegative(),
+    periodicDurationSec: z.number().int().nonnegative(),
+    humidityOverridePct: z.number().min(0).max(100),
+  }),
+  pump: z.object({
+    triggerPct: z.number().min(0).max(100),
+    delayAfterMeasurementSec: z.number().int().nonnegative(),
+    pulseDurationSec: z.number().int().positive(),
+    settleWindowSec: z.number().int().nonnegative(),
+    maxPulsesPerDay: z.number().int().positive(),
+  }),
+});
+export type ControlSettingsType = z.infer<typeof ControlSettings>;
+export const ControlSettingsResponseSchema = okResponse(ControlSettings);
 
 export const CameraUploadResultSchema = z.object({
   deviceId: z.string(),
