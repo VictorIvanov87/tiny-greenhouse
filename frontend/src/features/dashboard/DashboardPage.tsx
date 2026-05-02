@@ -8,6 +8,7 @@ import { useTelemetryQuery } from '../telemetry/api';
 import type { SetupProfile } from '../setup/state';
 import { AlertBanner } from './components/AlertBanner';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
+import { DevicesChart } from './components/DevicesChart';
 import { EnvironmentChart } from './components/EnvironmentChart';
 import { RecentReadings } from './components/RecentReadings';
 import { SensorCard } from './components/SensorCard';
@@ -106,6 +107,8 @@ const DashboardPage = () => {
           </Card>
 
           <EnvironmentChart />
+
+          <DevicesChart />
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,_3fr)_minmax(0,_2fr)]">
             <AlertPanel />
