@@ -29,7 +29,7 @@ const greenhouseRoutes: FastifyPluginAsync = async (app) => {
     async (req) => {
       const payload = GreenhouseConfig.parse(req.body);
       const uid = req.user!.uid;
-      const updated = saveGreenhouseConfig(uid, payload);
+      const updated = await saveGreenhouseConfig(uid, payload);
       return ok(updated);
     },
   );

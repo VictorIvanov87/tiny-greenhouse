@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..', '..', 'data', 'mock');
+// Resolve from process cwd. Dev (`tsx watch src/app.ts`) runs from `backend/`;
+// the deployed bundle on Azure runs from `/home/site/wwwroot/`. In both cases
+// `data/mock/` sits directly under cwd — `import.meta.url` would point inside
+// the tsup bundle in prod and resolve to the wrong directory.
+const root = resolve(process.cwd(), 'data', 'mock');
 
 export async function readMock<T>(file: string): Promise<T> {
   const fullPath = resolve(root, file);
