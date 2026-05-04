@@ -1,0 +1,179 @@
+crop:
+  id: strawberries
+  variety: clery
+  lang: en
+  displayName: "Clery"
+  version: 1
+  defaultStage: transplant
+
+overview: |
+  Early-ripening short-day strawberry bred in Italy (1996) by Mazzoni Group, from Sweet Charlie × Onebor.
+  Compact, vigorous bushes with dark green glossy leaves. Produces uniform, conical, bright-red berries
+  with excellent sweetness and no pronounced acidity. High yield for an early variety.
+  Well suited for indoor cultivation in containers and small controlled environments.
+
+growth_timing:
+  transplant_to_first_leaf: "7–14 days after planting runners or plugs"
+  days_to_first_flower: "30–45 days after transplant (requires prior short-day exposure)"
+  days_to_first_harvest: "60–90 days after transplant, depending on temperature and light"
+  fruiting_window: "4–6 weeks of concentrated harvest"
+  notes: >
+    Clery is a short-day (June-bearing) variety. Flower initiation requires exposure to
+    photoperiods below 12 hours and cool temperatures (10–15°C) for at least 2–3 weeks.
+    Without this chilling/short-day period, plants remain vegetative.
+
+stages:
+  - id: transplant
+    label: "Transplant / Establishment"
+    cues:
+      - "Runners or plug plants set in containers with free-draining substrate"
+      - "Crown level with soil surface; roots spread, not bent"
+    guidance: |
+      Water thoroughly after planting. Keep substrate consistently moist (not waterlogged)
+      for the first week. Provide 14–16 hours of light to encourage vegetative growth
+      before switching to short-day treatment for flower induction.
+
+  - id: vegetative
+    label: "Vegetative Growth"
+    cues:
+      - "New leaves emerging; runners may appear; no flower buds visible"
+    guidance: |
+      Maintain 14–16 hours of light to build a strong leaf canopy before flower induction.
+      Remove runners to direct energy toward the crown. Gentle airflow strengthens stems
+      and reduces disease risk. Water when the top 1–2 cm of substrate are dry.
+
+  - id: flower_induction
+    label: "Flower Induction (Short-Day Treatment)"
+    cues:
+      - "Deliberate reduction of photoperiod to trigger flower bud formation"
+    guidance: |
+      Reduce light to 8–10 hours per day for 2–3 weeks. Ideal temperature during this
+      period is 10–15°C. In a home environment where temperature cannot be lowered,
+      a longer short-day treatment (3–4 weeks) may compensate. After the treatment,
+      return to normal photoperiod (12–14 hours). Flower buds become visible 2–4 weeks
+      after the end of short-day treatment.
+
+  - id: flowering
+    label: "Flowering"
+    cues:
+      - "Flower buds visible; first open white flowers with yellow centers"
+    guidance: |
+      Maintain 12–14 hours of light. Keep day temperature 20–24°C and night temperature
+      12–16°C for best fruit set. Clery is self-fertile but gentle vibration or airflow
+      helps pollination in still indoor environments. Avoid wetting flowers directly.
+      Slight dry-back of substrate improves fruit set.
+
+  - id: fruiting
+    label: "Fruiting / Harvest"
+    cues:
+      - "Green fruits visible, gradually turning white, then red"
+      - "Ripe berries are uniformly bright red, firm, conical"
+    guidance: |
+      Harvest when berries are fully red but still firm. Pick every 2–3 days during peak
+      production. Lower night temperatures (10–14°C) improve sweetness and flavor.
+      Continue regular watering but avoid overwatering, which causes soft, tasteless fruit.
+      Remove any damaged or overripe berries to prevent Botrytis.
+
+defaults:
+  environment:
+    temperature_day_c: [20, 24]
+    temperature_night_c: [10, 16]
+    humidity_pct: [60, 75]
+    light_hours: 14
+    light_hours_flower_induction: 9
+    co2_ppm: 400
+  irrigation:
+    method: "Top watering or drip irrigation"
+    soil_mix: "Universal potting soil:Perlite = 70:30 (free-draining, slightly acidic)"
+    watering_rule: "Water when top 1–2 cm are dry; reduce frequency in cool or low-light conditions"
+  nutrition:
+    ec_mS_cm: [0.8, 1.2]
+    ph: [5.5, 6.5]
+    feed_note: >
+      Balanced feed during vegetative growth. Increase potassium during flowering and fruiting
+      for better fruit quality. Potassium can be nearly double the nitrogen level during fruiting.
+      Avoid excessive nitrogen, which promotes leaf growth at the expense of fruit.
+  container:
+    pot_volume_l: [2.0, 5.0]
+    spacing_cm: [20, 30]
+  operations:
+    timelapse_hour_local: 9
+    airflow_note: "Gentle, consistent airflow reduces Botrytis risk and strengthens peduncles"
+
+safety_bounds:
+  temperature_c: [5, 32]
+  light_hours: [6, 18]
+  humidity_pct: [30, 85]
+  ec_mS_cm: [0.4, 1.8]
+
+warnings:
+  - stage: transplant
+    text: "Do not bury the crown; it should be level with the substrate surface. Buried crowns rot."
+  - stage: vegetative
+    text: "Remove runners promptly; they divert energy from the crown and reduce future yield."
+  - stage: flower_induction
+    text: >
+      Without short-day treatment, Clery will not flower. This is a short-day variety;
+      simply providing long photoperiods year-round will keep it vegetative indefinitely.
+  - stage: flowering
+    text: "Overwatering and high humidity (>75%) during flowering increase risk of Botrytis and poor fruit set."
+  - stage: fruiting
+    text: "Harvest ripe fruit promptly. Overripe berries attract fungal infection and reduce overall yield."
+  - stage: any
+    text: "Never recommend beyond safety bounds; clamp to safe min/max and change gradually."
+
+faq:
+  - q: "Is Clery a day-neutral or short-day variety?"
+    a: >
+      Clery is a short-day (June-bearing) variety. It requires a period of short days (below 12 hours)
+      and cool temperatures to initiate flowering. Without this treatment, the plant stays vegetative.
+
+  - q: "How much light does Clery need indoors?"
+    a: >
+      During vegetative growth: 14–16 hours to build a strong canopy. During flower induction:
+      reduce to 8–10 hours for 2–3 weeks. During flowering and fruiting: 12–14 hours.
+
+  - q: "What temperature is best for sweet fruit?"
+    a: >
+      Lower night temperatures (10–14°C) improve sugar content and flavor. Day temperatures
+      of 20–24°C support good photosynthesis. Avoid sustained temperatures above 28°C,
+      which stress the plant and reduce fruit quality.
+
+  - q: "How do I prevent Botrytis (grey mould)?"
+    a: >
+      Keep humidity below 75%, ensure good airflow around the plants, avoid wetting leaves
+      and flowers from above, and remove damaged or overripe fruit promptly. A thin perlite
+      layer on the substrate surface can reduce splash-borne infection.
+
+  - q: "What pot size works for indoor Clery?"
+    a: >
+      2–5 liters per plant with 20–30 cm spacing. Use a free-draining, slightly acidic mix
+      (pH 5.5–6.5). Avoid overpotting, which keeps the substrate wet for too long.
+
+  - q: "Do I need to pollinate manually?"
+    a: >
+      Clery is self-fertile, but in still indoor environments pollination can be poor.
+      A gentle fan providing consistent airflow usually suffices. Alternatively, lightly
+      shake the flower clusters or use a small brush.
+
+  - q: "Should I remove runners?"
+    a: >
+      Yes, especially during vegetative growth and flowering. Runners divert energy from
+      the crown and reduce fruit production. If you want new plants, root a few runners
+      in separate pots after the harvest is complete.
+
+  - q: "Can I grow Clery year-round indoors?"
+    a: >
+      Not continuously from the same plant. After a fruiting cycle, Clery needs a rest
+      period. You can simulate seasons by providing a chilling/short-day period, then
+      returning to long days, but expect one main harvest window per cycle.
+
+aliases:
+  - "clery"
+  - "strawberry clery"
+  - "fragaria ananassa clery"
+  - "ягода клери"
+
+sources:
+  - "strawberries-clery-notes"
+  - "soil-mix-basics"
