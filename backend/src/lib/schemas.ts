@@ -43,8 +43,8 @@ export type AiHealthResponsePayload = z.infer<typeof AiHealthResponseSchema>;
 
 export const TelemetrySample = z.object({
   timestamp: ISODate,
-  temperature: z.number(),
-  humidity: z.number(),
+  temperature: z.number().nullable(),
+  humidity: z.number().nullable(),
   soilMoisture: z.number(),
   lightLux: z.number().nullable().optional(),
   pressureHpa: z.number().nullable().optional(),
@@ -53,6 +53,7 @@ export const TelemetrySample = z.object({
   pumpOn: z.boolean().optional(),
   lightsOn: z.boolean().optional(),
   fanOn: z.boolean().optional(),
+  sensorError: z.boolean().optional(),
 });
 export type TelemetrySample = z.infer<typeof TelemetrySample>;
 
@@ -298,30 +299,32 @@ export const DeviceListResponseSchema = okResponse(DeviceListResult);
 export const TelemetryIngestBody = z.object({
   device_id: z.string().min(1),
   uptime_ms: z.coerce.number().int().nonnegative(),
-  temperature_c: z.number().finite(),
-  humidity_pct: z.number().finite(),
-  pressure_hpa: z.number().finite(),
+  temperature_c: z.number().finite().nullable(),
+  humidity_pct: z.number().finite().nullable(),
+  pressure_hpa: z.number().finite().nullable(),
   light_lux: z.number().finite().nullable(),
   soil_moisture_raw: z.number().finite().nullable(),
   soil_moisture_channels: z.array(z.number().finite()).nullable().optional(),
   pump_on: z.boolean().optional(),
   lights_on: z.boolean().optional(),
   fan_on: z.boolean().optional(),
+  sensor_error: z.boolean().optional(),
 });
 export type TelemetryIngestBody = z.infer<typeof TelemetryIngestBody>;
 
 export const TelemetryAcceptedSample = z.object({
   deviceId: z.string(),
   uptimeMs: z.number(),
-  temperatureC: z.number(),
-  humidityPct: z.number(),
-  pressureHpa: z.number(),
+  temperatureC: z.number().nullable(),
+  humidityPct: z.number().nullable(),
+  pressureHpa: z.number().nullable(),
   lightLux: z.number().nullable(),
   soilMoistureRaw: z.number().nullable(),
   soilMoistureChannels: z.array(z.number()).nullable().optional(),
   pumpOn: z.boolean().optional(),
   lightsOn: z.boolean().optional(),
   fanOn: z.boolean().optional(),
+  sensorError: z.boolean().optional(),
   receivedAt: ISODate,
 });
 export type TelemetryAcceptedSample = z.infer<typeof TelemetryAcceptedSample>;

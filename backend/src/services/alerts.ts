@@ -93,7 +93,7 @@ const ruleToAlertType = (rule: AlertRule): AlertType => {
 };
 
 const getSensorValue = (
-  latest: { temperature: number; humidity: number; soilMoisture: number; lightLux?: number | null },
+  latest: { temperature: number | null; humidity: number | null; soilMoisture: number; lightLux?: number | null },
   metric: AlertRuleMetric,
 ): number | null => {
   switch (metric) {

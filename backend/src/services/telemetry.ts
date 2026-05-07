@@ -131,6 +131,7 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
   pumpOn: s.pumpOn ?? false,
   lightsOn: s.lightsOn ?? false,
   fanOn: s.fanOn ?? false,
+  sensorError: s.sensorError,
 });
 
 // ---------------------------------------------------------------------------
@@ -161,6 +162,7 @@ export const insertTelemetry = async (
       pumpOn: sample.pumpOn ?? false,
       lightsOn: sample.lightsOn ?? false,
       fanOn: sample.fanOn ?? false,
+      sensorError: sample.sensorError ?? false,
       receivedAt,
       expiresAt,
     });
@@ -236,15 +238,16 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
     return {
       deviceId: d.deviceId,
       uptimeMs: d.uptimeMs,
-      temperatureC: d.temperatureC,
-      humidityPct: d.humidityPct,
-      pressureHpa: d.pressureHpa,
+      temperatureC: d.temperatureC ?? null,
+      humidityPct: d.humidityPct ?? null,
+      pressureHpa: d.pressureHpa ?? null,
       lightLux: d.lightLux ?? null,
       soilMoistureRaw: d.soilMoistureRaw ?? null,
       soilMoistureChannels: d.soilMoistureChannels ?? null,
       pumpOn: d.pumpOn ?? false,
       lightsOn: d.lightsOn ?? false,
       fanOn: d.fanOn ?? false,
+      sensorError: d.sensorError ?? false,
       receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
     };
   });

@@ -3,8 +3,8 @@ import { api } from '../../shared/hooks/useApi'
 
 export type TelemetrySample = {
   timestamp: string
-  temperature: number
-  humidity: number
+  temperature: number | null
+  humidity: number | null
   soilMoisture: number
   lightLux?: number | null
   pressureHpa?: number | null
@@ -13,6 +13,7 @@ export type TelemetrySample = {
   pumpOn?: boolean
   lightsOn?: boolean
   fanOn?: boolean
+  sensorError?: boolean
 }
 
 export type TelemetryList = {

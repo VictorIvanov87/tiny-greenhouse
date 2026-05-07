@@ -215,8 +215,8 @@ const SensorDataPage = () => {
       header,
       ...pageItems.map((row) => {
         const cells = [row.timestamp];
-        if (showColumn('temperature')) cells.push(row.temperature.toString());
-        if (showColumn('humidity')) cells.push(row.humidity.toString());
+        if (showColumn('temperature')) cells.push(row.temperature != null ? row.temperature.toString() : '');
+        if (showColumn('humidity')) cells.push(row.humidity != null ? row.humidity.toString() : '');
         if (showColumn('soilMoisture')) cells.push(row.soilMoisture.toString());
         if (showColumn('lightLux')) cells.push(row.lightLux != null ? row.lightLux.toString() : '');
         if (showColumn('pressureHpa'))
@@ -395,12 +395,12 @@ const SensorDataPage = () => {
                   </TableCell>
                   {showColumn('temperature') && (
                     <TableCell style={valueStyle(item.temperature, 'temperature')}>
-                      {item.temperature.toFixed(1)}
+                      {item.temperature != null ? item.temperature.toFixed(1) : '—'}
                     </TableCell>
                   )}
                   {showColumn('humidity') && (
                     <TableCell style={valueStyle(item.humidity, 'humidity')}>
-                      {item.humidity.toFixed(1)}
+                      {item.humidity != null ? item.humidity.toFixed(1) : '—'}
                     </TableCell>
                   )}
                   {showColumn('soilMoisture') && (

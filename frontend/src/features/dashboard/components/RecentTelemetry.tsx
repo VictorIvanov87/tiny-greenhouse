@@ -34,13 +34,14 @@ const formatTimestamp = (value: string) => {
   return timestampFormatter.format(new Date(parsed));
 };
 
-const formatNumber = (value: number) => value.toFixed(1);
+const formatNumber = (value: number | null | undefined) =>
+  value == null ? '—' : value.toFixed(1);
 
-const tempColour = (v: number) =>
-  v >= 35 ? 'text-rose-400' : v <= 10 ? 'text-sky-400' : '';
+const tempColour = (v: number | null | undefined) =>
+  v == null ? '' : v >= 35 ? 'text-rose-400' : v <= 10 ? 'text-sky-400' : '';
 
-const humidityColour = (v: number) =>
-  v < 30 ? 'text-amber-400' : v > 90 ? 'text-sky-400' : '';
+const humidityColour = (v: number | null | undefined) =>
+  v == null ? '' : v < 30 ? 'text-amber-400' : v > 90 ? 'text-sky-400' : '';
 
 const soilColour = (v: number) => (v < 20 ? 'text-amber-400' : '');
 

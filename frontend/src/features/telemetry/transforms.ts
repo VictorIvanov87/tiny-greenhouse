@@ -39,15 +39,16 @@ export const filterByWindow = <T extends HasTimestamp>(items: T[], windowKey: Wi
 
 export const bucketByMinute = <T extends HasTimestamp>(
   items: T[],
-  pick: (item: T) => number,
+  pick: (item: T) => number | null | undefined,
 ): Array<{ timestamp: number; value: number }> => {
   const buckets = new Map<number, number[]>()
 
   items.forEach((item) => {
+    const value = pick(item)
+    if (value == null) return
     const date = new Date(item.timestamp)
     date.setSeconds(0, 0)
     const key = date.getTime()
-    const value = pick(item)
     const bucket = buckets.get(key)
     if (!bucket) {
       buckets.set(key, [value])
