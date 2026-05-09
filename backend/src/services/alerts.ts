@@ -18,6 +18,13 @@ const HYSTERESIS: Record<AlertRuleMetric, number> = {
 const STALE_WARN_MINUTES = 10;
 const STALE_CRITICAL_MINUTES = 60;
 
+// Suppress SENSOR_STALE during cold-start window: the IoT Hub consumer takes
+// ~10–30 s to reconnect and drain pending events. Without this, the very first
+// /api/alerts call after a wake fires a false stale alert that resolves on the
+// next refresh.
+const WARMUP_GRACE_MS = 90_000;
+const processStartedAt = Date.now();
+
 const getStore = (uid: string): Store => {
   let store = stores.get(uid);
   if (!store) {
@@ -133,21 +140,26 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
   }
 
   const minutesSince = (now.getTime() - sampleTime) / 60000;
+  const inWarmup = now.getTime() - processStartedAt < WARMUP_GRACE_MS;
 
-  // --- Staleness check (always runs, not rule-based) ---
-  if (minutesSince >= STALE_WARN_MINUTES) {
-    const severity: AlertSeverity = minutesSince >= STALE_CRITICAL_MINUTES ? 'critical' : 'warn';
-    upsertAlert(uid, {
-      type: 'SENSOR_STALE',
-      severity,
-      message:
-        severity === 'critical'
-          ? 'Sensor data is stale for over an hour'
-          : 'Sensor data is stale',
-      startedAt: latest.timestamp,
-    });
-  } else {
-    resolveAlert(uid, 'SENSOR_STALE');
+  // --- Staleness check (always runs, not rule-based). Skipped during the
+  // cold-start grace window so the IoT Hub consumer has time to drain its
+  // backlog before we judge whether data is "stale".
+  if (!inWarmup) {
+    if (minutesSince >= STALE_WARN_MINUTES) {
+      const severity: AlertSeverity = minutesSince >= STALE_CRITICAL_MINUTES ? 'critical' : 'warn';
+      upsertAlert(uid, {
+        type: 'SENSOR_STALE',
+        severity,
+        message:
+          severity === 'critical'
+            ? 'Sensor data is stale for over an hour'
+            : 'Sensor data is stale',
+        startedAt: latest.timestamp,
+      });
+    } else {
+      resolveAlert(uid, 'SENSOR_STALE');
+    }
   }
 
   // --- Special case: soil moisture = 0 means sensor broken ---

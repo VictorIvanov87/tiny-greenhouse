@@ -1,0 +1,22 @@
+name: Keepalive
+
+# Pings /api/health every 5 min so Azure App Service F1 (Free) tier doesn't
+# sleep after 20 min of HTTP idle. Sleeping kills the IoT Hub consumer started
+# in src/app.ts, which causes telemetry to queue in IoT Hub instead of landing
+# in Firestore. See plans/ok-so-backend-lives-rosy-thimble.md.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # every 5 min — minimum granularity GitHub Actions allows
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /api/health
+        run: |
+          curl --max-time 30 --silent --show-error \
+            --output /dev/null \
+            --write-out 'HTTP %{http_code} in %{time_total}s\n' \
+            https://tiny-greenhouse-api.azurewebsites.net/api/health
