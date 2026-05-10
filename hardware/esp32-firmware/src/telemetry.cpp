@@ -71,19 +71,15 @@ String buildTelemetryJson(
   json += ",\"uptime_ms\":";
   json += String(uptimeMs);
 
-  // BME280 values: null if sensor is disabled
-  if (bme280Healthy) {
-    json += ",\"temperature_c\":";
-    json += String(temperatureC, 2);
-    json += ",\"humidity_pct\":";
-    json += String(humidityPct, 2);
-    json += ",\"pressure_hpa\":";
-    json += String(pressureHpa, 2);
-  } else {
-    json += ",\"temperature_c\":null";
-    json += ",\"humidity_pct\":null";
-    json += ",\"pressure_hpa\":null";
-  }
+  // BME280 values: null if sensor is disabled OR if any individual reading is
+  // NaN (e.g., BMP280 fallback has no humidity sensor → humidity is always NaN).
+  // JSON has no NaN literal, so we must emit `null` to keep the payload valid.
+  json += ",\"temperature_c\":";
+  json += (bme280Healthy && !isnan(temperatureC)) ? String(temperatureC, 2) : "null";
+  json += ",\"humidity_pct\":";
+  json += (bme280Healthy && !isnan(humidityPct)) ? String(humidityPct, 2) : "null";
+  json += ",\"pressure_hpa\":";
+  json += (bme280Healthy && !isnan(pressureHpa)) ? String(pressureHpa, 2) : "null";
 
   // BH1750 value: null if sensor is disabled or read failed
   json += ",\"light_lux\":";
