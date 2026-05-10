@@ -2,11 +2,13 @@
 
 #include <Arduino.h>
 #include <Adafruit_BME280.h>
+#include <Adafruit_BMP280.h>
 #include <Adafruit_ADS1X15.h>
 #include "config.h"
 
 // Driver instances (defined in sensors.cpp)
 extern Adafruit_BME280 bme;
+extern Adafruit_BMP280 bmp;
 extern Adafruit_ADS1115 ads;
 
 // Health state
@@ -16,6 +18,11 @@ extern bool adsOk;
 extern uint8_t bme280ErrorCount;
 extern uint8_t bh1750ErrorCount;
 extern bool sensorError;
+
+// True when the connected sensor is a BMP280 (no humidity).
+// initBme280() detects the chip and sets this; readHumidityPct() returns NAN
+// in this mode and isValidBME280() relaxes the humidity-required check.
+extern bool bmp280Mode;
 
 // Last-known-good readings consumed by control evaluators
 extern float lastHumidity;
@@ -27,6 +34,9 @@ bool initBh1750();
 bool initAds1115();
 
 // Reads
+float readTemperatureC();
+float readHumidityPct(); // returns NAN when bmp280Mode (BMP280 has no humidity sensor)
+float readPressureHpa();
 float readLightLux();
 int readSoilMoistureRaw(int16_t outChannels[SOIL_SENSOR_COUNT]);
 void printSoilChannels(const int16_t channels[SOIL_SENSOR_COUNT]);

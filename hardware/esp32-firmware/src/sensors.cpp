@@ -4,6 +4,7 @@
 #include <math.h>
 
 Adafruit_BME280 bme;
+Adafruit_BMP280 bmp;
 Adafruit_ADS1115 ads;
 
 bool bme280Healthy = true;
@@ -15,6 +16,7 @@ uint8_t bh1750ErrorCount = 0;
 bool adsOk = false;
 
 bool sensorError = false;
+bool bmp280Mode = false;
 
 float lastHumidity = 0.0f;
 float lastSoilPct = 100.0f; // start "wet" so we don't pump before the first reading
@@ -29,11 +31,14 @@ void updateSensorErrorFlag() {
 // Validation
 // ---------------------------------------------------------------------------
 
-// BME280 physical limits per datasheet: temp -40..+85, hum 0..100, pres 300..1100
+// BME280 physical limits per datasheet: temp -40..+85, hum 0..100, pres 300..1100.
+// In bmp280Mode (BMP280 fallback), the chip has no humidity sensor — humPct will
+// be NAN and is intentionally not part of validity.
 bool isValidBME280(float tempC, float humPct, float presHpa) {
-  if (isnan(tempC) || isnan(humPct) || isnan(presHpa)) return false;
+  if (isnan(tempC) || isnan(presHpa)) return false;
+  if (!bmp280Mode && isnan(humPct)) return false;
   if (tempC < -40.0f || tempC > 85.0f) return false;
-  if (humPct < 0.0f || humPct > 100.0f) return false;
+  if (!bmp280Mode && (humPct < 0.0f || humPct > 100.0f)) return false;
   if (presHpa < 300.0f || presHpa > 1100.0f) return false;
   return true;
 }
@@ -48,8 +53,32 @@ bool isValidBH1750(float lux) {
 // Init
 // ---------------------------------------------------------------------------
 
+// Try BME280 first (chip ID 0x60); fall back to BMP280 (chip ID 0x58) if the
+// physical sensor on the I2C bus is a BMP280. Lets the firmware run on either
+// without a code change — useful while a BME280 swap is pending.
 bool initBme280() {
-  return bme.begin(0x76);
+  if (bme.begin(0x76)) {
+    bmp280Mode = false;
+    return true;
+  }
+  if (bmp.begin(0x76)) {
+    bmp280Mode = true;
+    Serial.println("BMP280 detected at 0x76 — humidity readings will be null");
+    return true;
+  }
+  return false;
+}
+
+float readTemperatureC() {
+  return bmp280Mode ? bmp.readTemperature() : bme.readTemperature();
+}
+
+float readHumidityPct() {
+  return bmp280Mode ? NAN : bme.readHumidity();
+}
+
+float readPressureHpa() {
+  return bmp280Mode ? bmp.readPressure() : bme.readPressure();
 }
 
 bool initBh1750() {

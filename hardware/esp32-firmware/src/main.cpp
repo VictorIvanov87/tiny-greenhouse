@@ -92,9 +92,9 @@ void loop() {
   float pressureHpa = 0.0f;
 
   if (bme280Healthy) {
-    temperatureC = bme.readTemperature();
-    humidityPct = bme.readHumidity();
-    pressureHpa = bme.readPressure() / 100.0f;
+    temperatureC = readTemperatureC();
+    humidityPct = readHumidityPct();
+    pressureHpa = readPressureHpa() / 100.0f;
 
     if (isValidBME280(temperatureC, humidityPct, pressureHpa)) {
       bme280ErrorCount = 0;
