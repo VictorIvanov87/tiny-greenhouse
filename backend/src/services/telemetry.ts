@@ -131,6 +131,7 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
   pumpOn: s.pumpOn ?? false,
   lightsOn: s.lightsOn ?? false,
   fanOn: s.fanOn ?? false,
+  waterLevelLow: s.waterLevelLow ?? false,
   sensorError: s.sensorError,
 });
 
@@ -162,6 +163,7 @@ export const insertTelemetry = async (
       pumpOn: sample.pumpOn ?? false,
       lightsOn: sample.lightsOn ?? false,
       fanOn: sample.fanOn ?? false,
+      waterLevelLow: sample.waterLevelLow ?? false,
       sensorError: sample.sensorError ?? false,
       receivedAt,
       expiresAt,
@@ -247,6 +249,7 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       pumpOn: d.pumpOn ?? false,
       lightsOn: d.lightsOn ?? false,
       fanOn: d.fanOn ?? false,
+      waterLevelLow: d.waterLevelLow ?? false,
       sensorError: d.sensorError ?? false,
       receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
     };

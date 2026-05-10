@@ -162,6 +162,18 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
     }
   }
 
+  // --- Reservoir empty (water-level float switch went LOW) ---
+  if (latest.waterLevelLow) {
+    upsertAlert(uid, {
+      type: 'WATER_LEVEL_LOW',
+      severity: 'critical',
+      message: 'Water reservoir is empty — refill to resume automatic watering',
+      startedAt: latest.timestamp,
+    });
+  } else {
+    resolveAlert(uid, 'WATER_LEVEL_LOW');
+  }
+
   // --- Special case: soil moisture = 0 means sensor broken ---
   if (latest.soilMoisture === 0) {
     upsertAlert(uid, {

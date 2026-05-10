@@ -121,6 +121,9 @@ String buildTelemetryJson(
   json += ",\"fan_on\":";
   json += fanOn ? "true" : "false";
 
+  json += ",\"water_level_low\":";
+  json += waterLevelLow ? "true" : "false";
+
   // Sensor health flag: lets the backend generate an alert
   json += ",\"sensor_error\":";
   json += sensorError ? "true" : "false";

@@ -9,6 +9,7 @@ ControlSettings settings;
 bool pumpOn = false;
 bool lightsOn = false;
 bool fanOn = false;
+bool waterLevelLow = false;
 
 // Control state — uptime-based seconds, lost on reboot (acceptable: trigger
 // logic + cooldown prevent runaway pumping even with a reset counter).
@@ -138,6 +139,10 @@ void evalPump() {
 
 void maybeSchedulePump(float soilPct) {
   uint32_t nowSec = millis() / 1000;
+  if (waterLevelLow) {
+    Serial.println("Pump trigger ignored: reservoir is low");
+    return;
+  }
   if (soilPct > settings.pump.triggerPct) return;
   if (lastPumpAt > 0 && nowSec - lastPumpAt < settings.pump.settleWindowSec) {
     Serial.println("Pump trigger ignored: in settle window");

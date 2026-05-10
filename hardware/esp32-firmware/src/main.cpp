@@ -17,6 +17,7 @@ void setup() {
   pinMode(FAN_PIN, OUTPUT);
   pinMode(LIGHT_PIN, OUTPUT);
   pinMode(PUMP_PIN, OUTPUT);
+  pinMode(WATER_LEVEL_PIN, INPUT_PULLUP);
   digitalWrite(FAN_PIN, LOW);
   digitalWrite(LIGHT_PIN, LOW);
   digitalWrite(PUMP_PIN, LOW);
@@ -116,6 +117,10 @@ void loop() {
 
   int16_t soilChannels[SOIL_SENSOR_COUNT];
   int soilMoistureRaw = readSoilMoistureRaw(soilChannels);
+
+  // Read float switch on every measurement cycle. Fast, no debounce needed —
+  // floats stabilize in milliseconds and the 5-min cadence is the rate-limit.
+  waterLevelLow = (digitalRead(WATER_LEVEL_PIN) == HIGH) == WATER_LEVEL_LOW_WHEN_HIGH;
 
   if (soilMoistureRaw >= 0) {
     lastSoilPct = rawToSoilPercent(soilMoistureRaw);

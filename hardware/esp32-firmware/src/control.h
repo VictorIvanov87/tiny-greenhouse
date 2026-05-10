@@ -38,6 +38,10 @@ extern bool pumpOn;
 extern bool lightsOn;
 extern bool fanOn;
 
+// Reservoir state — refreshed each measurement cycle from the float switch on
+// WATER_LEVEL_PIN. true = reservoir empty / low, blocks new pump pulses.
+extern bool waterLevelLow;
+
 // Apply incoming twin desired-property fields. Missing fields keep current values.
 void applySettings(JsonObjectConst obj);
 

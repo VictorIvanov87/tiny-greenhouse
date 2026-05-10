@@ -75,6 +75,7 @@ export const ingestTelemetry = async (
     pumpOn: body.pump_on,
     lightsOn: body.lights_on,
     fanOn: body.fan_on,
+    waterLevelLow: body.water_level_low,
     sensorError: body.sensor_error,
     receivedAt: receivedAt ?? new Date().toISOString(),
   };

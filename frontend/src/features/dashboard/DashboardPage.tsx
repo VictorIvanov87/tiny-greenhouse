@@ -77,6 +77,7 @@ const DashboardPage = () => {
         lastSeenLabel={lastSeenLabel}
         criticalCount={criticalCount}
         warnCount={warnCount}
+        waterLevelLow={latestSample?.waterLevelLow}
       />
 
       {loading ? (

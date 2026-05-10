@@ -13,6 +13,7 @@ export type TelemetrySample = {
   pumpOn?: boolean
   lightsOn?: boolean
   fanOn?: boolean
+  waterLevelLow?: boolean
   sensorError?: boolean
 }
 
