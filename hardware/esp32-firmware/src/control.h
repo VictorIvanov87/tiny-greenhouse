@@ -42,6 +42,18 @@ extern bool fanOn;
 // WATER_LEVEL_PIN. true = reservoir empty / low, blocks new pump pulses.
 extern bool waterLevelLow;
 
+// Per-device timed manual override. Pushed via twin desired property
+// `overrides.{lights|fan|pump}`; firmware enforces expiry from wall-clock
+// (epoch ms) so a network drop or reboot can never leave an override stuck.
+struct DeviceOverride {
+  bool active = false;
+  bool desiredState = false;
+  uint64_t expiresAtMs = 0;
+};
+extern DeviceOverride lightsOverride;
+extern DeviceOverride fanOverride;
+extern DeviceOverride pumpOverride;
+
 // Apply incoming twin desired-property fields. Missing fields keep current values.
 void applySettings(JsonObjectConst obj);
 

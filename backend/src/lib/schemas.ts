@@ -296,6 +296,30 @@ export const DeviceListResult = z.object({
 });
 export const DeviceListResponseSchema = okResponse(DeviceListResult);
 
+// --- Device test overrides (timed manual on/off; firmware-enforced expiry) ---
+
+export const DeviceOverrideTarget = z.enum(['lights', 'pump', 'fan']);
+export type DeviceOverrideTarget = z.infer<typeof DeviceOverrideTarget>;
+
+export const DeviceOverrideState = z.enum(['on', 'off']);
+export type DeviceOverrideState = z.infer<typeof DeviceOverrideState>;
+
+export const DeviceOverrideRequest = z.object({
+  device: DeviceOverrideTarget,
+  state: DeviceOverrideState,
+  durationSec: z.number().int().min(1).max(30).default(10),
+});
+export type DeviceOverrideRequest = z.infer<typeof DeviceOverrideRequest>;
+
+export const DeviceOverrideResult = z.object({
+  deviceId: z.string(),
+  device: DeviceOverrideTarget,
+  state: DeviceOverrideState,
+  expiresAt: ISODate,
+});
+export type DeviceOverrideResult = z.infer<typeof DeviceOverrideResult>;
+export const DeviceOverrideResponseSchema = okResponse(DeviceOverrideResult);
+
 // --- Telemetry ingestion (POST /api/telemetry) ---
 
 export const TelemetryIngestBody = z.object({

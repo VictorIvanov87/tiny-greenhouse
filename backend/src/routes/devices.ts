@@ -9,12 +9,10 @@ import {
 } from '../lib/schemas';
 import { ok, errorBody } from '../lib/respond';
 import { ensureFirebase } from '../lib/firebase';
+import { listDevicesForUser, mockDevices } from '../services/devices';
 
 const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 const COLLECTION = 'devices';
-
-/** In-memory device store for mock mode. */
-const mockDevices = new Map<string, DeviceRecord>();
 
 const devicesRoutes: FastifyPluginAsync = async (app) => {
   // POST /api/devices — register a device under the authenticated user's greenhouse
@@ -92,28 +90,7 @@ const devicesRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req) => {
       const uid = req.user!.uid;
-
-      if (STORAGE_MODE === 'firestore') {
-        const { db } = ensureFirebase();
-        const snap = await db.collection(COLLECTION).where('ownerId', '==', uid).get();
-
-        const items: DeviceRecord[] = snap.docs.map((doc) => {
-          const d = doc.data();
-          return {
-            deviceId: doc.id,
-            ownerId: d.ownerId,
-            greenhouseId: d.greenhouseId,
-            type: d.type,
-            name: d.name,
-            registeredAt: (d.registeredAt as Timestamp).toDate().toISOString(),
-          };
-        });
-
-        return ok({ items, total: items.length });
-      }
-
-      // Mock mode
-      const items = Array.from(mockDevices.values()).filter((d) => d.ownerId === uid);
+      const items = await listDevicesForUser(uid);
       return ok({ items, total: items.length });
     },
   );

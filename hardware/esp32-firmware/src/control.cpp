@@ -1,5 +1,7 @@
 #include "control.h"
 
+#include <time.h>
+
 #include "config.h"
 #include "sensors.h"
 #include "net.h"
@@ -11,6 +13,10 @@ bool lightsOn = false;
 bool fanOn = false;
 bool waterLevelLow = false;
 
+DeviceOverride lightsOverride;
+DeviceOverride fanOverride;
+DeviceOverride pumpOverride;
+
 // Control state — uptime-based seconds, lost on reboot (acceptable: trigger
 // logic + cooldown prevent runaway pumping even with a reset counter).
 static uint32_t lastPeriodicFanStart = 0;
@@ -20,6 +26,51 @@ static uint32_t pumpScheduledAt = 0;
 static uint32_t pumpRunningUntil = 0;
 static uint16_t pumpsTodayCount = 0;
 static int pumpsTodayYday = -1;
+
+// Wall-clock epoch in ms; returns 0 until NTP has produced a sane value.
+static uint64_t nowEpochMs() {
+  if (!ntpSynced) return 0;
+  time_t now = time(nullptr);
+  if (now < 1700000000) return 0;  // ~2023-11; sentinel for un-synced clock
+  return (uint64_t)now * 1000ULL;
+}
+
+static void applyOverride(JsonObjectConst v, DeviceOverride& slot, const char* label) {
+  if (v.isNull()) return;
+  uint64_t expiresAtMs = v["expiresAtMs"] | (uint64_t)0;
+  const char* state = v["state"] | "";
+  if (expiresAtMs == 0) {
+    if (slot.active) {
+      Serial.printf("Override %s cleared\n", label);
+    }
+    slot.active = false;
+    slot.expiresAtMs = 0;
+    return;
+  }
+  bool desired = (strcmp(state, "on") == 0);
+  slot.desiredState = desired;
+  slot.expiresAtMs = expiresAtMs;
+  slot.active = true;
+  Serial.printf("Override %s -> %s expiresAtMs=%llu\n",
+    label, desired ? "ON" : "OFF", (unsigned long long)expiresAtMs);
+}
+
+// Returns true if the override should drive the actuator on this loop tick.
+// Auto-clears the slot on expiry and logs the transition.
+static bool overrideActive(DeviceOverride& slot, const char* label) {
+  if (!slot.active) return false;
+  uint64_t now = nowEpochMs();
+  if (now == 0) {
+    // No reliable wall-clock yet — refuse to honour an un-bounded override.
+    return false;
+  }
+  if (now >= slot.expiresAtMs) {
+    slot.active = false;
+    Serial.printf("Override %s expired, returning to schedule\n", label);
+    return false;
+  }
+  return true;
+}
 
 void applySettings(JsonObjectConst obj) {
   // Apply incoming fields; missing fields keep current values. No version
@@ -55,6 +106,13 @@ void applySettings(JsonObjectConst obj) {
     settings.pump.maxPulsesPerDay = p["maxPulsesPerDay"] | settings.pump.maxPulsesPerDay;
   }
 
+  JsonObjectConst ov = obj["overrides"];
+  if (!ov.isNull()) {
+    applyOverride(ov["lights"], lightsOverride, "lights");
+    applyOverride(ov["fan"],    fanOverride,    "fan");
+    applyOverride(ov["pump"],   pumpOverride,   "pump");
+  }
+
   Serial.printf("Settings v%u applied: tempMax=%.1f humMax=%.1f lights=%u-%u pumpTrigger=%.1f%%\n",
     settings.version,
     settings.thresholds.tempMaxC, settings.thresholds.humidityMaxPct,
@@ -71,6 +129,11 @@ static void setActuator(uint8_t pin, bool& state, bool desired) {
 }
 
 void evalLights() {
+  if (overrideActive(lightsOverride, "lights")) {
+    setActuator(LIGHT_PIN, lightsOn, lightsOverride.desiredState);
+    return;
+  }
+
   if (!ntpSynced) return;
 
   struct tm now;
@@ -88,6 +151,11 @@ void evalLights() {
 }
 
 void evalFan() {
+  if (overrideActive(fanOverride, "fan")) {
+    setActuator(FAN_PIN, fanOn, fanOverride.desiredState);
+    return;
+  }
+
   uint32_t nowSec = millis() / 1000;
 
   // Start of next periodic window
@@ -105,6 +173,20 @@ void evalFan() {
 
 void evalPump() {
   uint32_t nowSec = millis() / 1000;
+
+  // Manual override takes precedence over the schedule. Honoured for the
+  // override window only; does NOT bump pumpsTodayCount or interact with
+  // pumpRunningUntil so an in-flight scheduled pulse resumes cleanly when
+  // the override expires. Reservoir safety is still enforced.
+  if (overrideActive(pumpOverride, "pump")) {
+    bool desired = pumpOverride.desiredState;
+    if (desired && waterLevelLow) {
+      Serial.println("Pump override refused: reservoir is low");
+      desired = false;
+    }
+    setActuator(PUMP_PIN, pumpOn, desired);
+    return;
+  }
 
   // Daily count reset on local-day change
   if (ntpSynced) {
