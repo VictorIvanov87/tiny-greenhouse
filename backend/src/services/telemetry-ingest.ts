@@ -32,6 +32,10 @@ export const ingestTelemetry = async (
 
   const body = result.data;
 
+  console.log(
+    `[telemetry] device=${body.device_id} water_level_low=${JSON.stringify(body.water_level_low)} (raw=${JSON.stringify((raw as Record<string, unknown>)?.water_level_low)})`,
+  );
+
   const ownership = await lookupDevice(body.device_id);
   if (!ownership) {
     return {
