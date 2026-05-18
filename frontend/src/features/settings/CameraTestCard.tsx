@@ -1,4 +1,13 @@
-import { Alert, Badge, Button, Card, Label, Select, Spinner, TextInput } from 'flowbite-react'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Label,
+  RangeSlider,
+  Select,
+  Spinner,
+} from 'flowbite-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useDevicesQuery, type DeviceRecord } from './deviceTestApi'
 import {
@@ -39,48 +48,110 @@ const WB_MODE_OPTIONS = [
   { value: 4, label: 'Home' },
 ]
 
-const num = (v: string): number => {
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
-}
+// ── Reusable controls ──────────────────────────────────────────────────────
 
-type FieldProps = {
+type SliderProps = {
   id: string
   label: string
+  min: number
+  max: number
+  step?: number
   value: number
-  min?: number
-  max?: number
-  step?: string
-  suffix?: string
   onChange: (v: number) => void
   disabled?: boolean
+  help?: string
+  leftHint?: string
+  rightHint?: string
 }
 
-const Field = ({ id, label, value, min, max, step, suffix, onChange, disabled }: FieldProps) => (
+const Slider = ({
+  id,
+  label,
+  min,
+  max,
+  step = 1,
+  value,
+  onChange,
+  disabled,
+  help,
+  leftHint,
+  rightHint,
+}: SliderProps) => (
   <div className="space-y-1">
-    <Label htmlFor={id} className="text-xs font-medium text-slate-400">
-      {label}
-      {suffix ? <span className="ml-1 text-slate-500">({suffix})</span> : null}
-    </Label>
-    <TextInput
+    <div className="flex items-baseline justify-between">
+      <Label htmlFor={id} className="text-xs font-medium text-slate-400">
+        {label}
+      </Label>
+      <span className="text-xs font-mono text-slate-200">{value}</span>
+    </div>
+    <RangeSlider
       id={id}
-      type="number"
-      step={step ?? '1'}
       min={min}
       max={max}
-      value={String(value)}
-      onChange={(e) => onChange(num(e.target.value))}
+      step={step}
+      value={value}
       disabled={disabled}
+      onChange={(e) => onChange(Number(e.target.value))}
     />
+    <div className="flex justify-between text-[10px] text-slate-500">
+      <span>{leftHint ?? min}</span>
+      <span>{rightHint ?? max}</span>
+    </div>
+    {help && <p className="text-xs text-slate-500">{help}</p>}
   </div>
 )
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4">
-    <h3 className="mb-3 text-sm font-semibold text-slate-100">{title}</h3>
-    <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+type ToggleProps = {
+  id: string
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+  disabled?: boolean
+  help?: string
+}
+
+const Toggle = ({ id, label, checked, onChange, disabled, help }: ToggleProps) => (
+  <div className="space-y-1">
+    <label htmlFor={id} className="inline-flex cursor-pointer items-center gap-2">
+      <input
+        id={id}
+        type="checkbox"
+        className="peer sr-only"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span
+        className="peer relative h-6 w-11 rounded-full bg-gray-700
+          after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5
+          after:rounded-full after:border after:border-gray-600 after:bg-white
+          after:transition-all after:content-['']
+          peer-checked:bg-green-600 peer-checked:after:translate-x-full
+          peer-checked:after:border-white peer-focus:outline-none
+          peer-focus:ring-4 peer-focus:ring-green-800"
+      />
+      <span className="text-xs font-medium text-slate-300">{label}</span>
+    </label>
+    {help && <p className="text-xs text-slate-500">{help}</p>}
   </div>
 )
+
+const Section = ({
+  title,
+  children,
+  cols = 2,
+}: {
+  title: string
+  children: React.ReactNode
+  cols?: 1 | 2
+}) => (
+  <div className="rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4">
+    <h3 className="mb-3 text-sm font-semibold text-slate-100">{title}</h3>
+    <div className={cols === 1 ? 'space-y-4' : 'grid gap-4 sm:grid-cols-2'}>{children}</div>
+  </div>
+)
+
+// ── Test capture section ───────────────────────────────────────────────────
 
 const TestCaptureSection = ({ cams }: { cams: DeviceRecord[] }) => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
@@ -99,7 +170,6 @@ const TestCaptureSection = ({ cams }: { cams: DeviceRecord[] }) => {
     }
   }, [cams, selectedDeviceId])
 
-  // Reset any in-flight test when the user changes camera.
   useEffect(() => {
     setRequestId(null)
     setErrorMsg(null)
@@ -155,25 +225,14 @@ const TestCaptureSection = ({ cams }: { cams: DeviceRecord[] }) => {
         </div>
       )}
 
-      <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-300">
-        <input
-          type="checkbox"
-          className="peer sr-only"
-          checked={lightsOff}
-          disabled={captureInFlight}
-          onChange={(e) => setLightsOff(e.target.checked)}
-        />
-        <span
-          className="peer relative h-6 w-11 rounded-full bg-gray-700
-            after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5
-            after:rounded-full after:border after:border-gray-600 after:bg-white
-            after:transition-all after:content-['']
-            peer-checked:bg-green-600 peer-checked:after:translate-x-full
-            peer-checked:after:border-white peer-focus:outline-none
-            peer-focus:ring-4 peer-focus:ring-green-800"
-        />
-        Turn off lights during capture
-      </label>
+      <Toggle
+        id="lightsOff"
+        label="Turn off lights during capture"
+        checked={lightsOff}
+        disabled={captureInFlight}
+        onChange={setLightsOff}
+        help="Lights are dimmed for ~20s so the pink/purple glow doesn't tint the photo."
+      />
 
       <div>
         <Button
@@ -246,6 +305,8 @@ const TestCaptureSection = ({ cams }: { cams: DeviceRecord[] }) => {
   )
 }
 
+// ── Settings form ──────────────────────────────────────────────────────────
+
 const SettingsForm = () => {
   const query = useCameraSettingsQuery()
   const mutation = useUpdateCameraSettingsMutation()
@@ -302,6 +363,20 @@ const SettingsForm = () => {
 
   return (
     <div className="space-y-3">
+      <Alert color="warning">
+        <div className="space-y-1">
+          <div>
+            <span className="font-semibold">Changing these settings affects every future picture.</span>{' '}
+            A running timelapse depends on consistent framing, exposure, and white balance —
+            tweaking values mid-series will produce a visibly jumpy video.
+          </div>
+          <div className="text-xs">
+            Use the test capture above to preview the effect before saving. Only press
+            <span className="font-semibold"> Save changes</span> when you&apos;re sure.
+          </div>
+        </div>
+      </Alert>
+
       {savedFlash && !dirty && (
         <Alert color="success">
           Camera settings saved and pushed to device. Current version: {draft.version}
@@ -314,71 +389,80 @@ const SettingsForm = () => {
       )}
 
       <Section title="Image">
-        <Field
+        <Slider
           id="brightness"
           label="Brightness"
           min={-2}
           max={2}
           value={draft.brightness}
-          onChange={(v) => set({ brightness: Math.round(v) })}
+          onChange={(v) => set({ brightness: v })}
           disabled={saving}
+          leftHint="darker"
+          rightHint="brighter"
+          help="Shifts the whole image lighter or darker. Most greenhouses are fine at 0."
         />
-        <Field
+        <Slider
           id="contrast"
           label="Contrast"
           min={-2}
           max={2}
           value={draft.contrast}
-          onChange={(v) => set({ contrast: Math.round(v) })}
+          onChange={(v) => set({ contrast: v })}
           disabled={saving}
+          leftHint="flat"
+          rightHint="punchy"
+          help="Higher values exaggerate the difference between light and dark areas."
         />
-        <Field
+        <Slider
           id="saturation"
           label="Saturation"
           min={-2}
           max={2}
           value={draft.saturation}
-          onChange={(v) => set({ saturation: Math.round(v) })}
+          onChange={(v) => set({ saturation: v })}
           disabled={saving}
+          leftHint="muted"
+          rightHint="vivid"
+          help="Negative values fade colours toward grey; positive values make greens look greener."
         />
-        <Field
+        <Slider
           id="sharpness"
           label="Sharpness"
           min={-2}
           max={3}
           value={draft.sharpness}
-          onChange={(v) => set({ sharpness: Math.round(v) })}
+          onChange={(v) => set({ sharpness: v })}
           disabled={saving}
+          leftHint="soft"
+          rightHint="crisp"
+          help="Edge enhancement. Too high causes visible noise on leaves."
         />
-        <Field
+        <Toggle
           id="denoise"
           label="Denoise"
-          min={0}
-          max={1}
-          value={draft.denoise}
-          onChange={(v) => set({ denoise: Math.round(v) })}
+          checked={draft.denoise === 1}
+          onChange={(v) => set({ denoise: v ? 1 : 0 })}
           disabled={saving}
+          help="Smooths fine grain. Best left on unless you want raw sensor noise."
         />
       </Section>
 
       <Section title="White balance & exposure">
-        <Field
+        <Toggle
           id="whitebal"
           label="Auto white balance"
-          min={0}
-          max={1}
-          value={draft.whitebal}
-          onChange={(v) => set({ whitebal: Math.round(v) })}
+          checked={draft.whitebal === 1}
+          onChange={(v) => set({ whitebal: v ? 1 : 0 })}
           disabled={saving}
+          help="Lets the camera correct colour casts on its own. Turn off only to use a fixed mode below."
         />
-        <Field
+        <Toggle
           id="awbGain"
           label="AWB gain"
-          min={0}
-          max={1}
-          value={draft.awbGain}
-          onChange={(v) => set({ awbGain: Math.round(v) })}
+          checked={draft.awbGain === 1}
+          onChange={(v) => set({ awbGain: v ? 1 : 0 })}
           disabled={saving}
+          help="Secondary white-balance gain stage. Usually paired with auto white balance above."
         />
         <div className="space-y-1">
           <Label htmlFor="wbMode" className="text-xs font-medium text-slate-400">
@@ -396,24 +480,25 @@ const SettingsForm = () => {
               </option>
             ))}
           </Select>
+          <p className="text-xs text-slate-500">
+            Only applies when auto white balance is off. <em>Auto</em> is the right choice for most setups.
+          </p>
         </div>
-        <Field
+        <Toggle
           id="exposureCtrl"
           label="Auto exposure"
-          min={0}
-          max={1}
-          value={draft.exposureCtrl}
-          onChange={(v) => set({ exposureCtrl: Math.round(v) })}
+          checked={draft.exposureCtrl === 1}
+          onChange={(v) => set({ exposureCtrl: v ? 1 : 0 })}
           disabled={saving}
+          help="Adjusts shutter speed for the available light. Leave on unless the scene is perfectly static and lit."
         />
-        <Field
+        <Toggle
           id="gainCtrl"
           label="Auto gain"
-          min={0}
-          max={1}
-          value={draft.gainCtrl}
-          onChange={(v) => set({ gainCtrl: Math.round(v) })}
+          checked={draft.gainCtrl === 1}
+          onChange={(v) => set({ gainCtrl: v ? 1 : 0 })}
           disabled={saving}
+          help="Boosts the signal in dim light. Off = always at lowest gain (less noise but darker)."
         />
         <div className="space-y-1">
           <Label htmlFor="specialEffect" className="text-xs font-medium text-slate-400">
@@ -431,6 +516,9 @@ const SettingsForm = () => {
               </option>
             ))}
           </Select>
+          <p className="text-xs text-slate-500">
+            Bake an effect into every frame. Leave on <em>None</em> for natural-looking timelapses.
+          </p>
         </div>
       </Section>
 
@@ -451,30 +539,34 @@ const SettingsForm = () => {
               </option>
             ))}
           </Select>
+          <p className="text-xs text-slate-500">
+            Larger sizes look better but take longer to capture and upload. UXGA is recommended.
+          </p>
         </div>
-        <Field
+        <Slider
           id="jpegQuality"
           label="JPEG quality"
-          suffix="lower = better"
           min={4}
           max={40}
           value={draft.jpegQuality}
-          onChange={(v) => set({ jpegQuality: Math.max(4, Math.min(40, Math.round(v))) })}
+          onChange={(v) => set({ jpegQuality: v })}
           disabled={saving}
+          leftHint="4 — best"
+          rightHint="40 — smallest"
+          help="JPEG compression level — counter-intuitive: lower numbers mean better quality and larger files. 4 is the recommended default."
         />
       </Section>
 
-      <p className="text-xs text-slate-500">
-        Saved settings apply to the next test capture and to the daily timelapse picture.
-      </p>
-
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button color="green" outline={true} onClick={handleSave} disabled={saving || !dirty}>
           {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
         </Button>
         <Button color="gray" outline={true} onClick={handleReset} disabled={saving || !dirty}>
           Reset
         </Button>
+        {dirty && (
+          <span className="text-xs text-slate-500">Unsaved changes — preview with a test capture first.</span>
+        )}
       </div>
     </div>
   )
