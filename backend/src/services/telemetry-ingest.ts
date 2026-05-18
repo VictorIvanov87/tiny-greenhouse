@@ -32,10 +32,6 @@ export const ingestTelemetry = async (
 
   const body = result.data;
 
-  console.log(
-    `[telemetry] device=${body.device_id} water_level_low=${JSON.stringify(body.water_level_low)} (raw=${JSON.stringify((raw as Record<string, unknown>)?.water_level_low)})`,
-  );
-
   const ownership = await lookupDevice(body.device_id);
   if (!ownership) {
     return {
@@ -79,7 +75,10 @@ export const ingestTelemetry = async (
     pumpOn: body.pump_on,
     lightsOn: body.lights_on,
     fanOn: body.fan_on,
-    waterLevelLow: body.water_level_low,
+    // Float-switch polarity on this device is inverted vs. firmware's
+    // WATER_LEVEL_LOW_WHEN_HIGH=true assumption — flip it on ingest.
+    waterLevelLow:
+      body.water_level_low === undefined ? undefined : !body.water_level_low,
     sensorError: body.sensor_error,
     receivedAt: receivedAt ?? new Date().toISOString(),
   };
