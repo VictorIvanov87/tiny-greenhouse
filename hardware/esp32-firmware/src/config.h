@@ -17,7 +17,7 @@ static const uint8_t LIGHT_PIN = 18;
 // typical NO float-switch wiring. Set the polarity flag to false if your
 // switch is wired the opposite way (NC) and you'd rather flip in firmware
 // than re-wire.
-static const uint8_t WATER_LEVEL_PIN = 17;
+static const uint8_t WATER_LEVEL_PIN = 27;
 static const bool WATER_LEVEL_LOW_WHEN_HIGH = true;
 
 // Timing

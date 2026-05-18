@@ -2,11 +2,16 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { CameraUploadResponseSchema, ErrorResponseSchema } from '../lib/schemas';
+import {
+  CameraUploadResponseSchema,
+  ErrorResponseSchema,
+  TestUploadAckResponseSchema,
+} from '../lib/schemas';
 import { ok, errorBody } from '../lib/respond';
 import { uploadBlob } from '../lib/blob';
 import { insertCameraImage } from '../services/camera';
 import { lookupDevice } from '../services/telemetry';
+import { getPending, storeImage } from '../services/cameraTestStore';
 
 const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
 const UPLOADS_DIR = join(process.cwd(), 'uploads');
@@ -149,6 +154,68 @@ const cameraRoutes: FastifyPluginAsync = async (app) => {
         blobUrl,
         analysisStatus: 'pending',
         capturedAt,
+      });
+    },
+  );
+
+  // POST /api/camera/test-upload?requestId=... — ephemeral test capture sink.
+  // Called by the cam firmware in response to a `test_capture` command that
+  // the backend pushed to its twin. Image is held in RAM only; never persisted
+  // to Azure Blob or Firestore. Unauthenticated: the requestId acts as a
+  // single-use, short-lived bearer token (validated against the in-memory
+  // pending map).
+  app.post(
+    '/api/camera/test-upload',
+    {
+      schema: {
+        querystring: z.object({ requestId: z.string().min(1) }),
+        response: {
+          200: TestUploadAckResponseSchema,
+          400: ErrorResponseSchema,
+          410: ErrorResponseSchema,
+        },
+      },
+    },
+    async (req, reply) => {
+      const { requestId } = req.query as { requestId: string };
+
+      const headerResult = UploadHeaders.safeParse(req.headers);
+      if (!headerResult.success) {
+        return reply.status(400).send(
+          errorBody('INVALID_IMAGE_UPLOAD', headerResult.error.issues[0].message),
+        );
+      }
+
+      const body = req.body as Buffer | undefined;
+      if (!Buffer.isBuffer(body) || body.length === 0) {
+        return reply.status(400).send(
+          errorBody('INVALID_IMAGE_UPLOAD', 'Request body must be a JPEG image'),
+        );
+      }
+
+      const pending = getPending(requestId);
+      if (!pending || pending.type !== 'test_capture') {
+        return reply.status(410).send(
+          errorBody('TEST_CAPTURE_EXPIRED', 'Unknown or expired test capture request'),
+        );
+      }
+
+      const accepted = storeImage(requestId, body, 'image/jpeg');
+      if (!accepted) {
+        return reply.status(410).send(
+          errorBody('TEST_CAPTURE_EXPIRED', 'Test capture request has expired'),
+        );
+      }
+
+      req.log.info(
+        { requestId, deviceId: pending.deviceId, sizeBytes: body.length },
+        'Test capture image received',
+      );
+
+      return ok({
+        accepted: true as const,
+        requestId,
+        sizeBytes: body.length,
       });
     },
   );

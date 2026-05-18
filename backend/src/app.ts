@@ -24,6 +24,13 @@ import cameraRoutes from './routes/camera';
 import devicesRoutes from './routes/devices';
 import deviceTestRoutes from './routes/deviceTest';
 import controlSettingsRoutes from './routes/controlSettings';
+import cameraSettingsRoutes from './routes/cameraSettings';
+import cameraTestRoutes from './routes/cameraTest';
+import { startSweeper, stopSweeper } from './services/cameraTestStore';
+import {
+  startTimelapseScheduler,
+  stopTimelapseScheduler,
+} from './services/timelapseScheduler';
 
 export function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -70,6 +77,8 @@ export function buildServer() {
   app.register(devicesRoutes);
   app.register(deviceTestRoutes);
   app.register(controlSettingsRoutes);
+  app.register(cameraSettingsRoutes);
+  app.register(cameraTestRoutes);
   app.register(ragRoutes);
   app.register(assistRoutes);
 
@@ -94,15 +103,19 @@ if (process.env.NODE_ENV !== 'test') {
           app.log.error(err, 'Failed to start IoT Hub consumer');
         }
       }
+      startSweeper();
+      startTimelapseScheduler(app.log);
     })
     .catch((error) => {
       app.log.error(error);
       process.exit(1);
     });
 
-  // Graceful shutdown: close HTTP server + IoT Hub consumer
+  // Graceful shutdown: close HTTP server + IoT Hub consumer + schedulers
   const shutdown = async (signal: string) => {
     app.log.info(`${signal} received, shutting down...`);
+    stopTimelapseScheduler();
+    stopSweeper();
     await stopIotConsumer(app.log);
     await app.close();
     process.exit(0);

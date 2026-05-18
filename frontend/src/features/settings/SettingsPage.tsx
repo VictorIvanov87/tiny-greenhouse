@@ -6,6 +6,7 @@ import { getCurrentGreenhouse, updateCurrentGreenhouse } from '../greenhouse/api
 import type { GreenhouseConfig } from '../greenhouse/types';
 import { AutomationCard } from './AutomationCard';
 import { DeviceTestCard } from './DeviceTestCard';
+import { CameraTestCard } from './CameraTestCard';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -116,6 +117,7 @@ const SettingsPage = () => {
       {content}
       <AutomationCard />
       <DeviceTestCard />
+      <CameraTestCard />
       <Card className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

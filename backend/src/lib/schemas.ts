@@ -320,6 +320,62 @@ export const DeviceOverrideResult = z.object({
 export type DeviceOverrideResult = z.infer<typeof DeviceOverrideResult>;
 export const DeviceOverrideResponseSchema = okResponse(DeviceOverrideResult);
 
+// --- Camera sensor settings (pushed to ESP32-CAM via IoT Hub twin desired) ---
+
+export const CameraFramesize = z.enum(['UXGA', 'SXGA', 'XGA', 'SVGA', 'VGA']);
+export type CameraFramesize = z.infer<typeof CameraFramesize>;
+
+export const CameraSettings = z.object({
+  version: z.number().int().nonnegative(),
+  brightness: z.number().int().min(-2).max(2).default(0),
+  contrast: z.number().int().min(-2).max(2).default(1),
+  saturation: z.number().int().min(-2).max(2).default(0),
+  sharpness: z.number().int().min(-2).max(3).default(2),
+  denoise: z.number().int().min(0).max(1).default(1),
+  whitebal: z.number().int().min(0).max(1).default(1),
+  awbGain: z.number().int().min(0).max(1).default(1),
+  exposureCtrl: z.number().int().min(0).max(1).default(1),
+  gainCtrl: z.number().int().min(0).max(1).default(1),
+  specialEffect: z.number().int().min(0).max(6).default(0),
+  wbMode: z.number().int().min(0).max(4).default(0),
+  framesize: CameraFramesize.default('UXGA'),
+  jpegQuality: z.number().int().min(4).max(40).default(4),
+});
+export type CameraSettingsType = z.infer<typeof CameraSettings>;
+export const CameraSettingsResponseSchema = okResponse(CameraSettings);
+
+// --- Camera test capture (ephemeral, no persistence) ---
+
+export const TestCaptureTrigger = z.object({
+  lightsOff: z.boolean().default(true),
+});
+export type TestCaptureTrigger = z.infer<typeof TestCaptureTrigger>;
+
+export const TestCaptureTriggerResult = z.object({
+  requestId: z.string(),
+  expiresAt: ISODate,
+  lightsOffApplied: z.boolean(),
+});
+export type TestCaptureTriggerResult = z.infer<typeof TestCaptureTriggerResult>;
+export const TestCaptureTriggerResponseSchema = okResponse(TestCaptureTriggerResult);
+
+export const TestCaptureStatus = z.object({
+  requestId: z.string(),
+  status: z.enum(['pending', 'ready', 'expired']),
+  imageUrl: z.string().optional(),
+  capturedAt: ISODate.optional(),
+  sizeBytes: z.number().int().nonnegative().optional(),
+});
+export type TestCaptureStatus = z.infer<typeof TestCaptureStatus>;
+export const TestCaptureStatusResponseSchema = okResponse(TestCaptureStatus);
+
+export const TestUploadAck = z.object({
+  accepted: z.literal(true),
+  requestId: z.string(),
+  sizeBytes: z.number().int().nonnegative(),
+});
+export const TestUploadAckResponseSchema = okResponse(TestUploadAck);
+
 // --- Telemetry ingestion (POST /api/telemetry) ---
 
 export const TelemetryIngestBody = z.object({
