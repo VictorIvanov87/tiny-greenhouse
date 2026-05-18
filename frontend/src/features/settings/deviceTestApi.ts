@@ -34,8 +34,7 @@ const getDevices = async (): Promise<DeviceRecord[]> => {
     data: { items: DeviceRecord[]; total: number }
   }>('/devices')
   if (!data?.ok) throw new Error('Failed to load devices')
-  // Filter to controllers — only esp32-main has actuators.
-  return data.data.items.filter((d) => d.type === 'esp32-main')
+  return data.data.items
 }
 
 export const useDevicesQuery = () =>

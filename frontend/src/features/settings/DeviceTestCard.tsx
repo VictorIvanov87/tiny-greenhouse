@@ -70,7 +70,10 @@ const formatRelative = (iso: string): string => {
 
 export const DeviceTestCard = () => {
   const devicesQuery = useDevicesQuery()
-  const devices = useMemo(() => devicesQuery.data ?? [], [devicesQuery.data])
+  const devices = useMemo(
+    () => (devicesQuery.data ?? []).filter((d) => d.type === 'esp32-main'),
+    [devicesQuery.data],
+  )
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
 
   // Default the picker to the first device whenever the list resolves/changes.
