@@ -27,32 +27,49 @@ static uint32_t pumpRunningUntil = 0;
 static uint16_t pumpsTodayCount = 0;
 static int pumpsTodayYday = -1;
 
-// Wall-clock epoch in ms; returns 0 until NTP has produced a sane value.
-static uint64_t nowEpochMs() {
-  if (!ntpSynced) return 0;
-  time_t now = time(nullptr);
-  if (now < 1700000000) return 0;  // ~2023-11; sentinel for un-synced clock
-  return (uint64_t)now * 1000ULL;
-}
-
 static void applyOverride(JsonObjectConst v, DeviceOverride& slot, const char* label) {
   if (v.isNull()) return;
-  uint64_t expiresAtMs = v["expiresAtMs"] | (uint64_t)0;
-  const char* state = v["state"] | "";
-  if (expiresAtMs == 0) {
-    if (slot.active) {
-      Serial.printf("Override %s cleared\n", label);
-    }
+
+  // Explicit clear: backend sets expiresAtMs to 0 to cancel an override.
+  if (!v["expiresAtMs"].isNull() && v["expiresAtMs"].as<uint64_t>() == 0) {
+    if (slot.active) Serial.printf("Override %s cleared\n", label);
     slot.active = false;
     slot.expiresAtMs = 0;
+    slot.desiredState = false;
+    publishOverrideReport(label, slot);
     return;
   }
-  bool desired = (strcmp(state, "on") == 0);
-  slot.desiredState = desired;
-  slot.expiresAtMs = expiresAtMs;
-  slot.active = true;
-  Serial.printf("Override %s -> %s expiresAtMs=%llu\n",
-    label, desired ? "ON" : "OFF", (unsigned long long)expiresAtMs);
+
+  // Update only fields present in this PATCH. Azure IoT Hub may send
+  // delta-only patches; treating an absent field as "default" silently
+  // corrupts the slot (e.g. missing `state` → desiredState gets flipped to
+  // false even though the user clicked "Test ON" again).
+  bool stateChanged = false;
+  bool expiryChanged = false;
+
+  if (!v["state"].isNull()) {
+    const char* state = v["state"].as<const char*>();
+    bool newDesired = (state && strcmp(state, "on") == 0);
+    if (newDesired != slot.desiredState) stateChanged = true;
+    slot.desiredState = newDesired;
+  }
+  if (!v["expiresAtMs"].isNull()) {
+    uint64_t newExpiry = v["expiresAtMs"].as<uint64_t>();
+    if (newExpiry != slot.expiresAtMs) expiryChanged = true;
+    slot.expiresAtMs = newExpiry;
+  }
+
+  // The slot is active iff we have a non-zero expiry — either freshly set
+  // above or already present from a prior patch.
+  slot.active = (slot.expiresAtMs != 0);
+
+  Serial.printf("Override %s parsed: active=%d desired=%s expiresAtMs=%llu (state %s, expiry %s)\n",
+    label, slot.active, slot.desiredState ? "ON" : "OFF",
+    (unsigned long long)slot.expiresAtMs,
+    stateChanged ? "CHANGED" : "kept",
+    expiryChanged ? "CHANGED" : "kept");
+
+  publishOverrideReport(label, slot);
 }
 
 // Returns true if the override should drive the actuator on this loop tick.
@@ -67,6 +84,7 @@ static bool overrideActive(DeviceOverride& slot, const char* label) {
   if (now >= slot.expiresAtMs) {
     slot.active = false;
     Serial.printf("Override %s expired, returning to schedule\n", label);
+    publishOverrideReport(label, slot);
     return false;
   }
   return true;
@@ -183,6 +201,10 @@ void evalPump() {
     if (desired && waterLevelLow) {
       Serial.println("Pump override refused: reservoir is low");
       desired = false;
+    }
+    if (pumpOn != desired) {
+      Serial.printf("Pump override drive: pumpOn=%d -> %d (overrideState=%d)\n",
+        pumpOn, desired, pumpOverride.desiredState);
     }
     setActuator(PUMP_PIN, pumpOn, desired);
     return;

@@ -19,9 +19,19 @@ void ensureWifiConnected();
 
 void initTime();
 
+// Wall-clock epoch in ms; returns 0 until NTP has produced a sane value.
+uint64_t nowEpochMs();
+
 void connectMqtt();
 void ensureMqttConnected();
 void mqttCallback(char* topic, byte* payload, unsigned int length);
+
+// Publish the firmware's current interpretation of a device override to the
+// twin's reported properties so it can be inspected from Azure Portal without
+// a serial monitor. Label is one of "lights" / "fan" / "pump". No-op when
+// MQTT is disconnected.
+struct DeviceOverride;
+void publishOverrideReport(const char* label, const DeviceOverride& slot);
 
 // Diagnostics
 const char* mqttStateName(int state);

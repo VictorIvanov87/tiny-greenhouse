@@ -149,6 +149,30 @@ void initTime() {
   Serial.print(ctime(&now));
 }
 
+uint64_t nowEpochMs() {
+  if (!ntpSynced) return 0;
+  time_t now = time(nullptr);
+  if (now < 1700000000) return 0;  // ~2023-11; sentinel for un-synced clock
+  return (uint64_t)now * 1000ULL;
+}
+
+void publishOverrideReport(const char* label, const DeviceOverride& slot) {
+  if (!mqttClient.connected()) return;
+  static int reportedRid = 100;
+  char topic[80];
+  snprintf(topic, sizeof(topic),
+    "$iothub/twin/PATCH/properties/reported/?$rid=%d", ++reportedRid);
+  char payload[256];
+  snprintf(payload, sizeof(payload),
+    "{\"overridesInterpreted\":{\"%s\":{\"active\":%s,\"desiredState\":%s,\"expiresAtMs\":%llu,\"lastAppliedAtMs\":%llu}}}",
+    label,
+    slot.active ? "true" : "false",
+    slot.desiredState ? "true" : "false",
+    (unsigned long long)slot.expiresAtMs,
+    (unsigned long long)nowEpochMs());
+  mqttClient.publish(topic, payload);
+}
+
 // ---------------------------------------------------------------------------
 // Twin handling — dispatched from MQTT callback into control layer
 // ---------------------------------------------------------------------------
