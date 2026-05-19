@@ -22,7 +22,7 @@ const HARDCODED_DEFAULTS: GreenhouseConfigType = {
   method: 'soil',
   plantType: '',
   language: 'en',
-  timelapse: { enabled: false, hour: 9 },
+  timelapse: { enabled: false, hour: 9, timezone: 'Europe/Sofia' },
 };
 
 const getDefault = async (): Promise<GreenhouseConfigType> => {

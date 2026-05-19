@@ -9,13 +9,36 @@ const USERS_COLLECTION = 'users';
 
 const TICK_INTERVAL_MS = Number(process.env.TIMELAPSE_TICK_INTERVAL_MS ?? 60_000);
 
-// Tracks which date (YYYY-MM-DD UTC) we already captured for a given user.
-// Prevents firing twice in the same hour or if the scheduler tick overlaps.
+// Tracks which local date (YYYY-MM-DD in the user's configured timezone) we
+// already captured for a given user. Prevents firing twice in the same hour
+// or if the scheduler tick overlaps.
 const lastCapturedDate = new Map<string, string>();
 
 let interval: NodeJS.Timeout | null = null;
 
-const today = (): string => new Date().toISOString().slice(0, 10);
+const localHour = (now: Date, tz: string): number => {
+  const s = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour12: false,
+    hour: '2-digit',
+  }).format(now);
+  // Intl can emit "24" for midnight in some locales — normalize.
+  const h = parseInt(s, 10);
+  return h === 24 ? 0 : h;
+};
+
+const localDate = (now: Date, tz: string): string => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const y = parts.find((p) => p.type === 'year')!.value;
+  const m = parts.find((p) => p.type === 'month')!.value;
+  const d = parts.find((p) => p.type === 'day')!.value;
+  return `${y}-${m}-${d}`;
+};
 
 const listOwnerIds = async (): Promise<string[]> => {
   if (STORAGE_MODE !== 'firestore') {
@@ -42,10 +65,11 @@ const checkAndFireForUser = async (
   const config = await getGreenhouseConfig(uid).catch(() => null);
   if (!config?.timelapse?.enabled) return;
 
-  const nowUtcHour = new Date().getUTCHours();
-  if (nowUtcHour !== config.timelapse.hour) return;
+  const tz = config.timelapse.timezone || 'Europe/Sofia';
+  const now = new Date();
+  if (localHour(now, tz) !== config.timelapse.hour) return;
 
-  const todayKey = today();
+  const todayKey = localDate(now, tz);
   if (lastCapturedDate.get(uid) === todayKey) return;
 
   const devices = await listDevicesForUser(uid);

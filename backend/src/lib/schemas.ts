@@ -88,6 +88,7 @@ export const GreenhouseConfig = z.object({
   timelapse: z.object({
     enabled: z.boolean(),
     hour: z.number().int().min(0).max(23),
+    timezone: z.string().min(1).default('Europe/Sofia'),
   }),
 });
 export type GreenhouseConfigType = z.infer<typeof GreenhouseConfig>;

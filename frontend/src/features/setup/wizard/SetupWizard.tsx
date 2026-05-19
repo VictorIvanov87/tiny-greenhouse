@@ -150,7 +150,11 @@ const WizardViewport = () => {
       variety: state.selection.variety,
       growthStage: defaults.stages[0]?.id ?? 'germination',
       language: defaults.lang === 'bg' ? 'bg' : 'en',
-      timelapse: { enabled: true, hour: 9 },
+      timelapse: {
+        enabled: true,
+        hour: 9,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Sofia',
+      },
     };
 
     try {

@@ -9,6 +9,7 @@
   "language": "en",
   "timelapse": {
     "enabled": true,
-    "hour": 9
+    "hour": 9,
+    "timezone": "Europe/Sofia"
   }
 }

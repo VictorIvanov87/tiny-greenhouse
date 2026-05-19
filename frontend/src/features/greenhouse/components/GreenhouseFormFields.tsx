@@ -2,6 +2,21 @@ import { Label, Select, TextInput } from 'flowbite-react'
 import type { ChangeEvent } from 'react'
 import type { GreenhouseConfig } from '../types'
 
+const timezoneOptions: string[] = (() => {
+  if (typeof Intl.supportedValuesOf === 'function') {
+    return Intl.supportedValuesOf('timeZone')
+  }
+  return ['Europe/Sofia', 'Europe/London', 'UTC']
+})()
+
+const browserTimezone = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Sofia'
+  } catch {
+    return 'Europe/Sofia'
+  }
+}
+
 type GreenhouseFormFieldsProps = {
   value: GreenhouseConfig
   onChange: (value: GreenhouseConfig) => void
@@ -61,6 +76,12 @@ export const GreenhouseFormFields = ({
     const hour = Number(hh)
     updateTimelapse({ hour: Number.isNaN(hour) ? 0 : hour })
   }
+
+  const handleTimelapseTimezoneChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    updateTimelapse({ timezone: event.target.value })
+  }
+
+  const timelapseTimezone = value.timelapse.timezone || browserTimezone()
 
   return (
     <div className="space-y-6">
@@ -138,15 +159,32 @@ export const GreenhouseFormFields = ({
             <div className="peer relative h-6 w-11 rounded-full bg-gray-700 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-600 after:bg-white after:transition-all after:content-[''] peer-checked:bg-green-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-800 rtl:peer-checked:after:-translate-x-full" />
           </label>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="greenhouse-timelapse-hour">Capture time</Label>
-          <TextInput
-            id="greenhouse-timelapse-hour"
-            type="time"
-            value={`${String(value.timelapse.hour).padStart(2, '0')}:00`}
-            onChange={handleTimelapseTimeChange}
-            disabled={disabled || !value.timelapse.enabled}
-          />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="greenhouse-timelapse-hour">Capture time</Label>
+            <TextInput
+              id="greenhouse-timelapse-hour"
+              type="time"
+              value={`${String(value.timelapse.hour).padStart(2, '0')}:00`}
+              onChange={handleTimelapseTimeChange}
+              disabled={disabled || !value.timelapse.enabled}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="greenhouse-timelapse-timezone">Timezone</Label>
+            <Select
+              id="greenhouse-timelapse-timezone"
+              value={timelapseTimezone}
+              onChange={handleTimelapseTimezoneChange}
+              disabled={disabled || !value.timelapse.enabled}
+            >
+              {timezoneOptions.map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
       </div>
     </div>

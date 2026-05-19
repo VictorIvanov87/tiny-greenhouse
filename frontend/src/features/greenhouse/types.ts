@@ -13,5 +13,6 @@ export type GreenhouseConfig = {
   timelapse: {
     enabled: boolean
     hour: number
+    timezone: string
   }
 }
