@@ -20,6 +20,7 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { saveUserSettings, updateGreenhouse, updateNotificationPrefs } from '../api';
 import type { GreenhouseConfig } from '../../greenhouse/types';
 import type { NotificationPrefs } from '../../notifications/api';
+import { useDocumentTitle } from '../../../shared/hooks/useDocumentTitle';
 
 const TITLES = ['🌿 Welcome', '🌶️ Crop & Variety', '🔔 Alarms', '✅ Finish'];
 
@@ -275,10 +276,13 @@ const WizardViewport = () => {
   );
 };
 
-const SetupWizard = () => (
-  <SetupWizardProvider>
-    <WizardViewport />
-  </SetupWizardProvider>
-);
+const SetupWizard = () => {
+  useDocumentTitle();
+  return (
+    <SetupWizardProvider>
+      <WizardViewport />
+    </SetupWizardProvider>
+  );
+};
 
 export default SetupWizard;

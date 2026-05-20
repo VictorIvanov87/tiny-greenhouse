@@ -5,6 +5,7 @@ import { Button } from 'flowbite-react';
 import type { SetupProfile } from '../features/setup/state';
 import { SidebarNav } from '../shared/ui/SidebarNav';
 import { Brand } from '../shared/ui/Brand';
+import { useDocumentTitle } from '../shared/hooks/useDocumentTitle';
 
 type AppShellProps = PropsWithChildren<{
   profile: SetupProfile;
@@ -13,6 +14,8 @@ type AppShellProps = PropsWithChildren<{
 export const AppShell = ({ children, profile }: AppShellProps) => {
   const location = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  useDocumentTitle();
 
   useEffect(() => {
     setIsMobileSidebarOpen(false);

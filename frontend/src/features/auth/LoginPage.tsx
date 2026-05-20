@@ -4,8 +4,10 @@ import { AuthCard } from './components/AuthCard';
 import { useAuth } from './hooks/useAuth';
 import { useUserProfile } from '../setup/hooks/useUserProfile';
 import { Brand } from '../../shared/ui/Brand';
+import { useDocumentTitle } from '../../shared/hooks/useDocumentTitle';
 
 const LoginPage = () => {
+  useDocumentTitle();
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile(user ? user.uid : null);
 
