@@ -29,8 +29,8 @@ static const char* const TZ_RULE = "EET-2EEST,M3.5.0/3,M10.5.0/4";
 
 // Soil moisture calibration on-device (must match backend defaults). Future:
 // ship via twin so users can recalibrate without reflash.
-static const float SOIL_RAW_DRY = 22000.0f;
-static const float SOIL_RAW_WET = 9500.0f;
+static const float SOIL_RAW_DRY = 20000.0f;
+static const float SOIL_RAW_WET = 10000.0f;
 static const uint8_t SOIL_SENSOR_COUNT = 4;
 static const uint8_t SOIL_ADS_CHANNELS[SOIL_SENSOR_COUNT] = {0, 1, 2, 3};
 
