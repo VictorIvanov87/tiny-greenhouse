@@ -8,6 +8,7 @@ import { getGreenhouseConfig } from './greenhouse';
 import {
   getLatestTelemetry,
   getTelemetryAggregates,
+  type TelemetryAggregate,
   type TelemetryMetricKey,
 } from './telemetry';
 import { retrieveChunks } from './rag';
@@ -149,12 +150,37 @@ const makeTelemetryAggregatesHandler = (uid: string): ToolHandler => async (args
 
 // ── Gardening branch ──────────────────────────────────────────────────────
 
+const METRIC_UNITS: Record<TelemetryMetricKey, string> = {
+  temperature: '°C',
+  humidity: '%',
+  soilMoisture: '%',
+  lightLux: ' lux',
+  pressureHpa: ' hPa',
+};
+
+const formatAggregateLine = (
+  label: string,
+  agg: TelemetryAggregate,
+): string => {
+  if (!agg.sampleCount) return `${label}: no samples in window`;
+  const parts: string[] = [];
+  for (const key of Object.keys(agg.perMetric) as TelemetryMetricKey[]) {
+    const v = agg.perMetric[key];
+    if (!v) continue;
+    const unit = METRIC_UNITS[key];
+    parts.push(`${key} min ${v.min}${unit} / avg ${v.avg}${unit} / max ${v.max}${unit}`);
+  }
+  return `${label} (${agg.sampleCount} samples): ${parts.join('; ')}`;
+};
+
 const buildSnapshotBlock = (
   greenhouse: GreenhouseConfigType,
   cropId: string,
   variety: string | undefined,
   stage: string | null,
   telemetry: Awaited<ReturnType<typeof getLatestTelemetry>>,
+  last24h: TelemetryAggregate,
+  last14d: TelemetryAggregate,
 ): string => {
   const lines: string[] = [
     `Greenhouse: ${greenhouse.name} (${greenhouse.id})`,
@@ -175,6 +201,9 @@ const buildSnapshotBlock = (
   } else {
     lines.push('No telemetry samples recorded yet.');
   }
+  lines.push('');
+  lines.push(formatAggregateLine('Last 24h', last24h));
+  lines.push(formatAggregateLine('Last 14d', last14d));
   return lines.join('\n');
 };
 
@@ -255,7 +284,12 @@ export const buildAssistantAnswer = async (
   }
 
   // ── Gardening branch ────────────────────────────────────────────────
-  const [chunks, telemetry, cameraImages] = await Promise.all([
+  const nowMs = Date.now();
+  const last24hFrom = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
+  const last14dFrom = new Date(nowMs - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const nowIso = new Date(nowMs).toISOString();
+
+  const [chunks, telemetry, cameraImages, last24h, last14d] = await Promise.all([
     retrieveChunks({
       query: trimmedMessage,
       cropId: effectiveCropId,
@@ -265,6 +299,8 @@ export const buildAssistantAnswer = async (
     }),
     getLatestTelemetry(uid),
     listCameraImages().then((list) => list.slice(0, 1)),
+    getTelemetryAggregates(uid, last24hFrom, nowIso),
+    getTelemetryAggregates(uid, last14dFrom, nowIso),
   ]);
 
   const latestImage = cameraImages[0];
@@ -286,22 +322,34 @@ export const buildAssistantAnswer = async (
     effectiveVariety,
     stage,
     telemetry,
+    last24h,
+    last14d,
   );
 
   const systemPrompt = [
-    'You are the Tiny Greenhouse assistant.',
-    'You have access to SOURCES (greenhouse and plant docs), a SNAPSHOT of current sensor readings,',
-    'and usually a recent camera image. You can also call get_telemetry_aggregates(from, to, metrics?)',
-    'to fetch sensor history when the user asks about trends or past windows.',
-    '',
-    'Rules:',
-    '- Ground specific facts in SOURCES; cite them inline as "Source N" when relevant.',
-    '- Use SNAPSHOT and the camera image to describe current state when asked.',
-    '- Call get_telemetry_aggregates when you need history beyond the snapshot. The current time is ' +
+    'You are the Tiny Greenhouse assistant. You diagnose this specific greenhouse using SOURCES',
+    '(crop-specific docs with target ranges), SNAPSHOT (current reading + last-24h and last-14d',
+    'aggregates already computed for you), and usually a recent camera image. You may call',
+    'get_telemetry_aggregates(from, to, metrics?) for other windows. The current time is ' +
       new Date().toISOString() + '.',
-    '- If the image is unclear, dark, or you would need details you cannot see, ASK ONE focused',
-    '  clarifying question instead of guessing. Keep it to one question per turn.',
-    '- Be concise and actionable. Prefer numbers and concrete next steps.',
+    '',
+    'Diagnostic rules — DO NOT skip these:',
+    '1. Identify the target ranges for the user\'s crop and stage from SOURCES (temperature, humidity,',
+    '   soil moisture, light, watering frequency). Quote the numbers, citing "Source N".',
+    '2. Compare those targets to the actual SNAPSHOT values AND the last-24h / last-14d aggregates.',
+    '   State the gap in numbers (e.g. "soil moisture averaged 22% over the last 14d vs the 50–70%',
+    '   target — chronically dry"). Always reference the trend, not just the latest reading.',
+    '3. Only then conclude what is wrong, naming the most likely cause first based on the data gap.',
+    '4. Give 1–3 concrete, plant- and sensor-specific next actions tied to the numbers you cited.',
+    '',
+    'Hard constraints:',
+    '- NEVER produce a generic numbered list of possible causes ("could be underwatering, could be',
+    '  overwatering, could be nutrients, could be pests…"). That answer is forbidden when SNAPSHOT',
+    '  data is present. Commit to a diagnosis grounded in the actual numbers.',
+    '- If SOURCES do not contain a target range you need, say so explicitly instead of inventing one.',
+    '- If the camera image is unclear or you need a detail you cannot see, ASK ONE focused',
+    '  clarifying question instead of guessing. One question per turn, max.',
+    '- Be concise. Lead with the diagnosis, then evidence, then actions.',
     `Respond in ${lang.toUpperCase()}.`,
   ].join('\n');
 
