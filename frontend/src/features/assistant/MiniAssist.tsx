@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, Badge, Button, Spinner, Textarea } from 'flowbite-react';
 import { sendAssistMessage } from './api';
 import type { AssistantAnswer } from './api';
+import { MarkdownMessage } from '../../shared/ui/MarkdownMessage';
 
 type MiniAssistProps = {
   cropId?: string;
@@ -77,7 +78,7 @@ export const MiniAssist = ({ cropId, variety, disabled }: MiniAssistProps) => {
       ) : null}
       {answer ? (
         <div className="space-y-3 rounded-2xl border border-slate-200 p-3 text-sm text-slate-700">
-          <p>{answer.message}</p>
+          <MarkdownMessage text={answer.message} />
           {answer.sources && answer.sources.length > 0 ? (
             <div className="flex flex-wrap gap-2 text-xs text-slate-500">
               {answer.sources.slice(0, 3).map((source) => (

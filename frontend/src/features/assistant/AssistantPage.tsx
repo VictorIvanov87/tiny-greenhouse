@@ -17,6 +17,7 @@ import {
   saveTranscript,
 } from './storage';
 import { ApiError } from '../../shared/hooks/useApi';
+import { MarkdownMessage } from '../../shared/ui/MarkdownMessage';
 
 type AssistantContext = {
   profile: SetupProfile;
@@ -422,12 +423,18 @@ const AssistantPage = () => {
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       {isUser ? 'You' : 'Assistant'}
                     </p>
-                    <div className="mt-2 whitespace-pre-line text-slate-100">
-                      {message.role === 'assistant' && message.status === 'pending'
-                        ? 'Thinking...'
-                        : message.role === 'assistant' && message.status === 'error'
-                          ? (message.errorMessage ?? 'Assistant failed to reply.')
-                          : message.content}
+                    <div className="mt-2 text-slate-100">
+                      {message.role === 'assistant' && message.status === 'pending' ? (
+                        <span className="whitespace-pre-line">Thinking...</span>
+                      ) : message.role === 'assistant' && message.status === 'error' ? (
+                        <span className="whitespace-pre-line">
+                          {message.errorMessage ?? 'Assistant failed to reply.'}
+                        </span>
+                      ) : message.role === 'assistant' ? (
+                        <MarkdownMessage text={message.content} />
+                      ) : (
+                        <span className="whitespace-pre-line">{message.content}</span>
+                      )}
                     </div>
 
                     {message.role === 'assistant' && message.status === 'pending' ? (

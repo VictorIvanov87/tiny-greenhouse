@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Badge, Spinner } from 'flowbite-react';
 import { sendAssistMessage } from '../../assistant/api';
 import type { AssistantAnswer } from '../../assistant/api';
+import { MarkdownMessage } from '../../../shared/ui/MarkdownMessage';
 
 type StepContext = 'crop-selection' | 'alarms-setup' | 'physical-setup';
 
@@ -148,13 +149,17 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
                   }`}
                 >
                   <div
-                    className={`inline-block max-w-[90%] rounded-xl px-3 py-2 ${
+                    className={`inline-block max-w-[90%] rounded-xl px-3 py-2 text-left ${
                       msg.role === 'user'
                         ? 'bg-emerald-900/30 text-emerald-100'
                         : 'bg-[#1a2740] text-slate-100'
                     }`}
                   >
-                    {msg.content}
+                    {msg.role === 'assistant' ? (
+                      <MarkdownMessage text={msg.content} />
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                   {msg.sources && msg.sources.length > 0 ? (
                     <div className="mt-1 flex flex-wrap justify-start gap-1">
