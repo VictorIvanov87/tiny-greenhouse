@@ -242,6 +242,33 @@ const discoverSeedFiles = async (): Promise<string[]> => {
 };
 
 /**
+ * Recursively discover all .md files under data/rag/prototype/**.
+ * These describe the greenhouse hardware itself and are ingested under
+ * cropId="prototype" so retrieval can co-fetch them alongside crop chunks.
+ */
+const discoverPrototypeFiles = async (): Promise<string[]> => {
+	const files: string[] = [];
+	const root = join(ragRoot, "prototype");
+
+	const walk = async (dir: string) => {
+		const entries = await readdir(dir, { withFileTypes: true }).catch(
+			() => []
+		);
+		for (const e of entries) {
+			const p = join(dir, e.name);
+			if (e.isDirectory()) {
+				await walk(p);
+			} else if (e.isFile() && extname(e.name) === ".md") {
+				files.push(p);
+			}
+		}
+	};
+
+	await walk(root);
+	return files;
+};
+
+/**
  * Collect all .md files that live in the same folder as the YAML seed file.
  * No filename prefix matching is required.
  */
@@ -320,6 +347,42 @@ const main = async () => {
 		console.log(
 			`Inserted ${inserts.length} chunks from ${sourcePaths.size} source(s).`
 		);
+	}
+
+	const prototypeFiles = await discoverPrototypeFiles();
+	if (prototypeFiles.length) {
+		console.log(`\nProcessing ${prototypeFiles.length} prototype doc(s)`);
+		const prototypeChunks: RawChunk[] = [];
+		for (const mdPath of prototypeFiles) {
+			prototypeChunks.push(
+				...(await buildMarkdownChunks(mdPath, "prototype", "en"))
+			);
+		}
+
+		if (prototypeChunks.length) {
+			const sourcePaths = new Set<string>(
+				prototypeChunks.map((chunk) => chunk.sourcePath)
+			);
+			await resetChunksForSources(Array.from(sourcePaths));
+
+			const inserts: RagChunkInsert[] = [];
+			for (const chunk of prototypeChunks) {
+				const embedding = await provider.embed(chunk.text);
+				inserts.push({
+					cropId: chunk.cropId,
+					stage: chunk.stage ?? null,
+					lang: chunk.lang,
+					sourcePath: chunk.sourcePath,
+					chunk: chunk.text,
+					embedding,
+				});
+			}
+
+			await insertChunks(inserts);
+			console.log(
+				`Inserted ${inserts.length} prototype chunks from ${sourcePaths.size} source(s).`
+			);
+		}
 	}
 
 	console.log("\nSeeding complete.");

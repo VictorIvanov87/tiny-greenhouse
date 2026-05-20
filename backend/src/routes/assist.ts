@@ -44,6 +44,7 @@ const assistRoutes: FastifyPluginAsync = async (app) => {
         variety: body.variety,
         topK: body.topK,
         temperature: body.temperature,
+        threadId: body.threadId,
       });
       return ok(answer);
     },

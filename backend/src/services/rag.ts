@@ -19,18 +19,25 @@ const mapRow = (row: RagChunkRow): RagChunk => ({
   score: typeof row.score === 'number' ? Number(row.score) : undefined,
 });
 
+export const PROTOTYPE_CROP_ID = 'prototype';
+
 export const retrieveChunks = async (opts: {
   query: string;
   cropId: string;
   lang: string;
   stage?: string | null;
   topK?: number;
+  includePrototype?: boolean;
 }): Promise<RagChunk[]> => {
   const provider = getEmbeddingProvider();
   const embedding = await provider.embed(opts.query);
+  const cropIds = opts.includePrototype === false || opts.cropId === PROTOTYPE_CROP_ID
+    ? [opts.cropId]
+    : [opts.cropId, PROTOTYPE_CROP_ID];
+
   const rows = await searchChunks({
     embedding,
-    cropId: opts.cropId,
+    cropIds,
     lang: opts.lang,
     stage: opts.stage ?? null,
     limit: opts.topK ?? defaultTopK,

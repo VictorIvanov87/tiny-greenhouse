@@ -279,6 +279,75 @@ export const getTelemetrySamples = async (uid: string): Promise<TelemetrySample[
   return samples;
 };
 
+export type TelemetryMetricKey = 'temperature' | 'humidity' | 'soilMoisture' | 'lightLux' | 'pressureHpa';
+
+export type TelemetryAggregate = {
+  from: string;
+  to: string;
+  sampleCount: number;
+  perMetric: Partial<Record<TelemetryMetricKey, { min: number; max: number; avg: number; count: number }>>;
+};
+
+const allMetricKeys: TelemetryMetricKey[] = [
+  'temperature',
+  'humidity',
+  'soilMoisture',
+  'lightLux',
+  'pressureHpa',
+];
+
+export const getTelemetryAggregates = async (
+  uid: string,
+  fromIso: string,
+  toIso: string,
+  metrics?: TelemetryMetricKey[],
+): Promise<TelemetryAggregate> => {
+  const fromMs = Date.parse(fromIso);
+  const toMs = Date.parse(toIso);
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) {
+    throw new Error(`Invalid range: from=${fromIso} to=${toIso}`);
+  }
+  const requested = (metrics?.length ? metrics : allMetricKeys);
+
+  const samples = await getTelemetrySamples(uid);
+  const inRange = samples.filter((s) => {
+    const ts = Date.parse(s.timestamp);
+    return Number.isFinite(ts) && ts >= fromMs && ts <= toMs;
+  });
+
+  const perMetric: TelemetryAggregate['perMetric'] = {};
+  for (const key of requested) {
+    let min = Infinity;
+    let max = -Infinity;
+    let sum = 0;
+    let count = 0;
+    for (const sample of inRange) {
+      const raw = sample[key as keyof TelemetrySample];
+      const value = typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+      if (value === null) continue;
+      if (value < min) min = value;
+      if (value > max) max = value;
+      sum += value;
+      count += 1;
+    }
+    if (count > 0) {
+      perMetric[key] = {
+        min: Math.round(min * 100) / 100,
+        max: Math.round(max * 100) / 100,
+        avg: Math.round((sum / count) * 100) / 100,
+        count,
+      };
+    }
+  }
+
+  return {
+    from: new Date(fromMs).toISOString(),
+    to: new Date(toMs).toISOString(),
+    sampleCount: inRange.length,
+    perMetric,
+  };
+};
+
 export const getLatestTelemetry = async (uid: string): Promise<TelemetrySample | null> => {
   if (STORAGE_MODE === 'firestore') {
     const latestKey = `latest:${uid}`;

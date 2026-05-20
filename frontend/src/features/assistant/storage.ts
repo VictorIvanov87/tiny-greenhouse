@@ -52,3 +52,19 @@ export const saveTranscript = (key: string, messages: ChatMessage[]) => {
     console.warn('Failed to persist assistant transcript', error);
   }
 };
+
+const threadKey = (transcriptKey: string) => `${transcriptKey}:thread`;
+
+export const loadThreadId = (transcriptKey: string): string | null => {
+  if (!hasWindow()) return null;
+  return window.localStorage.getItem(threadKey(transcriptKey));
+};
+
+export const saveThreadId = (transcriptKey: string, threadId: string | null) => {
+  if (!hasWindow()) return;
+  if (threadId) {
+    window.localStorage.setItem(threadKey(transcriptKey), threadId);
+  } else {
+    window.localStorage.removeItem(threadKey(transcriptKey));
+  }
+};

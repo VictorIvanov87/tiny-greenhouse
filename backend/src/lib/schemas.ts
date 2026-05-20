@@ -176,6 +176,7 @@ export const AssistRequestSchema = z
     variety: z.string().min(1).optional(),
     topK: z.number().int().min(1).max(12).default(6),
     temperature: z.number().min(0).max(1).default(0.2),
+    threadId: z.string().min(1).optional(),
   })
   .strict();
 export type AssistRequest = z.infer<typeof AssistRequestSchema>;
@@ -184,6 +185,8 @@ export const AssistantMetaSchema = z.object({
   cropId: z.string(),
   lang: z.string(),
   stage: z.string().nullable().optional(),
+  intent: z.enum(['gardening', 'general']).optional(),
+  imageAttached: z.boolean().optional(),
   options: z
     .object({
       cropId: z.string(),
@@ -199,10 +202,19 @@ export type AssistantMeta = z.infer<typeof AssistantMetaSchema>;
 export const AssistantAnswerSchema = z.object({
   message: z.string(),
   sources: z.array(RagChunkSchema),
+  threadId: z.string(),
   meta: AssistantMetaSchema.optional(),
 });
 export type AssistantAnswer = z.infer<typeof AssistantAnswerSchema>;
 export const AssistantResponseSchema = okResponse(AssistantAnswerSchema);
+
+export const ChatTurnSchema = z.object({
+  id: z.string(),
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+  createdAt: ISODate,
+});
+export type ChatTurn = z.infer<typeof ChatTurnSchema>;
 
 const BoundedMetric = z.object({
   min: z.number(),

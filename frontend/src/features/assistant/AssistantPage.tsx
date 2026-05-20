@@ -9,7 +9,13 @@ import type { GreenhouseConfig } from '../greenhouse/types';
 import { sendAssistMessage, type AssistantSource } from './api';
 import type { AssistantChatMessage, ChatMessage, UserChatMessage } from './types';
 import { MAX_MESSAGES, isAssistantMessage } from './types';
-import { buildStorageKey, loadTranscript, saveTranscript } from './storage';
+import {
+  buildStorageKey,
+  loadThreadId,
+  loadTranscript,
+  saveThreadId,
+  saveTranscript,
+} from './storage';
 import { ApiError } from '../../shared/hooks/useApi';
 
 type AssistantContext = {
@@ -48,6 +54,7 @@ const AssistantPage = () => {
   const { profile } = useOutletContext<AssistantContext>();
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [rateLimited, setRateLimited] = useState(false);
@@ -106,6 +113,7 @@ const AssistantPage = () => {
   useEffect(() => {
     const transcript = loadTranscript(storageKey);
     setMessages(trimMessages(transcript));
+    setThreadId(loadThreadId(storageKey));
   }, [storageKey]);
 
   useEffect(() => {
@@ -204,7 +212,13 @@ const AssistantPage = () => {
           variety: greenhouse?.variety ?? undefined,
           topK: DEFAULT_TOP_K,
           temperature: DEFAULT_TEMPERATURE,
+          threadId: threadId ?? undefined,
         });
+
+        if (answer.threadId && answer.threadId !== threadId) {
+          setThreadId(answer.threadId);
+          saveThreadId(storageKey, answer.threadId);
+        }
 
         setMessages((prev) =>
           prev.map((message) => {
@@ -245,8 +259,16 @@ const AssistantPage = () => {
         setIsSending(false);
       }
     },
-    [greenhouse?.cropId, greenhouse?.plantType, greenhouse?.variety]
+    [greenhouse?.cropId, greenhouse?.plantType, greenhouse?.variety, threadId, storageKey]
   );
+
+  const handleNewChat = useCallback(() => {
+    if (isSending) return;
+    setMessages([]);
+    setThreadId(null);
+    saveThreadId(storageKey, null);
+    saveTranscript(storageKey, []);
+  }, [isSending, storageKey]);
 
   const handleSend = async () => {
     if (isSending) {
@@ -357,9 +379,20 @@ const AssistantPage = () => {
               Answers grounded in your crop plan, docs, and latest telemetry.
             </p>
           </div>
-          <Badge className="rounded-full border text-sm border-green-500 text-green-500">
-            Live
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              color="gray"
+              outline={true}
+              size="xs"
+              onClick={handleNewChat}
+              disabled={isSending || messages.length === 0}
+            >
+              New chat
+            </Button>
+            <Badge className="rounded-full border text-sm border-green-500 text-green-500">
+              Live
+            </Badge>
+          </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4 pr-1">

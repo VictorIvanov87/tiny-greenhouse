@@ -125,11 +125,12 @@ export const insertChunks = async (chunks: RagChunkInsert[]) => {
 
 export const searchChunks = async (opts: {
   embedding: number[];
-  cropId: string;
+  cropIds: string[];
   lang: string;
   stage?: string | null;
   limit: number;
 }): Promise<RagChunkRow[]> => {
+  if (!opts.cropIds.length) return [];
   const poolInstance = getPool();
   const client = await poolInstance.connect();
   try {
@@ -154,7 +155,7 @@ export const searchChunks = async (opts: {
           chunk,
           1 - (embedding <=> $1::vector) AS score
         FROM rag_chunks
-        WHERE crop_id = $2
+        WHERE crop_id = ANY($2::text[])
           AND lang = $3
           AND (
             $4::text IS NULL
@@ -164,7 +165,7 @@ export const searchChunks = async (opts: {
         ORDER BY embedding <=> $1::vector
         LIMIT $5
       `,
-      [formatVectorLiteral(opts.embedding), opts.cropId, opts.lang, opts.stage ?? null, opts.limit],
+      [formatVectorLiteral(opts.embedding), opts.cropIds, opts.lang, opts.stage ?? null, opts.limit],
     );
 
     return rows.map((row) => ({

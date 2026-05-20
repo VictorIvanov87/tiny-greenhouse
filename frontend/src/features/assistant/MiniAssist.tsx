@@ -12,6 +12,7 @@ type MiniAssistProps = {
 export const MiniAssist = ({ cropId, variety, disabled }: MiniAssistProps) => {
   const [message, setMessage] = useState('');
   const [answer, setAnswer] = useState<AssistantAnswer | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,8 +31,10 @@ export const MiniAssist = ({ cropId, variety, disabled }: MiniAssistProps) => {
         variety,
         topK: 6,
         temperature: 0.2,
+        threadId: threadId ?? undefined,
       });
       setAnswer(response);
+      if (response.threadId) setThreadId(response.threadId);
       setMessage('');
     } catch (err) {
       const reason = err instanceof Error ? err.message : 'Assistant request failed';

@@ -14,11 +14,14 @@ export type AssistantMeta = {
   cropId: string;
   lang: string;
   stage?: string | null;
+  intent?: 'gardening' | 'general';
+  imageAttached?: boolean;
 };
 
 export type AssistantAnswer = {
   message: string;
   sources: AssistantSource[];
+  threadId: string;
   meta?: AssistantMeta;
   retrieval?: AssistantSource[];
 };
@@ -53,6 +56,7 @@ export type AssistRequestPayload = {
   variety?: string;
   topK?: number;
   temperature?: number;
+  threadId?: string;
 };
 
 type AssistBody = {
@@ -61,6 +65,7 @@ type AssistBody = {
   variety?: string;
   topK?: number;
   temperature?: number;
+  threadId?: string;
 };
 
 const buildBody = (payload: AssistRequestPayload): AssistBody => {
@@ -82,6 +87,10 @@ const buildBody = (payload: AssistRequestPayload): AssistBody => {
 
   if (typeof payload.temperature === 'number') {
     body.temperature = payload.temperature;
+  }
+
+  if (payload.threadId) {
+    body.threadId = payload.threadId;
   }
 
   return body;
