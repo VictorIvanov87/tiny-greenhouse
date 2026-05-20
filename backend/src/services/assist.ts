@@ -12,6 +12,7 @@ import {
 } from './telemetry';
 import { retrieveChunks } from './rag';
 import { listCameraImages } from './camera';
+import { getBlobSasUrl } from '../lib/blob';
 import { getChatProvider, type ChatMessage, type ToolDef, type ToolHandler } from '../ai/providers';
 import {
   appendTurn,
@@ -274,6 +275,7 @@ export const buildAssistantAnswer = async (
       ? `An image captured at ${latestImage.capturedAt} is attached.`
       : `An image captured at ${latestImage.capturedAt} is attached, but it is older than 24 hours.`
     : 'No camera image is available.';
+  const latestImageUrl = latestImage ? await getBlobSasUrl(latestImage.blobPath) : undefined;
 
   const sourcesBlock = chunks.length
     ? buildSourcesBlock(chunks)
@@ -323,7 +325,7 @@ export const buildAssistantAnswer = async (
 
   const completion = await llm.complete({
     messages,
-    images: latestImage ? [latestImage.blobUrl] : undefined,
+    images: latestImageUrl ? [latestImageUrl] : undefined,
     tools: [telemetryAggregatesTool],
     toolHandlers: { get_telemetry_aggregates: makeTelemetryAggregatesHandler(uid) },
     temperature,
