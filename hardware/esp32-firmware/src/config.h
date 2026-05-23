@@ -12,7 +12,7 @@ static const uint8_t FAN_PIN = 23;
 static const uint8_t PUMP_PIN = 19;
 static const uint8_t LIGHT_PIN = 18;
 
-// Water level sensor (digital float switch on GPIO17 with INPUT_PULLUP).
+// Water level sensor (digital float switch on GPIO27 with INPUT_PULLUP).
 // With INPUT_PULLUP, GPIO reads HIGH when the float drops (water low) for the
 // typical NO float-switch wiring. Set the polarity flag to false if your
 // switch is wired the opposite way (NC) and you'd rather flip in firmware
@@ -29,8 +29,8 @@ static const char* const TZ_RULE = "EET-2EEST,M3.5.0/3,M10.5.0/4";
 
 // Soil moisture calibration on-device (must match backend defaults). Future:
 // ship via twin so users can recalibrate without reflash.
-static const float SOIL_RAW_DRY = 20000.0f;
-static const float SOIL_RAW_WET = 10000.0f;
+static const float SOIL_RAW_DRY = 18000.0f;
+static const float SOIL_RAW_WET = 9000.0f;
 static const uint8_t SOIL_SENSOR_COUNT = 4;
 static const uint8_t SOIL_ADS_CHANNELS[SOIL_SENSOR_COUNT] = {0, 1, 2, 3};
 
