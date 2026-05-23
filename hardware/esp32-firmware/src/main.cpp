@@ -96,10 +96,16 @@ void loop() {
     humidityPct = readHumidityPct();
     pressureHpa = readPressureHpa() / 100.0f;
 
-    if (isValidBME280(temperatureC, humidityPct, pressureHpa)) {
+    bool valid = isValidBME280(temperatureC, humidityPct, pressureHpa);
+    bool stale = isStaleBME280(temperatureC, humidityPct, pressureHpa);
+
+    if (valid && !stale) {
       bme280ErrorCount = 0;
       lastHumidity = humidityPct;
     } else {
+      if (valid && stale) {
+        Serial.println("BME280 frozen: consecutive identical reads — treating as failure");
+      }
       handleBME280Error(temperatureC, humidityPct, pressureHpa);
       // Do NOT update lastHumidity with bad data; fan control keeps using
       // the last known good value or falls back to periodic-only.

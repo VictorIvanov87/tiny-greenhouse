@@ -2,6 +2,7 @@
 
 #include <Wire.h>
 #include <math.h>
+#include <string.h>
 
 Adafruit_BME280 bme;
 Adafruit_BMP280 bmp;
@@ -23,6 +24,30 @@ float lastSoilPct = 100.0f; // start "wet" so we don't pump before the first rea
 
 static unsigned long lastReinitAttemptMs = 0;
 
+// Frozen-reading detector state. A counterfeit/defective BME280 can return
+// bit-identical compensated values across reads — physical chips with x16
+// oversampling always jitter in the low bits, so identical IEEE-754 bit
+// patterns across consecutive reads is a clear "chip not converting" signal.
+static float prevTempC = NAN;
+static float prevHumPct = NAN;
+static float prevPresHpa = NAN;
+static uint8_t staleReadCount = 0;
+static const uint8_t STALE_READ_THRESHOLD = 3;
+
+static void resetStaleTracking() {
+  prevTempC = NAN;
+  prevHumPct = NAN;
+  prevPresHpa = NAN;
+  staleReadCount = 0;
+}
+
+static bool bitwiseEqualFloat(float a, float b) {
+  uint32_t ai, bi;
+  memcpy(&ai, &a, sizeof(ai));
+  memcpy(&bi, &b, sizeof(bi));
+  return ai == bi;
+}
+
 void updateSensorErrorFlag() {
   sensorError = !bme280Healthy || !bh1750Healthy || !adsOk;
 }
@@ -32,6 +57,11 @@ void updateSensorErrorFlag() {
 // ---------------------------------------------------------------------------
 
 // BME280 physical limits per datasheet: temp -40..+85, hum 0..100, pres 300..1100.
+// Pressure range is intentionally tighter than the datasheet: the greenhouse
+// lives at a fixed Bulgarian location (sea level → ~1500 m max), so any value
+// outside [870, 1080] hPa is the sensor lying, not the weather. Catches the
+// classic counterfeit-BME280 frozen-at-673-hPa failure mode and routes it
+// through the existing error-recovery path.
 // In bmp280Mode (BMP280 fallback), the chip has no humidity sensor — humPct will
 // be NAN and is intentionally not part of validity.
 bool isValidBME280(float tempC, float humPct, float presHpa) {
@@ -39,8 +69,31 @@ bool isValidBME280(float tempC, float humPct, float presHpa) {
   if (!bmp280Mode && isnan(humPct)) return false;
   if (tempC < -40.0f || tempC > 85.0f) return false;
   if (!bmp280Mode && (humPct < 0.0f || humPct > 100.0f)) return false;
-  if (presHpa < 300.0f || presHpa > 1100.0f) return false;
+  if (presHpa < 870.0f || presHpa > 1080.0f) return false;
   return true;
+}
+
+// Returns true when the last STALE_READ_THRESHOLD reads (this one included)
+// have been bit-identical to the previous reading. Healthy sensors never do
+// this — even with x16 oversampling there is sub-LSB ADC noise. In bmp280Mode
+// the humidity field is always NaN, so we skip it in the comparison.
+bool isStaleBME280(float tempC, float humPct, float presHpa) {
+  bool same = bitwiseEqualFloat(tempC, prevTempC) &&
+              bitwiseEqualFloat(presHpa, prevPresHpa);
+  if (!bmp280Mode) {
+    same = same && bitwiseEqualFloat(humPct, prevHumPct);
+  }
+
+  prevTempC = tempC;
+  prevHumPct = humPct;
+  prevPresHpa = presHpa;
+
+  if (same) {
+    staleReadCount++;
+    return staleReadCount >= STALE_READ_THRESHOLD;
+  }
+  staleReadCount = 0;
+  return false;
 }
 
 // BH1750 range: 0..65535 lux (16-bit). Negative means read failure.
@@ -56,16 +109,26 @@ bool isValidBH1750(float lux) {
 // Try BME280 first (chip ID 0x60); fall back to BMP280 (chip ID 0x58) if the
 // physical sensor on the I2C bus is a BMP280. Lets the firmware run on either
 // without a code change — useful while a BME280 swap is pending.
+//
+// Adafruit's begin() is permissive (accepts chip ID 0x60 or 0x61 for BME280),
+// so a counterfeit module that reports a wrong ID would still slip through.
+// We print the sensorID() byte so the serial log makes the silicon identity
+// unambiguous when diagnosing dead/clone sensors.
 bool initBme280() {
+  resetStaleTracking();
+
   if (bme.begin(0x76)) {
     bmp280Mode = false;
+    Serial.printf("BME280 detected at 0x76 (chip ID 0x%02X)\n", bme.sensorID());
     return true;
   }
   if (bmp.begin(0x76)) {
     bmp280Mode = true;
-    Serial.println("BMP280 detected at 0x76 — humidity readings will be null");
+    Serial.printf("BMP280 detected at 0x76 (chip ID 0x%02X) — humidity readings will be null\n",
+                  bmp.sensorID());
     return true;
   }
+  Serial.println("No BME280/BMP280 responded at 0x76");
   return false;
 }
 

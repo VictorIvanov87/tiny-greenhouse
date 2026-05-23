@@ -45,6 +45,12 @@ void printSoilChannels(const int16_t channels[SOIL_SENSOR_COUNT]);
 bool isValidBME280(float tempC, float humPct, float presHpa);
 bool isValidBH1750(float lux);
 
+// Frozen-value detector for BME280: returns true once it has seen
+// STALE_READ_THRESHOLD consecutive bit-identical reads (the signature of a
+// chip that's no longer converting). Each call updates the internal previous-
+// reading state, so call it exactly once per read cycle.
+bool isStaleBME280(float tempC, float humPct, float presHpa);
+
 // Error handling — increments counter, runs I2C recovery, disables on threshold
 void handleBME280Error(float tempC, float humPct, float presHpa);
 void handleBH1750Error(float lux);
