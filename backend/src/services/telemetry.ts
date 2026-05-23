@@ -11,7 +11,7 @@ const DEVICES_COLLECTION = 'devices';
 // Capacitive soil moisture sensor calibration. Higher raw ADC = drier soil.
 // Defaults match the Adafruit-style capacitive probe wired to ADS1115 (GAIN_ONE)
 // at 3.3 V on this device; tune via env if your sensors differ.
-const SOIL_RAW_DRY = Number(process.env.SOIL_RAW_DRY ?? 22000);
+const SOIL_RAW_DRY = Number(process.env.SOIL_RAW_DRY ?? 19000);
 const SOIL_RAW_WET = Number(process.env.SOIL_RAW_WET ?? 9500);
 
 export const rawToSoilPercent = (raw: number | null | undefined): number => {
