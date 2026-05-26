@@ -75,11 +75,10 @@ export const ingestTelemetry = async (
     pumpOn: body.pump_on,
     lightsOn: body.lights_on,
     fanOn: body.fan_on,
-    // Float-switch polarity on this device is inverted vs. firmware's
-    // WATER_LEVEL_LOW_WHEN_HIGH=true assumption — flip it on ingest.
-    waterLevelLow:
-      body.water_level_low === undefined ? undefined : !body.water_level_low,
+    waterLevelLow: body.water_level_low,
     sensorError: body.sensor_error,
+    clockSynced: body.clock_synced,
+    pumpTriggerPct: body.pump_trigger_pct,
     receivedAt: receivedAt ?? new Date().toISOString(),
   };
 

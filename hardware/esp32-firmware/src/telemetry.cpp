@@ -124,6 +124,14 @@ String buildTelemetryJson(
   json += ",\"sensor_error\":";
   json += sensorError ? "true" : "false";
 
+  // Diagnostics so the dashboard can surface "manual override won't work" and
+  // "firmware is still on default trigger" without a serial monitor.
+  json += ",\"clock_synced\":";
+  json += ntpSynced ? "true" : "false";
+
+  json += ",\"pump_trigger_pct\":";
+  json += String(settings.pump.triggerPct, 1);
+
   json += "}";
 
   return json;

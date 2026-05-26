@@ -56,6 +56,8 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
           fanOn: s.fanOn ?? false,
           waterLevelLow: s.waterLevelLow ?? false,
           sensorError: s.sensorError,
+          clockSynced: s.clockSynced,
+          pumpTriggerPct: s.pumpTriggerPct,
         }));
 
         return ok({ items, total: items.length });

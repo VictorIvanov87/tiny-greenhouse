@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <esp_task_wdt.h>
+#include <time.h>
 
 #include "config.h"
 #include "control.h"
@@ -71,6 +72,19 @@ void loop() {
   esp_task_wdt_reset();
 
   mqttClient.loop();
+
+  // NTP recovery: initTime() gives up after 15s at boot, but the LwIP SNTP
+  // client keeps polling. Promote ntpSynced as soon as time() becomes sane,
+  // otherwise manual overrides stay silently disabled forever after a slow
+  // boot (overrideActive refuses to honour an override without wall-clock).
+  if (!ntpSynced) {
+    time_t nowSec = time(nullptr);
+    if (nowSec >= 1700000000) {
+      ntpSynced = true;
+      Serial.print("NTP recovered. Local time: ");
+      Serial.print(ctime(&nowSec));
+    }
+  }
 
   // Fast control loop — runs every iteration, O(1) work
   evalLights();

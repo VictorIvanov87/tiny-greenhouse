@@ -13,12 +13,11 @@ static const uint8_t PUMP_PIN = 19;
 static const uint8_t LIGHT_PIN = 18;
 
 // Water level sensor (digital float switch on GPIO27 with INPUT_PULLUP).
-// With INPUT_PULLUP, GPIO reads HIGH when the float drops (water low) for the
-// typical NO float-switch wiring. Set the polarity flag to false if your
-// switch is wired the opposite way (NC) and you'd rather flip in firmware
-// than re-wire.
+// On this device the float switch is wired NC: pin reads LOW when the float
+// drops (water low) and HIGH when the float lifts (water OK). Flip
+// WATER_LEVEL_LOW_WHEN_HIGH if your switch wiring is opposite.
 static const uint8_t WATER_LEVEL_PIN = 27;
-static const bool WATER_LEVEL_LOW_WHEN_HIGH = true;
+static const bool WATER_LEVEL_LOW_WHEN_HIGH = false;
 
 // Timing
 static const unsigned long READ_INTERVAL_MS = 300000; // 5 minutes

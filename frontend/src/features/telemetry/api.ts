@@ -15,6 +15,8 @@ export type TelemetrySample = {
   fanOn?: boolean
   waterLevelLow?: boolean
   sensorError?: boolean
+  clockSynced?: boolean
+  pumpTriggerPct?: number | null
 }
 
 export type TelemetryList = {

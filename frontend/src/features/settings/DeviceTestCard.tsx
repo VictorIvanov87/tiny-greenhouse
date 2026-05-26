@@ -212,6 +212,22 @@ export const DeviceTestCard = () => {
               </Alert>
             )}
 
+            {latestSample?.clockSynced === false && (
+              <Alert color="warning">
+                <span className="font-semibold">Device clock not synced.</span>{' '}
+                Manual overrides are silently ignored until NTP recovers — try again in a
+                minute, or reboot the device if this persists.
+              </Alert>
+            )}
+
+            {latestSample?.waterLevelLow && (
+              <Alert color="warning">
+                <span className="font-semibold">Reservoir reported low.</span> The pump
+                test will be refused by the firmware until the float switch reads water
+                present.
+              </Alert>
+            )}
+
             <div className="rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4">
               <p className="mb-3 text-xs text-slate-500">
                 {telemetryQuery.isFetching ? (

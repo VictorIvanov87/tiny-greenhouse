@@ -133,6 +133,8 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
   fanOn: s.fanOn ?? false,
   waterLevelLow: s.waterLevelLow ?? false,
   sensorError: s.sensorError,
+  clockSynced: s.clockSynced,
+  pumpTriggerPct: s.pumpTriggerPct,
 });
 
 // ---------------------------------------------------------------------------
@@ -165,6 +167,8 @@ export const insertTelemetry = async (
       fanOn: sample.fanOn ?? false,
       waterLevelLow: sample.waterLevelLow ?? false,
       sensorError: sample.sensorError ?? false,
+      clockSynced: sample.clockSynced ?? null,
+      pumpTriggerPct: sample.pumpTriggerPct ?? null,
       receivedAt,
       expiresAt,
     });
@@ -251,6 +255,8 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       fanOn: d.fanOn ?? false,
       waterLevelLow: d.waterLevelLow ?? false,
       sensorError: d.sensorError ?? false,
+      clockSynced: d.clockSynced ?? undefined,
+      pumpTriggerPct: d.pumpTriggerPct ?? undefined,
       receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
     };
   });

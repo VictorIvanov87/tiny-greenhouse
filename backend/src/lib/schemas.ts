@@ -55,6 +55,8 @@ export const TelemetrySample = z.object({
   fanOn: z.boolean().optional(),
   waterLevelLow: z.boolean().optional(),
   sensorError: z.boolean().optional(),
+  clockSynced: z.boolean().optional(),
+  pumpTriggerPct: z.number().nullable().optional(),
 });
 export type TelemetrySample = z.infer<typeof TelemetrySample>;
 
@@ -405,6 +407,8 @@ export const TelemetryIngestBody = z.object({
   fan_on: z.boolean().optional(),
   water_level_low: z.boolean().optional(),
   sensor_error: z.boolean().optional(),
+  clock_synced: z.boolean().optional(),
+  pump_trigger_pct: z.number().finite().nullable().optional(),
 });
 export type TelemetryIngestBody = z.infer<typeof TelemetryIngestBody>;
 
@@ -422,6 +426,8 @@ export const TelemetryAcceptedSample = z.object({
   fanOn: z.boolean().optional(),
   waterLevelLow: z.boolean().optional(),
   sensorError: z.boolean().optional(),
+  clockSynced: z.boolean().optional(),
+  pumpTriggerPct: z.number().nullable().optional(),
   receivedAt: ISODate,
 });
 export type TelemetryAcceptedSample = z.infer<typeof TelemetryAcceptedSample>;
