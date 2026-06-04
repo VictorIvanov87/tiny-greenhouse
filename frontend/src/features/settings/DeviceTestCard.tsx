@@ -1,6 +1,7 @@
 import { Alert, Badge, Button, Card, Label, Select, Spinner } from 'flowbite-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTelemetryQuery, type TelemetrySample } from '../telemetry/api'
+import { useControlSettingsQuery } from './controlSettingsApi'
 import {
   useDevicesQuery,
   useDeviceTestMutation,
@@ -9,6 +10,27 @@ import {
 } from './deviceTestApi'
 
 const TEST_DURATION_SEC = 10
+
+// Human labels for the firmware's `pump_last_skip` reason — the outcome of the
+// most recent auto-trigger evaluation. Lets the user see WHY the pump is idle.
+const PUMP_SKIP_LABELS: Record<string, string> = {
+  scheduled: 'pulse scheduled',
+  reservoir_low: 'reservoir low',
+  above_trigger: 'soil above trigger %',
+  settle_window: 'in cooldown window',
+  daily_cap: 'daily pulse cap reached',
+  already_active: 'already running / scheduled',
+  boot: 'no reading yet',
+}
+
+const humanizePumpSkip = (skip?: string | null): string =>
+  skip ? (PUMP_SKIP_LABELS[skip] ?? skip) : '—'
+
+const formatCooldown = (sec: number): string => {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return m > 0 ? `${m}m ${s}s` : `${s}s`
+}
 
 type Row = {
   key: DeviceTestTarget
@@ -92,6 +114,9 @@ export const DeviceTestCard = () => {
     limit: 1,
   })
   const latestSample = telemetryQuery.data?.items?.at(-1)
+
+  const controlSettingsQuery = useControlSettingsQuery()
+  const maxPulses = controlSettingsQuery.data?.pump.maxPulsesPerDay ?? null
 
   const mutation = useDeviceTestMutation(selectedDeviceId)
   const [active, setActive] = useState<ActiveTest | null>(null)
@@ -228,6 +253,16 @@ export const DeviceTestCard = () => {
               </Alert>
             )}
 
+            {latestSample?.pumpLastSkip === 'daily_cap' && (
+              <Alert color="info">
+                <span className="font-semibold">Auto-watering hit its daily limit.</span> The
+                pump already ran its {maxPulses ?? 'configured'} pulses today and won&apos;t
+                auto-trigger again until the local-midnight reset — this is the safety cap, not a
+                fault. Raise “Max pulses per day” or pulse duration in Automation if the soil
+                still needs water.
+              </Alert>
+            )}
+
             <div className="rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4">
               <p className="mb-3 text-xs text-slate-500">
                 {telemetryQuery.isFetching ? (
@@ -281,6 +316,19 @@ export const DeviceTestCard = () => {
                             )}
                           </div>
                           <p className="mt-1 text-xs text-slate-500">{row.description}</p>
+                          {row.key === 'pump' && latestSample && (
+                            <p className="mt-1 text-xs text-slate-400">
+                              Auto-trigger: {latestSample.pumpsToday ?? 0}
+                              {maxPulses != null ? `/${maxPulses}` : ''} pulse(s) today · last
+                              decision:{' '}
+                              <span className="text-slate-300">
+                                {humanizePumpSkip(latestSample.pumpLastSkip)}
+                              </span>
+                              {latestSample.pumpCooldownSec != null &&
+                                latestSample.pumpCooldownSec > 0 &&
+                                ` · cooldown ${formatCooldown(latestSample.pumpCooldownSec)}`}
+                            </p>
+                          )}
                         </div>
                       </div>
 

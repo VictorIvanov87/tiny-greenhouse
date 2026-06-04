@@ -27,7 +27,7 @@ struct ControlSettings {
     uint32_t delayAfterMeasurementSec = 25;
     uint32_t pulseDurationSec = 5;
     uint32_t settleWindowSec = 1800;
-    uint16_t maxPulsesPerDay = 6;
+    uint16_t maxPulsesPerDay = 10;
   } pump;
 };
 
@@ -64,3 +64,10 @@ void evalPump();
 
 // Called once per measurement cycle, AFTER soil moisture is read
 void maybeSchedulePump(float soilPct);
+
+// Pump diagnostics — reflect the most recent scheduling evaluation. Reported in
+// telemetry so the dashboard can show why the pump is (not) running.
+uint16_t pumpPulsesToday();           // pulses fired so far this local day
+const char* pumpLastSkip();           // last maybeSchedulePump() decision
+uint32_t pumpCooldownRemainingSec();  // settle-window seconds remaining (0 = free)
+bool consumePumpPulsed();             // true if pump ran since last report (read+clears)

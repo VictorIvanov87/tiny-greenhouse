@@ -135,6 +135,10 @@ const toTelemetrySample = (s: TelemetryAcceptedSample): TelemetrySample => ({
   sensorError: s.sensorError,
   clockSynced: s.clockSynced,
   pumpTriggerPct: s.pumpTriggerPct,
+  pumpsToday: s.pumpsToday,
+  pumpCooldownSec: s.pumpCooldownSec,
+  pumpLastSkip: s.pumpLastSkip,
+  pumpPulsed: s.pumpPulsed,
 });
 
 // ---------------------------------------------------------------------------
@@ -169,6 +173,10 @@ export const insertTelemetry = async (
       sensorError: sample.sensorError ?? false,
       clockSynced: sample.clockSynced ?? null,
       pumpTriggerPct: sample.pumpTriggerPct ?? null,
+      pumpsToday: sample.pumpsToday ?? null,
+      pumpCooldownSec: sample.pumpCooldownSec ?? null,
+      pumpLastSkip: sample.pumpLastSkip ?? null,
+      pumpPulsed: sample.pumpPulsed ?? null,
       receivedAt,
       expiresAt,
     });
@@ -257,6 +265,10 @@ export const queryTelemetry = async (opts: QueryOpts): Promise<TelemetryAccepted
       sensorError: d.sensorError ?? false,
       clockSynced: d.clockSynced ?? undefined,
       pumpTriggerPct: d.pumpTriggerPct ?? undefined,
+      pumpsToday: d.pumpsToday ?? undefined,
+      pumpCooldownSec: d.pumpCooldownSec ?? undefined,
+      pumpLastSkip: d.pumpLastSkip ?? undefined,
+      pumpPulsed: d.pumpPulsed ?? undefined,
       receivedAt: (d.receivedAt as Timestamp).toDate().toISOString(),
     };
   });

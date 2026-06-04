@@ -26,10 +26,12 @@ static const uint32_t WDT_TIMEOUT_S = 30;
 // Bulgaria timezone (EET/EEST). Lights schedule + pump daily reset use local time.
 static const char* const TZ_RULE = "EET-2EEST,M3.5.0/3,M10.5.0/4";
 
-// Soil moisture calibration on-device (must match backend defaults). Future:
-// ship via twin so users can recalibrate without reflash.
-static const float SOIL_RAW_DRY = 18000.0f;
-static const float SOIL_RAW_WET = 9000.0f;
+// Soil moisture calibration on-device. MUST match the backend defaults
+// (SOIL_RAW_DRY/SOIL_RAW_WET in backend/src/services/telemetry.ts) so the
+// dashboard % equals the value the pump actually triggers on. Future: ship via
+// twin so users can recalibrate without reflash.
+static const float SOIL_RAW_DRY = 19000.0f;
+static const float SOIL_RAW_WET = 9500.0f;
 static const uint8_t SOIL_SENSOR_COUNT = 4;
 static const uint8_t SOIL_ADS_CHANNELS[SOIL_SENSOR_COUNT] = {0, 1, 2, 3};
 

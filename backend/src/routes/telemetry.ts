@@ -58,6 +58,10 @@ const telemetryRoutes: FastifyPluginAsync = async (app) => {
           sensorError: s.sensorError,
           clockSynced: s.clockSynced,
           pumpTriggerPct: s.pumpTriggerPct,
+          pumpsToday: s.pumpsToday,
+          pumpCooldownSec: s.pumpCooldownSec,
+          pumpLastSkip: s.pumpLastSkip,
+          pumpPulsed: s.pumpPulsed,
         }));
 
         return ok({ items, total: items.length });

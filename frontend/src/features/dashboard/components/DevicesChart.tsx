@@ -52,7 +52,11 @@ type DeviceConfig = {
 }
 
 const DEVICES: DeviceConfig[] = [
-  { key: 'pump', label: 'Water pump', stroke: '#3b82f6', pick: (s) => s.pumpOn },
+  // Pump pulses (5s) are far shorter than the telemetry cadence (5 min), so
+  // instantaneous pumpOn is almost never sampled true. pumpPulsed is edge-latched
+  // by the firmware — true on any interval where the pump ran. Fall back to
+  // pumpOn for samples predating the field.
+  { key: 'pump', label: 'Water pump', stroke: '#3b82f6', pick: (s) => s.pumpPulsed ?? s.pumpOn },
   { key: 'lights', label: 'Lights', stroke: '#eab308', pick: (s) => s.lightsOn },
   { key: 'fan', label: 'Fan', stroke: '#22d3ee', pick: (s) => s.fanOn },
 ]

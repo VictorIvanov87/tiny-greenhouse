@@ -132,6 +132,24 @@ String buildTelemetryJson(
   json += ",\"pump_trigger_pct\":";
   json += String(settings.pump.triggerPct, 1);
 
+  // Pump scheduling diagnostics: lets the dashboard distinguish "rate-limited"
+  // (e.g. daily_cap) from a genuine auto-trigger fault without a serial monitor.
+  json += ",\"pumps_today\":";
+  json += String(pumpPulsesToday());
+
+  json += ",\"pump_cooldown_sec\":";
+  json += String(pumpCooldownRemainingSec());
+
+  json += ",\"pump_last_skip\":\"";
+  json += pumpLastSkip();
+  json += "\"";
+
+  // Edge-latched pump activity: true if the pump ran at any point since the
+  // previous sample. A 5s pulse is invisible to instantaneous pumpOn sampling
+  // at the 5-min cadence, so the dashboard uses this to draw pump activity.
+  json += ",\"pump_pulsed\":";
+  json += consumePumpPulsed() ? "true" : "false";
+
   json += "}";
 
   return json;

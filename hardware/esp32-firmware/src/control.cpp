@@ -27,6 +27,18 @@ static uint32_t pumpRunningUntil = 0;
 static uint16_t pumpsTodayCount = 0;
 static int pumpsTodayYday = -1;
 
+// Outcome of the most recent maybeSchedulePump() evaluation. Reported in
+// telemetry so the dashboard can explain WHY the pump is idle (e.g. "daily_cap"
+// vs a genuine fault) without a serial monitor.
+static const char* lastPumpSkip = "boot";
+
+// Latches true whenever the pump turns ON (auto pulse OR manual test) and is
+// cleared when telemetry is built. A pump pulse (5s) is far shorter than the
+// 5-min telemetry cadence, so sampling instantaneous pumpOn almost never
+// catches it — this flag lets the dashboard show that the pump ran during the
+// interval between two samples.
+static bool pumpPulsedSinceReport = false;
+
 static void applyOverride(JsonObjectConst v, DeviceOverride& slot, const char* label) {
   if (v.isNull()) return;
 
@@ -141,6 +153,8 @@ void applySettings(JsonObjectConst obj) {
 static void setActuator(uint8_t pin, bool& state, bool desired) {
   if (state != desired) {
     digitalWrite(pin, desired ? HIGH : LOW);
+    // Latch every pump OFF→ON edge (auto pulse or manual test) for telemetry.
+    if (pin == PUMP_PIN && desired) pumpPulsedSinceReport = true;
     state = desired;
     Serial.printf("Actuator pin %u -> %s\n", pin, desired ? "ON" : "OFF");
   }
@@ -244,23 +258,52 @@ void evalPump() {
 void maybeSchedulePump(float soilPct) {
   uint32_t nowSec = millis() / 1000;
   if (waterLevelLow) {
+    lastPumpSkip = "reservoir_low";
     Serial.println("Pump trigger ignored: reservoir is low");
     return;
   }
-  if (soilPct > settings.pump.triggerPct) return;
+  if (soilPct > settings.pump.triggerPct) {
+    lastPumpSkip = "above_trigger";
+    return;
+  }
   if (lastPumpAt > 0 && nowSec - lastPumpAt < settings.pump.settleWindowSec) {
+    lastPumpSkip = "settle_window";
     Serial.println("Pump trigger ignored: in settle window");
     return;
   }
   if (pumpsTodayCount >= settings.pump.maxPulsesPerDay) {
+    lastPumpSkip = "daily_cap";
     Serial.println("Pump trigger ignored: daily cap reached");
     return;
   }
   if (pumpScheduledAt > 0 || pumpOn) {
+    lastPumpSkip = "already_active";
     Serial.println("Pump trigger ignored: already scheduled or running");
     return;
   }
   pumpScheduledAt = nowSec + settings.pump.delayAfterMeasurementSec;
+  lastPumpSkip = "scheduled";
   Serial.printf("Pump scheduled in %us (soil=%.1f%%, trigger=%.1f%%)\n",
     settings.pump.delayAfterMeasurementSec, soilPct, settings.pump.triggerPct);
+}
+
+// --- Pump diagnostics accessors (reported in telemetry) ---
+
+uint16_t pumpPulsesToday() { return pumpsTodayCount; }
+
+const char* pumpLastSkip() { return lastPumpSkip; }
+
+uint32_t pumpCooldownRemainingSec() {
+  if (lastPumpAt == 0) return 0;
+  uint32_t elapsed = (millis() / 1000) - lastPumpAt;
+  if (elapsed >= settings.pump.settleWindowSec) return 0;
+  return settings.pump.settleWindowSec - elapsed;
+}
+
+// Reads and clears the "pump ran since last report" latch. Call exactly once
+// per telemetry build so each pulse is reported on exactly one sample.
+bool consumePumpPulsed() {
+  bool pulsed = pumpPulsedSinceReport;
+  pumpPulsedSinceReport = false;
+  return pulsed;
 }

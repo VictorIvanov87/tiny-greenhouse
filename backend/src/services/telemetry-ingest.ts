@@ -79,6 +79,10 @@ export const ingestTelemetry = async (
     sensorError: body.sensor_error,
     clockSynced: body.clock_synced,
     pumpTriggerPct: body.pump_trigger_pct,
+    pumpsToday: body.pumps_today,
+    pumpCooldownSec: body.pump_cooldown_sec,
+    pumpLastSkip: body.pump_last_skip,
+    pumpPulsed: body.pump_pulsed,
     receivedAt: receivedAt ?? new Date().toISOString(),
   };
 

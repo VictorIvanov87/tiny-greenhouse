@@ -57,6 +57,10 @@ export const TelemetrySample = z.object({
   sensorError: z.boolean().optional(),
   clockSynced: z.boolean().optional(),
   pumpTriggerPct: z.number().nullable().optional(),
+  pumpsToday: z.number().int().nonnegative().nullable().optional(),
+  pumpCooldownSec: z.number().int().nonnegative().nullable().optional(),
+  pumpLastSkip: z.string().nullable().optional(),
+  pumpPulsed: z.boolean().nullable().optional(),
 });
 export type TelemetrySample = z.infer<typeof TelemetrySample>;
 
@@ -409,6 +413,10 @@ export const TelemetryIngestBody = z.object({
   sensor_error: z.boolean().optional(),
   clock_synced: z.boolean().optional(),
   pump_trigger_pct: z.number().finite().nullable().optional(),
+  pumps_today: z.number().int().nonnegative().optional(),
+  pump_cooldown_sec: z.number().int().nonnegative().optional(),
+  pump_last_skip: z.string().optional(),
+  pump_pulsed: z.boolean().optional(),
 });
 export type TelemetryIngestBody = z.infer<typeof TelemetryIngestBody>;
 
@@ -428,6 +436,10 @@ export const TelemetryAcceptedSample = z.object({
   sensorError: z.boolean().optional(),
   clockSynced: z.boolean().optional(),
   pumpTriggerPct: z.number().nullable().optional(),
+  pumpsToday: z.number().int().nonnegative().optional(),
+  pumpCooldownSec: z.number().int().nonnegative().optional(),
+  pumpLastSkip: z.string().optional(),
+  pumpPulsed: z.boolean().optional(),
   receivedAt: ISODate,
 });
 export type TelemetryAcceptedSample = z.infer<typeof TelemetryAcceptedSample>;

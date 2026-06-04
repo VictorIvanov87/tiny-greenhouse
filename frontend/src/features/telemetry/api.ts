@@ -17,6 +17,10 @@ export type TelemetrySample = {
   sensorError?: boolean
   clockSynced?: boolean
   pumpTriggerPct?: number | null
+  pumpsToday?: number | null
+  pumpCooldownSec?: number | null
+  pumpLastSkip?: string | null
+  pumpPulsed?: boolean | null
 }
 
 export type TelemetryList = {
