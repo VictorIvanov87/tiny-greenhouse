@@ -114,7 +114,7 @@ export function AuthCard() {
   const signUpPasswordValid = isPasswordValid(signUpForm.password);
 
   const front = (
-    <Card className="relative h-full min-h-[36rem] overflow-hidden rounded-[32px] border border-[rgba(31,111,74,0.16)] bg-[linear-gradient(145deg,rgba(248,252,248,0.98),rgba(239,250,243,0.96))] text-[color:var(--color-soil)] shadow-[0_34px_90px_rgba(9,22,16,0.28)] backdrop-blur">
+    <Card className="relative h-full min-h-[34rem] overflow-hidden rounded-[32px] border border-[rgba(31,111,74,0.16)] bg-[linear-gradient(145deg,rgba(248,252,248,0.98),rgba(239,250,243,0.96))] text-[color:var(--color-soil)] shadow-[0_34px_90px_rgba(9,22,16,0.28)] backdrop-blur sm:min-h-[36rem]">
       <div className="relative space-y-8">
         <div className="space-y-3 text-center">
           <span
@@ -229,7 +229,7 @@ export function AuthCard() {
   );
 
   const back = (
-    <Card className="relative h-full min-h-[36rem] overflow-hidden rounded-[32px] border border-[rgba(31,111,74,0.16)] bg-[linear-gradient(145deg,rgba(239,250,243,0.98),rgba(255,255,255,0.95))] text-[color:var(--color-soil)] shadow-[0_34px_90px_rgba(9,22,16,0.28)] backdrop-blur">
+    <Card className="relative h-full min-h-[34rem] overflow-hidden rounded-[32px] border border-[rgba(31,111,74,0.16)] bg-[linear-gradient(145deg,rgba(239,250,243,0.98),rgba(255,255,255,0.95))] text-[color:var(--color-soil)] shadow-[0_34px_90px_rgba(9,22,16,0.28)] backdrop-blur sm:min-h-[36rem]">
       <div
         className="pointer-events-none absolute -left-20 top-16 h-52 w-52 rounded-full blur-3xl"
         style={{ background: alpha(palette.moss, 0.16) }}

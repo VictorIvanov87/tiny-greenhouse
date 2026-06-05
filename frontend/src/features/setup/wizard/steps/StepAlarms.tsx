@@ -187,7 +187,7 @@ const StepAlarms = ({ data, onChange }: StepProps) => {
 
           {showAddForm ? (
             <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-900/10 p-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-slate-400">Metric</label>
                   <select
@@ -222,7 +222,7 @@ const StepAlarms = ({ data, onChange }: StepProps) => {
                   />
                 </div>
               </div>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <button
                   type="button"
                   onClick={handleAddRule}

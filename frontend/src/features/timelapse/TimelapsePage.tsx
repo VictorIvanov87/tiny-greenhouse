@@ -222,7 +222,7 @@ const TimelapsePage = () => {
               <img
                 src={frame.url}
                 alt={parsedTimestamp(frame)}
-                className="max-h-[70vh] w-auto rounded-xl object-contain"
+                className="max-h-[70dvh] max-w-full rounded-xl object-contain"
               />
               <div className="absolute bottom-4 right-6 rounded-md bg-black/70 px-3 py-1 text-sm text-white shadow-lg">
                 {parsedTimestamp(frame)}

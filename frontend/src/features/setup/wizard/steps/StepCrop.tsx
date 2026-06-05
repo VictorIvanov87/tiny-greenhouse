@@ -63,20 +63,23 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   });
   const [reloadToken, setReloadToken] = useState(0);
   const selection = data.selection;
+  const selectedCropId = selection.cropId;
+  const selectedVariety = selection.variety;
+  const defaultsMatchSelection = Boolean(
+    selection.defaults &&
+      selection.defaults.cropId === selectedCropId &&
+      selection.defaults.variety === selectedVariety,
+  );
 
   useEffect(() => {
-    const cropId = selection.cropId;
-    const variety = selection.variety;
+    const cropId = selectedCropId;
+    const variety = selectedVariety;
     if (!cropId || !variety) {
       setStatus({ loading: false, error: null });
       return;
     }
 
-    if (
-      selection.defaults &&
-      selection.defaults.cropId === cropId &&
-      selection.defaults.variety === variety
-    ) {
+    if (defaultsMatchSelection) {
       return;
     }
 
@@ -114,7 +117,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
       });
 
     return () => { cancelled = true; };
-  }, [selection.cropId, selection.variety, reloadToken, onChange]);
+  }, [defaultsMatchSelection, selectedCropId, selectedVariety, reloadToken, onChange]);
 
   const overview = firstParagraph(selection.defaults?.overview);
   const environment = selection.defaults?.defaults?.environment;

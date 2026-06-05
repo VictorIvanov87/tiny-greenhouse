@@ -15,8 +15,12 @@ export function Flip({ front, back, isFlipped, className }: FlipProps) {
   return (
     <div className={classes}>
       <div className="flip__inner">
-        <div className="flip__face">{front}</div>
-        <div className="flip__face flip__face--back">{back}</div>
+        <div className="flip__face" aria-hidden={isFlipped} inert={isFlipped}>
+          {front}
+        </div>
+        <div className="flip__face flip__face--back" aria-hidden={!isFlipped} inert={!isFlipped}>
+          {back}
+        </div>
       </div>
     </div>
   )

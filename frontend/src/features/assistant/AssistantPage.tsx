@@ -414,7 +414,7 @@ const AssistantPage = () => {
                   } text-sm leading-relaxed`}
                 >
                   <div
-                    className={`max-w-full rounded-2xl border px-4 py-3 sm:max-w-[80%] rounded-md ${
+                    className={`max-w-full rounded-md border px-4 py-3 [overflow-wrap:anywhere] sm:max-w-[80%] ${
                       isUser
                         ? 'border-[#1f2a3d] bg-[#0f1729] text-slate-50 shadow-[0_16px_36px_rgba(8,20,38,0.35)] text-right'
                         : 'border-[#22324a] bg-[#1a2740] text-slate-100'
@@ -423,17 +423,17 @@ const AssistantPage = () => {
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                       {isUser ? 'You' : 'Assistant'}
                     </p>
-                    <div className="mt-2 text-slate-100">
+                    <div className="mt-2 min-w-0 text-slate-100">
                       {message.role === 'assistant' && message.status === 'pending' ? (
                         <span className="whitespace-pre-line">Thinking...</span>
                       ) : message.role === 'assistant' && message.status === 'error' ? (
-                        <span className="whitespace-pre-line">
+                        <span className="whitespace-pre-line [overflow-wrap:anywhere]">
                           {message.errorMessage ?? 'Assistant failed to reply.'}
                         </span>
                       ) : message.role === 'assistant' ? (
-                        <MarkdownMessage text={message.content} />
+                        <MarkdownMessage text={message.content} className="min-w-0 [overflow-wrap:anywhere]" />
                       ) : (
-                        <span className="whitespace-pre-line">{message.content}</span>
+                        <span className="whitespace-pre-line [overflow-wrap:anywhere]">{message.content}</span>
                       )}
                     </div>
 

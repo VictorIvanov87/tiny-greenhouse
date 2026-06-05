@@ -13,7 +13,7 @@ const LoginPage = () => {
 
   if (user && profileLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[color:var(--color-night)] text-[color:var(--color-sage)]">
+      <div className="flex min-h-dvh items-center justify-center bg-[color:var(--color-night)] text-[color:var(--color-sage)]">
         <span className="text-sm opacity-80">Preparing your dashboard...</span>
       </div>
     );
@@ -37,25 +37,25 @@ const LoginPage = () => {
 
   return (
     <div
-      className="relative flex h-screen flex-col overflow-hidden"
+      className="relative flex min-h-dvh flex-col overflow-y-auto"
       style={{
         background: heroBackground,
       }}
     >
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 py-10 md:px-10">
-        <div className="flex w-full max-w-5xl flex-col justify-start items-center h-full gap-10 text-center lg:gap-12">
-          <div className="w-full space-y-4 text-center pb-10 pt-10">
+      <div className="relative z-10 flex min-h-dvh flex-col items-center px-4 py-6 sm:px-6 sm:py-8 md:px-10 lg:justify-center">
+        <div className="flex w-full max-w-5xl flex-col items-center gap-6 text-center sm:gap-8 lg:gap-10">
+          <div className="w-full space-y-3 text-center sm:space-y-4">
             <Brand variant="dark" className="mb-2 justify-center" />
-            <h1 className="text-3xl font-semibold leading-tight sm:text-4xl mt-5">
+            <h1 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
               Grow smarter with a live greenhouse companion
             </h1>
-            <p className="text-sm text-[color:var(--color-sage)]/85 sm:text-base">
+            <p className="mx-auto max-w-2xl text-sm text-[color:var(--color-sage)]/85 sm:text-base">
               Keep every bed in balance and stay ahead of shifts in your environment with guided
               insights rooted in horticultural best practices.
             </p>
           </div>
 
-          <div className="w-full max-w-xl pt-10">
+          <div className="w-full max-w-xl pb-8">
             <AuthCard />
           </div>
         </div>

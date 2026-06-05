@@ -228,6 +228,7 @@ export const SetupWizardProvider = ({ children }: { children: ReactNode }) => {
   return <SetupWizardContext.Provider value={value}>{children}</SetupWizardContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- setup state helpers intentionally live with the provider state.
 export const useSetupWizard = () => {
   const context = useContext(SetupWizardContext);
   if (!context) {
@@ -236,6 +237,7 @@ export const useSetupWizard = () => {
   return context;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- setup state helpers intentionally live with the provider state.
 export const isStepValid = (state: SetupWizardState, step: WizardStep): boolean => {
   switch (step) {
     case 0:
@@ -256,8 +258,10 @@ export const isStepValid = (state: SetupWizardState, step: WizardStep): boolean 
   }
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- setup state helpers intentionally live with the provider state.
 export const getNextStep = (current: WizardStep): WizardStep =>
   Math.min(TOTAL_STEPS - 1, current + 1) as WizardStep;
 
+// eslint-disable-next-line react-refresh/only-export-components -- setup state helpers intentionally live with the provider state.
 export const getPreviousStep = (current: WizardStep): WizardStep =>
   Math.max(0, current - 1) as WizardStep;

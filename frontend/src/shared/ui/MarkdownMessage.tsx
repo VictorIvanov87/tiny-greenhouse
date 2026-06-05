@@ -1,7 +1,7 @@
 import ReactMarkdown, { type Components } from 'react-markdown';
 
 const components: Components = {
-  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  p: ({ children }) => <p className="mb-2 [overflow-wrap:anywhere] last:mb-0">{children}</p>,
   ul: ({ children }) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
   ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
@@ -12,13 +12,13 @@ const components: Components = {
   strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
   em: ({ children }) => <em className="italic">{children}</em>,
   code: ({ children }) => (
-    <code className="rounded bg-black/30 px-1 py-0.5 font-mono text-[0.85em]">{children}</code>
+    <code className="rounded bg-black/30 px-1 py-0.5 font-mono text-[0.85em] [overflow-wrap:anywhere]">{children}</code>
   ),
   pre: ({ children }) => (
     <pre className="mb-2 overflow-x-auto rounded-md bg-black/40 p-3 text-xs last:mb-0">{children}</pre>
   ),
   a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="text-emerald-300 underline">
+    <a href={href} target="_blank" rel="noreferrer" className="text-emerald-300 underline [overflow-wrap:anywhere]">
       {children}
     </a>
   ),

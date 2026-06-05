@@ -233,13 +233,13 @@ export const SidebarNav = ({ profile, isMobileOpen, onClose }: SidebarNavProps) 
   return (
     <>
       <aside className="hidden h-full md:block md:w-72 md:flex-shrink-0">
-        <div className="sticky top-0 h-screen w-full">{renderSidebar()}</div>
+        <div className="sticky top-0 h-dvh w-full">{renderSidebar()}</div>
       </aside>
       {isMobileOpen ? (
         <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={handleBackgroundClick}>
           <div
             className={[
-              'h-full w-72 transition-transform duration-200',
+              'h-full w-[min(18rem,85vw)] transition-transform duration-200',
               isMobileOpen ? 'translate-x-0' : '-translate-x-full',
             ].join(' ')}
             onClick={handleMenuClick}

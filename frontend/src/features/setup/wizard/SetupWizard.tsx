@@ -191,7 +191,7 @@ const WizardViewport = () => {
 
   if (authLoading || profileLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <div className="flex min-h-dvh items-center justify-center bg-slate-950">
         <Spinner color="success" />
       </div>
     );
@@ -207,8 +207,8 @@ const WizardViewport = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4">
-        <div className="mx-auto flex h-full max-w-6xl flex-col gap-8 px-4">
+      <div className="min-h-dvh bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-6 sm:py-12">
+        <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 sm:gap-8">
           <header className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-500">
               Setup wizard
