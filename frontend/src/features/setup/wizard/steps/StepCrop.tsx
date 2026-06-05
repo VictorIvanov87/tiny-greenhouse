@@ -3,7 +3,7 @@ import { Badge, Button, Spinner } from 'flowbite-react';
 import type { SetupWizardState, CropDefaults } from '../../state';
 import { getCropDefaults } from '../../api';
 import { ApiError } from '../../../../shared/hooks/useApi';
-import { coerceNumber, parseHours } from '../../../../shared/utils/formatters';
+import { parseHours, rangeMidpoint } from '../../../../shared/utils/formatters';
 import { CROP_LIBRARY, findCrop, findVariety, type CropOption, type VarietyOption } from '../data/cropLibrary';
 import { generateDefaultAlarms } from '../data/defaultAlarms';
 import WizardLayout from '../WizardLayout';
@@ -460,6 +460,9 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   );
 };
 
+const midOf = (metric?: { min: number; max: number }): number | null =>
+  metric ? Math.round((metric.min + metric.max) / 2) : null;
+
 const seedPrefsFromDefaults = (
   prefs: SetupWizardState['prefs'],
   defaults: CropDefaults,
@@ -467,16 +470,16 @@ const seedPrefsFromDefaults = (
   const environment = defaults.defaults?.environment;
   const safety = defaults.safety_bounds;
 
+  // Climate setpoints are the midpoint of the SELECTED crop's recommended range
+  // (environment first, then its own safety bounds) — never a generic default or
+  // a value carried over from a previously selected crop. When the crop has no
+  // data for a metric the setpoint is left null (shown as "Auto-configured").
   return {
     ...prefs,
-    lightHours: parseHours(environment?.light_hours) ?? prefs.lightHours ?? 12,
-    temperatureDay:
-      coerceNumber(environment?.temperature_day) ??
-      prefs.temperatureDay ??
-      safety?.temperature_c?.max ??
-      26,
-    temperatureNight: coerceNumber(environment?.temperature_night) ?? prefs.temperatureNight ?? 18,
-    humidityTarget: coerceNumber(environment?.humidity) ?? prefs.humidityTarget ?? 55,
+    lightHours: parseHours(environment?.light_hours) ?? midOf(safety?.light_hours),
+    temperatureDay: rangeMidpoint(environment?.temperature_day) ?? midOf(safety?.temperature_c),
+    temperatureNight: rangeMidpoint(environment?.temperature_night) ?? midOf(safety?.temperature_c),
+    humidityTarget: rangeMidpoint(environment?.humidity) ?? midOf(safety?.humidity_pct),
     notifications: prefs.notifications,
   };
 };

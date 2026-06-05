@@ -1,19 +1,6 @@
 import type { AlertRule } from '../../../notifications/api';
-import type { BoundedMetric, CropDefaults } from '../../state';
-
-// Pull every positive number out of a free-form value like "21-28 °C",
-// "55-65%" or "24°C" so we can turn a recommended range into alarm bounds.
-const extractNumbers = (value?: string): number[] => {
-  if (!value) return [];
-  const matches = value.match(/\d+(?:\.\d+)?/g);
-  return matches ? matches.map(Number).filter((n) => !Number.isNaN(n)) : [];
-};
-
-const parseRange = (value?: string): BoundedMetric | undefined => {
-  const nums = extractNumbers(value);
-  if (nums.length === 0) return undefined;
-  return { min: Math.min(...nums), max: Math.max(...nums) };
-};
+import type { CropDefaults } from '../../state';
+import { parseRange } from '../../../../shared/utils/formatters';
 
 export const generateDefaultAlarms = (defaults: CropDefaults): AlertRule[] => {
   const env = defaults.defaults?.environment;

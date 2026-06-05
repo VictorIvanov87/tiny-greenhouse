@@ -122,57 +122,57 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
             }`}
           >
             {messages.length === 0 ? (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-slate-400">Try asking:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {suggestions.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => handleSend(q)}
-                    disabled={loading}
-                    className="rounded-full border border-[#22324a] bg-[#0f1729] px-3 py-1.5 text-xs text-slate-300 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
-                  >
-                    {q}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-slate-400">Try asking:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestions.map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      onClick={() => handleSend(q)}
+                      disabled={loading}
+                      className="rounded-full border border-[#22324a] bg-[#0f1729] px-3 py-1.5 text-xs text-slate-300 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
             ) : (
-            <div className="space-y-2">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`text-sm ${
-                    msg.role === 'user' ? 'text-right text-slate-300' : 'text-left text-slate-100'
-                  }`}
-                >
+              <div className="space-y-2">
+                {messages.map((msg) => (
                   <div
-                    className={`inline-block max-w-[90%] rounded-xl px-3 py-2 text-left ${
-                      msg.role === 'user'
-                        ? 'bg-emerald-900/30 text-emerald-100'
-                        : 'bg-[#1a2740] text-slate-100'
+                    key={msg.id}
+                    className={`text-sm ${
+                      msg.role === 'user' ? 'text-right text-slate-300' : 'text-left text-slate-100'
                     }`}
                   >
-                    {msg.role === 'assistant' ? (
-                      <MarkdownMessage text={msg.content} />
-                    ) : (
-                      msg.content
-                    )}
-                  </div>
-                  {msg.sources && msg.sources.length > 0 ? (
-                    <div className="mt-1 flex flex-wrap justify-start gap-1">
-                      {msg.sources.slice(0, 2).map((source) => (
-                        <Badge key={source.id} color="gray" className="text-[10px]">
-                          {source.sourcePath}
-                        </Badge>
-                      ))}
+                    <div
+                      className={`inline-block max-w-[90%] rounded-xl px-3 py-2 text-left ${
+                        msg.role === 'user'
+                          ? 'bg-emerald-900/30 text-emerald-100'
+                          : 'bg-[#1a2740] text-slate-100'
+                      }`}
+                    >
+                      {msg.role === 'assistant' ? (
+                        <MarkdownMessage text={msg.content} />
+                      ) : (
+                        msg.content
+                      )}
                     </div>
-                  ) : null}
-                </div>
-              ))}
-              {loading ? <div className="text-left text-xs text-slate-500">Thinking…</div> : null}
-            </div>
+                    {msg.sources && msg.sources.length > 0 ? (
+                      <div className="mt-1 flex flex-wrap justify-start gap-1">
+                        {msg.sources.slice(0, 2).map((source) => (
+                          <Badge key={source.id} color="gray" className="text-[10px]">
+                            {source.sourcePath}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+                {loading ? <div className="text-left text-xs text-slate-500">Thinking…</div> : null}
+              </div>
             )}
           </div>
 
@@ -209,7 +209,7 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
                   type="button"
                   onClick={() => handleSend(q)}
                   disabled={loading}
-                  className="rounded-full border border-[#22324a] bg-[#0f1729] px-2.5 py-1 text-[11px] text-slate-400 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
+                  className="rounded-full border border-[#22324a] bg-[#0f1729] px-2.5 py-1 px-1 text-[11px] text-slate-400 transition hover:border-emerald-500/40 hover:text-emerald-300 disabled:opacity-50"
                 >
                   {q}
                 </button>
