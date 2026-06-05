@@ -26,7 +26,7 @@ const ProtectedRoute = () => {
 
   if (loading || profileLoading || profile === undefined) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-white">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-white">
         <span className="text-sm text-gray-500">Checking session...</span>
       </div>
     )

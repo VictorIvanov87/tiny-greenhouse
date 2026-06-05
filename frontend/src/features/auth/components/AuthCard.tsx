@@ -212,17 +212,15 @@ export function AuthCard() {
         </form>
 
         <div className="text-center text-sm text-[color:var(--color-soil-70)]">
-          Looking to join?
-          <Button
-            color="gray"
-            outline={true}
-            size="xs"
-            className="ml-2 !inline !border-none !bg-transparent !p-0 !font-semibold !text-[color:var(--color-evergreen)] !shadow-none hover:!underline"
+          <span>Looking to join?</span>{' '}
+          <button
+            type="button"
+            className="inline-flex appearance-none items-center justify-center border-0 bg-transparent p-0 text-sm font-semibold text-[color:var(--color-evergreen)] shadow-none hover:underline focus:outline-none focus:ring-2 focus:ring-[color:var(--color-moss)]/40"
             onClick={() => handleFlip('signUp')}
             disabled={submitting}
           >
             Create an account
-          </Button>
+          </button>
         </div>
       </div>
     </Card>
@@ -317,17 +315,15 @@ export function AuthCard() {
         </form>
 
         <div className="text-center text-sm text-[color:var(--color-soil-70)]">
-          Already have an account?
-          <Button
-            color="gray"
-            outline={true}
-            size="xs"
-            className="ml-2 !inline !border-none !bg-transparent !p-0 !font-semibold !text-[color:var(--color-evergreen)] !shadow-none hover:!underline"
+          <span>Already have an account?</span>{' '}
+          <button
+            type="button"
+            className="inline-flex appearance-none items-center justify-center border-0 bg-transparent p-0 text-sm font-semibold text-[color:var(--color-evergreen)] shadow-none hover:underline focus:outline-none focus:ring-2 focus:ring-[color:var(--color-moss)]/40"
             onClick={() => handleFlip('signIn')}
             disabled={submitting}
           >
             Sign in instead
-          </Button>
+          </button>
         </div>
       </div>
     </Card>

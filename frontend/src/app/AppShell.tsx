@@ -22,13 +22,13 @@ export const AppShell = ({ children, profile }: AppShellProps) => {
   }, [location.pathname]);
 
   return (
-    <div className="relative min-h-dvh w-full bg-[#0b1220] text-slate-200 md:flex">
+    <div className="relative min-h-[100dvh] w-full bg-[#0b1220] text-slate-200 md:flex">
       <SidebarNav
         profile={profile}
         isMobileOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
       />
-      <div className="flex min-h-dvh flex-1 flex-col bg-[#0f1729]">
+      <div className="flex min-h-[100dvh] flex-1 flex-col bg-[#0f1729]">
         <div className="flex items-center gap-3 border-b border-[#1f2a3d] bg-[#111c2d] px-4 py-3 text-slate-200 md:hidden">
           <Button
             color="gray"
