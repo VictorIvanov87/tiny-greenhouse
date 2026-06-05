@@ -134,24 +134,24 @@ const DetailSection = ({
   children: ReactNode;
   defaultOpen?: boolean;
 }) => (
-  <details className="group rounded-2xl border border-[#1f2a3d] bg-[#0f1729]" open={defaultOpen}>
-    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-100 marker:hidden">
+  <details className="group" open={defaultOpen}>
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-sm font-semibold text-slate-100 marker:hidden">
       <span>
         {title}
         {helper ? <span className="ml-2 font-normal text-slate-500">{helper}</span> : null}
       </span>
       <span className="text-xs font-medium text-slate-500 transition group-open:rotate-180">⌄</span>
     </summary>
-    <div className="border-t border-[#1f2a3d] px-4 py-3">{children}</div>
+    <div className="pb-4">{children}</div>
   </details>
 );
 
 const MetricList = ({ items }: { items: Array<[string, string | undefined]> }) => (
-  <dl className="grid gap-3 sm:grid-cols-2">
+  <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
     {items.map(([label, value]) => (
-      <div key={label} className="rounded-xl border border-[#22324a] bg-[#111c2d] px-3 py-2">
+      <div key={label}>
         <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
-        <dd className="mt-1 text-sm text-slate-200">{value || '—'}</dd>
+        <dd className="mt-0.5 text-sm text-slate-200">{value || '—'}</dd>
       </div>
     ))}
   </dl>
@@ -162,12 +162,12 @@ const StageList = ({ defaults }: { defaults: CropDefaults }) => {
 
   return (
     <DetailSection title="Growth stages" helper={`${defaults.stages.length} stages`}>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {defaults.stages.map((stage) => (
-          <div key={stage.id} className="rounded-xl border border-[#22324a] bg-[#111c2d] px-3 py-2">
+          <div key={stage.id} className="border-l-2 border-[#22324a] pl-3">
             <p className="font-medium text-slate-100">{stage.label ?? stage.id.replace(/-/g, ' ')}</p>
             {stage.cues && stage.cues.length > 0 ? (
-              <p className="mt-1 text-xs leading-5 text-slate-400">{stage.cues[0]}</p>
+              <p className="mt-0.5 text-xs leading-5 text-slate-400">{stage.cues[0]}</p>
             ) : null}
           </div>
         ))}
@@ -404,7 +404,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
 
           {showPreview && selection.defaults ? (
             <div className="space-y-4">
-              <div className={panelClass}>
+              <div>
                 <p className="text-sm font-semibold text-emerald-400">
                   {selection.defaults.displayName ?? selection.varietyLabel}
                 </p>
@@ -412,6 +412,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
                 {safetyBadges.length ? <div className="mt-3 flex flex-wrap gap-2">{safetyBadges}</div> : null}
               </div>
 
+              <div className="divide-y divide-[#1f2a3d] border-t border-[#1f2a3d]">
               {environment ? (
                 <DetailSection title="Environment" helper="temperature, humidity, light" defaultOpen={true}>
                   <MetricList
@@ -450,6 +451,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
               ) : null}
 
               <StageList defaults={selection.defaults} />
+              </div>
             </div>
           ) : null}
         </div>

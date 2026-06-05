@@ -35,6 +35,12 @@ export const CROP_LIBRARY: CropOption[] = [
         description: 'Windowsill ornamental with multi-color pods.',
         supported: true,
       },
+      {
+        id: 'bolivian-rainbow',
+        label: 'Bolivian Rainbow',
+        description: 'Ornamental chilli with pods ripening purple to red.',
+        supported: true,
+      },
     ],
   },
   {
@@ -48,6 +54,21 @@ export const CROP_LIBRARY: CropOption[] = [
         id: 'genovese',
         label: 'Genovese',
         description: 'Classic sweet basil — tender leaves and fast rebounds.',
+        supported: true,
+      },
+    ],
+  },
+  {
+    id: 'strawberries',
+    label: 'Strawberries',
+    emoji: '🍓',
+    description: 'Compact berry bushes for containers and small rigs.',
+    supported: true,
+    varieties: [
+      {
+        id: 'clery',
+        label: 'Clery',
+        description: 'Early short-day Italian berry — sweet, uniform fruit.',
         supported: true,
       },
     ],

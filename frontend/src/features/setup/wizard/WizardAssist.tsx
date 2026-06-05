@@ -100,7 +100,7 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
   const suggestions = SUGGESTED_QUESTIONS[stepContext];
 
   return (
-    <div className="sticky top-6 flex flex-col rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-4 h-full">
+    <div className="flex h-full min-h-0 flex-col rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-4">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-slate-100">🤖 Ask Assistant</h3>
@@ -110,13 +110,14 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
       </div>
 
       {disabled ? (
-        <div className="rounded-xl bg-[#0f1729] px-3 py-2 text-sm text-slate-400">
+        <div className="flex flex-1 items-center justify-center rounded-xl bg-[#0f1729] px-3 py-2 text-center text-sm text-slate-400">
           Pick a crop & variety first to enable the assistant.
         </div>
       ) : (
         <>
-          {messages.length === 0 ? (
-            <div className="mb-3 space-y-2">
+          <div className="min-h-0 flex-1">
+            {messages.length === 0 ? (
+            <div className="space-y-2">
               <p className="text-xs font-medium text-slate-400">Try asking:</p>
               <div className="flex flex-wrap gap-1.5">
                 {suggestions.map((q) => (
@@ -132,12 +133,10 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
                 ))}
               </div>
             </div>
-          ) : null}
-
-          {messages.length > 0 ? (
+            ) : (
             <div
               ref={scrollRef}
-              className="mb-3 max-h-64 space-y-2 overflow-y-auto rounded-xl bg-[#0f1729] p-3"
+              className="h-full space-y-2 overflow-y-auto rounded-xl bg-[#0f1729] p-3"
             >
               {messages.map((msg) => (
                 <div
@@ -172,9 +171,10 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
               ))}
               {loading ? <div className="text-left text-xs text-slate-500">Thinking…</div> : null}
             </div>
-          ) : null}
+            )}
+          </div>
 
-          <div className="flex gap-2">
+          <div className="mt-3 flex gap-2">
             <input
               type="text"
               value={input}
