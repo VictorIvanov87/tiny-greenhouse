@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Dark form controls (app-wide)
+   Ensures no text-like input ever renders on a light/white background.
+   Unlayered + high specificity so it overrides flowbite.css's default
+   `input { background-color: var(--color-gray-50) }` and Flowbite React's
+   `bg-gray-50` field classes. Covers both Flowbite components (which render
+   native input/select/textarea underneath) and the app's own native inputs.
+   Checkboxes, radios, ranges and file pickers are excluded (styled elsewhere).
+   ────────────────────────────────────────────────────────────────────────── */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']),
+select,
+textarea {
+	background-color: #0f1729;
+	color: #e2e8f0;
+	border-color: #22324a;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range'])::placeholder,
+textarea::placeholder {
+	color: #64748b;
+	opacity: 1;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
+select:focus,
+textarea:focus {
+	border-color: rgba(16, 185, 129, 0.5);
+	outline: none;
+	box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+}
+
+/* Disabled inputs: keep dark, just dim slightly. */
+input:disabled,
+select:disabled,
+textarea:disabled {
+	background-color: #0b1322;
+	color: #94a3b8;
+}
+
 @layer theme {
 	:root {
 		--color-evergreen: #1F6F4A;
@@ -33,6 +72,12 @@
 	body,
 	#root {
 		min-height: 100%;
+	}
+
+	/* Dark UA rendering for native controls: select option lists, date/time
+	   pickers, scrollbars, and any input without an explicit background. */
+	:root {
+		color-scheme: dark;
 	}
 
 	body {
