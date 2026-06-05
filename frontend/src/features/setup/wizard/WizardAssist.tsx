@@ -115,7 +115,12 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
         </div>
       ) : (
         <>
-          <div className="min-h-0 flex-1">
+          <div
+            ref={scrollRef}
+            className={`min-h-0 flex-1 overflow-y-auto ${
+              messages.length > 0 ? 'rounded-xl bg-[#0f1729] p-3' : ''
+            }`}
+          >
             {messages.length === 0 ? (
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-400">Try asking:</p>
@@ -134,10 +139,7 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
               </div>
             </div>
             ) : (
-            <div
-              ref={scrollRef}
-              className="h-full space-y-2 overflow-y-auto rounded-xl bg-[#0f1729] p-3"
-            >
+            <div className="space-y-2">
               {messages.map((msg) => (
                 <div
                   key={msg.id}

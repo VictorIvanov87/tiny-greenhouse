@@ -9,7 +9,7 @@ const WizardLayout = ({ children, aside }: WizardLayoutProps) => (
   <div className="wizard-layout">
     <div className="wizard-layout__main min-w-0">{children}</div>
     {aside ? (
-      <aside className="wizard-layout__aside flex min-w-0 flex-col">{aside}</aside>
+      <aside className="wizard-layout__aside min-w-0">{aside}</aside>
     ) : null}
   </div>
 );

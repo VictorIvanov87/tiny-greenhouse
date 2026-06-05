@@ -108,6 +108,18 @@
 		align-items: stretch;
 		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 	}
+
+	/* The aside fills the row (= main column height) without its own content
+	   driving that height, so a long chat scrolls inside the card instead of
+	   stretching the page. */
+	.wizard-layout__aside {
+		position: relative;
+	}
+
+	.wizard-layout__aside > * {
+		position: absolute;
+		inset: 0;
+	}
 }
 
 @keyframes shimmer {

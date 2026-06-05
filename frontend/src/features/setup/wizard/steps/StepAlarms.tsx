@@ -129,7 +129,7 @@ const StepAlarms = ({ data, onChange }: StepProps) => {
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-slate-100">🔔 Alarm Rules</h2>
             <p className="text-sm text-slate-400">
-              We've pre-configured alerts based on your crop's safety bounds.
+              We've pre-configured alerts based on your crop's recommended ranges.
               Toggle, tweak values, add new rules, or remove ones you don't need.
             </p>
             <p className="mt-1 text-xs text-emerald-400">
