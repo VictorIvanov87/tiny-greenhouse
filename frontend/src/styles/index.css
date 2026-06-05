@@ -97,6 +97,19 @@
 	transform: rotateY(180deg);
 }
 
+.wizard-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+	.wizard-layout {
+		align-items: start;
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	}
+}
+
 @keyframes shimmer {
 	0% {
 		background-position: -400px 0;

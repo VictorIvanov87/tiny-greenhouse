@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { Alert, Badge, Button, Spinner } from 'flowbite-react';
+import { useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { Badge, Button, Spinner } from 'flowbite-react';
 import type { SetupWizardState, CropDefaults } from '../../state';
 import { getCropDefaults } from '../../api';
 import { ApiError } from '../../../../shared/hooks/useApi';
@@ -17,42 +17,162 @@ type StepProps = {
 const firstParagraph = (value?: string | null) =>
   value?.split('\n').map((part) => part.trim()).filter(Boolean).at(0) ?? null;
 
-const StageList = ({ defaults }: { defaults: CropDefaults }) => {
-  const [open, setOpen] = useState(false);
+const panelClass =
+  'rounded-2xl border border-[#1f2a3d] bg-[#0f1729] px-4 py-3 text-sm text-slate-300';
 
-  if (!defaults.stages.length) return null;
+type DropdownOption = {
+  id: string;
+  label: string;
+  description?: string;
+  emoji?: string;
+  supported: boolean;
+};
+
+const ThemedDropdown = ({
+  label,
+  placeholder,
+  value,
+  options,
+  disabled = false,
+  onSelect,
+}: {
+  label: string;
+  placeholder: string;
+  value?: string;
+  options: DropdownOption[];
+  disabled?: boolean;
+  onSelect: (value: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.id === value);
 
   return (
-    <div className="space-y-3">
-      <Button
-        color="gray"
-        outline={true}
-        className="flex w-full items-center justify-between !rounded-2xl"
+    <div className="relative space-y-2">
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+      <button
+        type="button"
+        disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
+        className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium outline-none transition ${
+          open
+            ? 'border-emerald-500 bg-[#0f1729] ring-2 ring-emerald-500/20'
+            : 'border-[#22324a] bg-[#0f1729] hover:border-emerald-500/40'
+        } ${disabled ? 'cursor-not-allowed opacity-50' : 'text-slate-100'}`}
       >
-        <span>Stages ({defaults.stages.length})</span>
-        <span className="text-xs text-slate-400">{open ? 'Hide' : 'Show'}</span>
-      </Button>
-      {open ? (
-        <div className="rounded-2xl border border-[#1f2a3d] bg-[#0f1729]">
-          {defaults.stages.map((stage, idx) => (
-            <div
-              key={stage.id}
-              className={`flex flex-col gap-1 px-4 py-3 text-sm ${
-                idx < defaults.stages.length - 1 ? 'border-b border-[#1f2a3d]' : ''
+        <span className="min-w-0 truncate">
+          {selected ? (
+            <span className="inline-flex min-w-0 items-center gap-2">
+              {selected.emoji ? <span>{selected.emoji}</span> : null}
+              <span className="truncate">{selected.label}</span>
+            </span>
+          ) : (
+            <span className="text-slate-500">{placeholder}</span>
+          )}
+        </span>
+        <span className={`shrink-0 text-slate-500 transition ${open ? 'rotate-180' : ''}`}>⌄</span>
+      </button>
+
+      {open && !disabled ? (
+        <div
+          className="absolute z-50 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-[#22324a] bg-slate-950 p-2 opacity-100 shadow-[0_24px_60px_rgba(0,0,0,0.65)] ring-1 ring-black/40"
+          style={{ backgroundColor: '#020617' }}
+        >
+          {options.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              disabled={!option.supported}
+              onClick={() => {
+                if (!option.supported) return;
+                onSelect(option.id);
+                setOpen(false);
+              }}
+              className={`w-full rounded-xl px-3 py-2 text-left transition ${
+                option.id === value
+                  ? 'bg-emerald-500/15 text-emerald-200'
+                  : option.supported
+                    ? 'text-slate-200 hover:bg-slate-800/80 hover:text-emerald-200'
+                    : 'cursor-not-allowed text-slate-600 opacity-60'
               }`}
             >
-              <span className="font-medium text-slate-100">
-                {stage.label ?? stage.id.replace(/-/g, ' ')}
+              <span className="flex items-center justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2 font-medium">
+                    {option.emoji ? <span>{option.emoji}</span> : null}
+                    <span className="truncate">{option.label}</span>
+                  </span>
+                  {option.description ? (
+                    <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                      {option.description}
+                    </span>
+                  ) : null}
+                </span>
+                {!option.supported ? (
+                  <span className="shrink-0 rounded-full bg-amber-900/30 px-2 py-0.5 text-[11px] font-medium text-amber-400">
+                    soon
+                  </span>
+                ) : null}
               </span>
-              {stage.cues && stage.cues.length > 0 ? (
-                <span className="text-xs text-slate-400">{stage.cues[0]}</span>
-              ) : null}
-            </div>
+            </button>
           ))}
         </div>
       ) : null}
+
+      {selected?.description ? <p className="text-xs leading-5 text-slate-400">{selected.description}</p> : null}
     </div>
+  );
+};
+
+const DetailSection = ({
+  title,
+  helper,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  helper?: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) => (
+  <details className="group rounded-2xl border border-[#1f2a3d] bg-[#0f1729]" open={defaultOpen}>
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-100 marker:hidden">
+      <span>
+        {title}
+        {helper ? <span className="ml-2 font-normal text-slate-500">{helper}</span> : null}
+      </span>
+      <span className="text-xs font-medium text-slate-500 transition group-open:rotate-180">⌄</span>
+    </summary>
+    <div className="border-t border-[#1f2a3d] px-4 py-3">{children}</div>
+  </details>
+);
+
+const MetricList = ({ items }: { items: Array<[string, string | undefined]> }) => (
+  <dl className="grid gap-3 sm:grid-cols-2">
+    {items.map(([label, value]) => (
+      <div key={label} className="rounded-xl border border-[#22324a] bg-[#111c2d] px-3 py-2">
+        <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
+        <dd className="mt-1 text-sm text-slate-200">{value || '—'}</dd>
+      </div>
+    ))}
+  </dl>
+);
+
+const StageList = ({ defaults }: { defaults: CropDefaults }) => {
+  if (!defaults.stages.length) return null;
+
+  return (
+    <DetailSection title="Growth stages" helper={`${defaults.stages.length} stages`}>
+      <div className="space-y-2">
+        {defaults.stages.map((stage) => (
+          <div key={stage.id} className="rounded-xl border border-[#22324a] bg-[#111c2d] px-3 py-2">
+            <p className="font-medium text-slate-100">{stage.label ?? stage.id.replace(/-/g, ' ')}</p>
+            {stage.cues && stage.cues.length > 0 ? (
+              <p className="mt-1 text-xs leading-5 text-slate-400">{stage.cues[0]}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </DetailSection>
   );
 };
 
@@ -65,6 +185,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   const selection = data.selection;
   const selectedCropId = selection.cropId;
   const selectedVariety = selection.variety;
+  const selectedCrop = useMemo(() => findCrop(selectedCropId), [selectedCropId]);
   const defaultsMatchSelection = Boolean(
     selection.defaults &&
       selection.defaults.cropId === selectedCropId &&
@@ -146,6 +267,11 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
     });
   };
 
+  const handleCropSelectChange = (value: string) => {
+    const crop = findCrop(value);
+    if (crop) handleSelectCrop(crop);
+  };
+
   const handleSelectVariety = (option: VarietyOption, parent: CropOption) => {
     if (!option.supported || !parent.supported) return;
     setStatus((prev) => ({ ...prev, error: null }));
@@ -164,6 +290,12 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
             : undefined,
       },
     }));
+  };
+
+  const handleVarietySelectChange = (value: string) => {
+    if (!selectedCrop) return;
+    const variety = selectedCrop.varieties.find((option) => option.id === value);
+    if (variety) handleSelectVariety(variety, selectedCrop);
   };
 
   const formatBounds = (label: string, metric?: { min?: number; max?: number }) => {
@@ -199,162 +331,123 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
       }
     >
       <div className="space-y-6">
-        {/* Crop selector */}
         <div className="rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-5">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-slate-100">🌱 Choose your crop</h2>
-            <p className="text-sm text-slate-400">
-              Pick a crop family and variety to load smart defaults.
-            </p>
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-100">🌱 Choose your crop</h2>
+              <p className="text-sm text-slate-400">
+                Use the dropdowns to choose a crop and variety. Details stay collapsed until defaults load.
+              </p>
+            </div>
+            {selectedCrop ? (
+              <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                {selectedCrop.emoji} {selectedCrop.label}
+              </span>
+            ) : null}
           </div>
-          <div className="space-y-3">
-            {CROP_LIBRARY.map((crop) => {
-              const isActive = selection.cropId === crop.id;
-              return (
-                <div
-                  key={crop.id}
-                  className={`cursor-pointer rounded-xl border p-4 transition ${
-                    isActive
-                      ? 'border-emerald-500 bg-emerald-900/20'
-                      : crop.supported
-                        ? 'border-[#22324a] bg-[#0f1729] hover:border-emerald-500/30'
-                        : 'border-[#22324a] bg-[#0f1729] opacity-50'
-                  }`}
-                  onClick={() => handleSelectCrop(crop)}
-                  role="button"
-                  tabIndex={crop.supported ? 0 : -1}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectCrop(crop); }}
-                >
-                  <div className="flex items-center gap-3">
-                    {crop.imageUrl ? (
-                      <img
-                        src={crop.imageUrl}
-                        alt={crop.label}
-                        className="h-12 w-12 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#1a2740] text-2xl">
-                        {crop.emoji}
-                      </span>
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-100">{crop.label}</span>
-                        {!crop.supported ? (
-                          <span className="rounded-full bg-amber-900/30 px-2 py-0.5 text-[11px] font-medium text-amber-400">
-                            coming soon
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="text-sm text-slate-400">{crop.description}</p>
-                    </div>
-                  </div>
 
-                  {isActive && crop.supported ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {crop.varieties.map((variety) => {
-                        const isSelected = selection.variety === variety.id;
-                        return (
-                          <button
-                            key={variety.id}
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleSelectVariety(variety, crop); }}
-                            disabled={!variety.supported}
-                            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-                              isSelected
-                                ? 'border border-emerald-500 bg-emerald-600/20 text-emerald-300'
-                                : variety.supported
-                                  ? 'border border-[#22324a] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300'
-                                  : 'border border-[#22324a] text-slate-500 opacity-50'
-                            }`}
-                          >
-                            {variety.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
+          <div className="grid gap-4 md:grid-cols-2">
+            <ThemedDropdown
+              label="Crop family"
+              placeholder="Select a crop"
+              value={selectedCropId}
+              options={CROP_LIBRARY}
+              onSelect={handleCropSelectChange}
+            />
+
+            <ThemedDropdown
+              label="Variety"
+              placeholder={selectedCrop ? 'Select a variety' : 'Choose a crop first'}
+              value={selectedVariety}
+              options={selectedCrop?.varieties ?? []}
+              disabled={!selectedCrop}
+              onSelect={handleVarietySelectChange}
+            />
           </div>
         </div>
 
-        {/* Crop defaults preview */}
         <div className="rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-5">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-lg font-semibold text-slate-100">📋 Crop defaults</h3>
               <p className="text-sm text-slate-400">
-                Smart defaults loaded from the seed pack database.
+                Loaded from the RAG/seed-pack data when the backend is available.
               </p>
             </div>
-            {status.loading ? <Spinner size="sm" color="success" /> : null}
+            {status.loading ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                <Spinner size="sm" color="success" /> Loading
+              </span>
+            ) : null}
           </div>
 
           {status.error ? (
-            <Alert color="failure" className="text-sm">
-              <div className="flex flex-col gap-2">
-                <span>{status.error}</span>
+            <div className={`${panelClass} border-amber-500/30 bg-amber-950/20 text-amber-100`}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold">Defaults are not available right now.</p>
+                  <p className="mt-1 text-xs leading-5 text-amber-100/80">
+                    The crop and variety are selected, but the local API did not return the RAG data.
+                    Start the backend on the expected port, then retry.
+                  </p>
+                </div>
                 <Button color="gray" outline={true} size="xs" onClick={handleRetry}>
                   Retry
                 </Button>
               </div>
-            </Alert>
+            </div>
           ) : null}
 
-          {!selection.variety ? (
-            <p className="text-sm text-slate-400">
-              Pick a supported variety above to see its defaults.
-            </p>
+          {!selection.variety && !status.error ? (
+            <div className={panelClass}>Pick a supported variety above to preview its defaults.</div>
           ) : null}
 
           {showPreview && selection.defaults ? (
-            <div className="space-y-5">
-              <div className="space-y-1">
+            <div className="space-y-4">
+              <div className={panelClass}>
                 <p className="text-sm font-semibold text-emerald-400">
                   {selection.defaults.displayName ?? selection.varietyLabel}
                 </p>
-                {overview ? <p className="text-sm text-slate-300">{overview}</p> : null}
+                {overview ? <p className="mt-2 text-sm leading-6 text-slate-300">{overview}</p> : null}
+                {safetyBadges.length ? <div className="mt-3 flex flex-wrap gap-2">{safetyBadges}</div> : null}
               </div>
 
-              {safetyBadges.length ? (
-                <div className="flex flex-wrap gap-2">{safetyBadges}</div>
+              {environment ? (
+                <DetailSection title="Environment" helper="temperature, humidity, light" defaultOpen={true}>
+                  <MetricList
+                    items={[
+                      ['Day temp', environment.temperature_day],
+                      ['Night temp', environment.temperature_night],
+                      ['Humidity', environment.humidity],
+                      ['Light hours', environment.light_hours],
+                    ]}
+                  />
+                </DetailSection>
               ) : null}
 
-              <div className="rounded-xl border border-[#1f2a3d] bg-[#0f1729]">
-                {environment ? (
-                  <div className="flex flex-col gap-1 border-b border-[#1f2a3d] px-4 py-3 text-sm">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Environment
-                    </span>
-                    <span className="text-slate-200">Day temp: {environment.temperature_day ?? '—'}</span>
-                    <span className="text-slate-200">Night temp: {environment.temperature_night ?? '—'}</span>
-                    <span className="text-slate-200">Humidity: {environment.humidity ?? '—'}</span>
-                    <span className="text-slate-200">Light hours: {environment.light_hours ?? '—'}</span>
-                  </div>
-                ) : null}
-                {irrigation ? (
-                  <div className="flex flex-col gap-1 border-b border-[#1f2a3d] px-4 py-3 text-sm">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Irrigation
-                    </span>
-                    <span className="text-slate-200">Method: {irrigation.method ?? '—'}</span>
-                    <span className="text-slate-200">Frequency: {irrigation.frequency ?? '—'}</span>
-                    {irrigation.notes ? <span className="text-slate-400">{irrigation.notes}</span> : null}
-                  </div>
-                ) : null}
-                {container ? (
-                  <div className="flex flex-col gap-1 px-4 py-3 text-sm">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Container
-                    </span>
-                    <span className="text-slate-200">Volume: {container.volume_liters ?? '—'}</span>
-                    <span className="text-slate-200">Diameter: {container.diameter_cm ?? '—'}</span>
-                    <span className="text-slate-200">Depth: {container.depth_cm ?? '—'}</span>
-                  </div>
-                ) : null}
-              </div>
+              {irrigation ? (
+                <DetailSection title="Irrigation" helper="method and cadence">
+                  <MetricList
+                    items={[
+                      ['Method', irrigation.method],
+                      ['Frequency', irrigation.frequency],
+                      ['Notes', irrigation.notes],
+                    ]}
+                  />
+                </DetailSection>
+              ) : null}
+
+              {container ? (
+                <DetailSection title="Container" helper="size guidance">
+                  <MetricList
+                    items={[
+                      ['Volume', container.volume_liters],
+                      ['Diameter', container.diameter_cm],
+                      ['Depth', container.depth_cm],
+                    ]}
+                  />
+                </DetailSection>
+              ) : null}
 
               <StageList defaults={selection.defaults} />
             </div>

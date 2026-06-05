@@ -31,6 +31,7 @@ jobs:
           mkdir -p deploy/dist deploy/data
           cp dist/app.js deploy/dist/
           cp -r data/mock deploy/data/
+          cp -r ../data/rag deploy/data/
           cp package.json package-lock.json deploy/
 
       - name: Install production deps in deploy folder

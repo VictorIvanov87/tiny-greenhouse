@@ -100,7 +100,7 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
   const suggestions = SUGGESTED_QUESTIONS[stepContext];
 
   return (
-    <div className="sticky top-6 flex flex-col rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-4">
+    <div className="sticky top-6 flex flex-col rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-4 h-full">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-slate-100">🤖 Ask Assistant</h3>
@@ -143,9 +143,7 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
                 <div
                   key={msg.id}
                   className={`text-sm ${
-                    msg.role === 'user'
-                      ? 'text-right text-slate-300'
-                      : 'text-left text-slate-100'
+                    msg.role === 'user' ? 'text-right text-slate-300' : 'text-left text-slate-100'
                   }`}
                 >
                   <div
@@ -172,9 +170,7 @@ const WizardAssist = ({ cropId, variety, stepContext, disabled }: WizardAssistPr
                   ) : null}
                 </div>
               ))}
-              {loading ? (
-                <div className="text-left text-xs text-slate-500">Thinking…</div>
-              ) : null}
+              {loading ? <div className="text-left text-xs text-slate-500">Thinking…</div> : null}
             </div>
           ) : null}
 

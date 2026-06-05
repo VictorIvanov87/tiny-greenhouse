@@ -6,9 +6,9 @@ type WizardLayoutProps = {
 };
 
 const WizardLayout = ({ children, aside }: WizardLayoutProps) => (
-  <div className="grid gap-6 lg:grid-cols-[7fr_3fr]">
-    <div className="min-w-0">{children}</div>
-    {aside ? <aside className="min-w-0">{aside}</aside> : null}
+  <div className="wizard-layout">
+    <div className="wizard-layout__main min-w-0">{children}</div>
+    {aside ? <aside className="wizard-layout__aside min-w-0 ">{aside}</aside> : null}
   </div>
 );
 
