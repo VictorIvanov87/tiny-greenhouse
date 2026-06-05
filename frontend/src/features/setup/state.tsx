@@ -77,6 +77,7 @@ export type CropDefaults = {
     light_hours?: BoundedMetric;
   };
   stages: CropStage[];
+  defaultStage?: string | null;
 };
 
 export type WizardSelection = {
@@ -84,6 +85,7 @@ export type WizardSelection = {
   cropLabel?: string;
   variety?: string;
   varietyLabel?: string;
+  stage?: string;
   defaults?: CropDefaults;
 };
 

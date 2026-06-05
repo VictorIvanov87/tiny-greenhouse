@@ -91,6 +91,10 @@ const StepFinish = ({ data, onChange }: StepProps) => {
   const { alarmRules, checklist } = data;
   const selection = data.selection;
 
+  const currentStageId = selection.stage ?? defaults?.defaultStage ?? defaults?.stages[0]?.id;
+  const stageLabel =
+    defaults?.stages.find((s) => s.id === currentStageId)?.label ?? currentStageId ?? null;
+
   const enabledAlarmCount = alarmRules.filter((r) => r.enabled).length;
   const checkedCount = CHECKLIST_ITEMS.filter((item) => checklist[item.id]).length;
   const totalChecklist = CHECKLIST_ITEMS.length;
@@ -110,6 +114,11 @@ const StepFinish = ({ data, onChange }: StepProps) => {
       value: defaults
         ? `${defaults.cropId} ▸ ${defaults.displayName ?? prettify(defaults.variety)}`
         : 'Not selected',
+    },
+    {
+      label: 'Growth phase',
+      icon: Icons.crop,
+      value: stageLabel ?? '—',
     },
     {
       label: 'Overview',

@@ -19,7 +19,6 @@ import { useTelemetryQuery } from './api';
 const CARD_CLASS =
   'rounded-3xl border border-[#1f2a3d] bg-[#111c2d] shadow-[0_24px_60px_rgba(8,20,38,0.35)]';
 
-
 type SortKey =
   | 'timestamp'
   | 'temperature'
@@ -59,7 +58,7 @@ const RANGES = {
   temperature: { low: 18, high: 26 },
   humidity: { low: 40, high: 70 },
   soilMoisture: { low: 20, high: 80 },
-  lightLux: { low: 100, high: 50000 },
+  lightLux: { low: 0, high: 1000 },
   pressureHpa: { low: 950, high: 1050 },
 };
 
@@ -215,7 +214,8 @@ const SensorDataPage = () => {
       header,
       ...pageItems.map((row) => {
         const cells = [row.timestamp];
-        if (showColumn('temperature')) cells.push(row.temperature != null ? row.temperature.toString() : '');
+        if (showColumn('temperature'))
+          cells.push(row.temperature != null ? row.temperature.toString() : '');
         if (showColumn('humidity')) cells.push(row.humidity != null ? row.humidity.toString() : '');
         if (showColumn('soilMoisture')) cells.push(row.soilMoisture.toString());
         if (showColumn('lightLux')) cells.push(row.lightLux != null ? row.lightLux.toString() : '');
@@ -317,7 +317,9 @@ const SensorDataPage = () => {
               <TableRow>
                 <TableHeadCell>
                   <Button
-                    color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
+                    color="gray"
+                    outline={true}
+                    className="!border-none !bg-transparent !p-0 !shadow-none"
                     onClick={() => toggleSort('timestamp')}
                   >
                     <span className="flex items-center text-sm font-semibold">
@@ -328,7 +330,9 @@ const SensorDataPage = () => {
                 {showColumn('temperature') && (
                   <TableHeadCell>
                     <Button
-                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
+                      color="gray"
+                      outline={true}
+                      className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('temperature')}
                     >
                       <span className="flex items-center text-sm font-semibold">
@@ -340,7 +344,9 @@ const SensorDataPage = () => {
                 {showColumn('humidity') && (
                   <TableHeadCell>
                     <Button
-                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
+                      color="gray"
+                      outline={true}
+                      className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('humidity')}
                     >
                       <span className="flex items-center text-sm font-semibold">
@@ -352,7 +358,9 @@ const SensorDataPage = () => {
                 {showColumn('soilMoisture') && (
                   <TableHeadCell>
                     <Button
-                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
+                      color="gray"
+                      outline={true}
+                      className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('soilMoisture')}
                     >
                       <span className="flex items-center text-sm font-semibold">
@@ -364,7 +372,9 @@ const SensorDataPage = () => {
                 {showColumn('lightLux') && (
                   <TableHeadCell>
                     <Button
-                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
+                      color="gray"
+                      outline={true}
+                      className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('lightLux')}
                     >
                       <span className="flex items-center text-sm font-semibold">
@@ -376,7 +386,9 @@ const SensorDataPage = () => {
                 {showColumn('pressureHpa') && (
                   <TableHeadCell>
                     <Button
-                      color="gray" outline={true} className="!border-none !bg-transparent !p-0 !shadow-none"
+                      color="gray"
+                      outline={true}
+                      className="!border-none !bg-transparent !p-0 !shadow-none"
                       onClick={() => toggleSort('pressureHpa')}
                     >
                       <span className="flex items-center text-sm font-semibold">

@@ -280,6 +280,7 @@ export const CropDefaultsPayloadSchema = z.object({
     .partial()
     .optional(),
   stages: z.array(CropStageSchema),
+  defaultStage: z.string().nullable().optional(),
 });
 export type CropDefaultsPayload = z.infer<typeof CropDefaultsPayloadSchema>;
 export const CropDefaultsResponseSchema = okResponse(CropDefaultsPayloadSchema);

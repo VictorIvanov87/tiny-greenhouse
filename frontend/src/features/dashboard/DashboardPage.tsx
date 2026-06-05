@@ -23,8 +23,14 @@ const DashboardPage = () => {
   const { profile } = useOutletContext<DashboardContext>();
   const { active } = useAlerts();
 
-  const { data, isLoading: loading, error: queryError, refetch } = useTelemetryQuery({ limit: 100 });
-  const error = queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
+  const {
+    data,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useTelemetryQuery({ limit: 100 });
+  const error =
+    queryError instanceof Error ? queryError.message : queryError ? String(queryError) : null;
 
   const { data: controlSettings } = useControlSettingsQuery();
 
@@ -32,31 +38,32 @@ const DashboardPage = () => {
 
   // Derive per-metric ranges from controlSettings (with sensible fallbacks for
   // metrics that aren't in controlSettings, e.g. light/pressure).
-  const ranges = useMemo(() => ({
-    temperature: {
-      low: controlSettings?.thresholds.tempMinC ?? 18,
-      high: controlSettings?.thresholds.tempMaxC ?? 26,
-    },
-    humidity: {
-      low: controlSettings?.thresholds.humidityMinPct ?? 40,
-      high: controlSettings?.thresholds.humidityMaxPct ?? 70,
-    },
-    soilMoisture: {
-      low: controlSettings?.thresholds.soilMoisturePctMin ?? 40,
-      high: controlSettings?.thresholds.soilMoisturePctMax ?? 60,
-    },
-    lightLux: { low: 100, high: 50000 },
-    pressureHpa: { low: 950, high: 1050 },
-  }), [controlSettings]);
+  const ranges = useMemo(
+    () => ({
+      temperature: {
+        low: controlSettings?.thresholds.tempMinC ?? 18,
+        high: controlSettings?.thresholds.tempMaxC ?? 26,
+      },
+      humidity: {
+        low: controlSettings?.thresholds.humidityMinPct ?? 40,
+        high: controlSettings?.thresholds.humidityMaxPct ?? 70,
+      },
+      soilMoisture: {
+        low: controlSettings?.thresholds.soilMoisturePctMin ?? 40,
+        high: controlSettings?.thresholds.soilMoisturePctMax ?? 60,
+      },
+      lightLux: { low: 0, high: 1000 },
+      pressureHpa: { low: 950, high: 1050 },
+    }),
+    [controlSettings]
+  );
 
   const latestSample = sortedSamples.at(-1);
 
   const criticalCount = active.filter((a) => a.severity === 'critical').length;
   const warnCount = active.filter((a) => a.severity === 'warn').length;
 
-  const lastSeenMs = latestSample
-    ? Date.now() - new Date(latestSample.timestamp).getTime()
-    : null;
+  const lastSeenMs = latestSample ? Date.now() - new Date(latestSample.timestamp).getTime() : null;
   const lastSeenLabel = (() => {
     if (lastSeenMs === null) return null;
     if (lastSeenMs < 60_000) return 'Last reading: just now';

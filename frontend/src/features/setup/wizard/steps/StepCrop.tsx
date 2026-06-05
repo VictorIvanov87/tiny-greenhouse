@@ -157,20 +157,37 @@ const MetricList = ({ items }: { items: Array<[string, string | undefined]> }) =
   </dl>
 );
 
-const StageList = ({ defaults }: { defaults: CropDefaults }) => {
+const StageList = ({
+  defaults,
+  selectedStageId,
+}: {
+  defaults: CropDefaults;
+  selectedStageId?: string;
+}) => {
   if (!defaults.stages.length) return null;
 
   return (
     <DetailSection title="Growth stages" helper={`${defaults.stages.length} stages`}>
       <div className="space-y-3">
-        {defaults.stages.map((stage) => (
-          <div key={stage.id} className="border-l-2 border-[#22324a] pl-3">
-            <p className="font-medium text-slate-100">{stage.label ?? stage.id.replace(/-/g, ' ')}</p>
-            {stage.cues && stage.cues.length > 0 ? (
-              <p className="mt-0.5 text-xs leading-5 text-slate-400">{stage.cues[0]}</p>
-            ) : null}
-          </div>
-        ))}
+        {defaults.stages.map((stage) => {
+          const isSelected = stage.id === selectedStageId;
+          return (
+            <div
+              key={stage.id}
+              className={`border-l-2 pl-3 ${isSelected ? 'border-emerald-500' : 'border-[#22324a]'}`}
+            >
+              <p className={`font-medium ${isSelected ? 'text-emerald-300' : 'text-slate-100'}`}>
+                {stage.label ?? stage.id.replace(/-/g, ' ')}
+                {isSelected ? (
+                  <span className="ml-2 text-[11px] font-normal text-emerald-400">• your phase</span>
+                ) : null}
+              </p>
+              {stage.cues && stage.cues.length > 0 ? (
+                <p className="mt-0.5 text-xs leading-5 text-slate-400">{stage.cues[0]}</p>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </DetailSection>
   );
@@ -217,6 +234,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
             cropLabel: findCrop(cropId)?.label ?? cropId,
             variety,
             varietyLabel: findVariety(cropId, variety)?.label ?? variety,
+            stage: payload.defaultStage ?? payload.stages[0]?.id,
             defaults: payload,
           },
           prefs: seedPrefsFromDefaults(prev.prefs, payload),
@@ -246,6 +264,15 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
   const container = selection.defaults?.defaults?.container;
   const safety = selection.defaults?.safety_bounds;
   const showPreview = Boolean(selection.defaults) && !status.loading;
+
+  const stages = selection.defaults?.stages ?? [];
+  const currentStage = selection.stage ?? selection.defaults?.defaultStage ?? stages[0]?.id;
+  const selectedStage = stages.find((s) => s.id === currentStage);
+  const stageOptions: DropdownOption[] = stages.map((s) => ({
+    id: s.id,
+    label: s.label ?? s.id.replace(/-/g, ' '),
+    supported: true,
+  }));
 
   const handleSelectCrop = (option: CropOption) => {
     if (!option.supported) return;
@@ -298,6 +325,10 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
     if (variety) handleSelectVariety(variety, selectedCrop);
   };
 
+  const handlePhaseChange = (value: string) => {
+    onChange((prev) => ({ ...prev, selection: { ...prev.selection, stage: value } }));
+  };
+
   const formatBounds = (label: string, metric?: { min?: number; max?: number }) => {
     if (!metric || typeof metric.min !== 'number' || typeof metric.max !== 'number') return null;
     return (
@@ -336,7 +367,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
             <div>
               <h2 className="text-xl font-semibold text-slate-100">🌱 Choose your crop</h2>
               <p className="text-sm text-slate-400">
-                Use the dropdowns to choose a crop and variety. Details stay collapsed until defaults load.
+                Choose a crop, a variety, and the phase you're planting from. Details load once a variety is picked.
               </p>
             </div>
             {selectedCrop ? (
@@ -364,6 +395,24 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
               onSelect={handleVarietySelectChange}
             />
           </div>
+
+          {stages.length ? (
+            <div className="mt-4">
+              <ThemedDropdown
+                label="Growth phase — what are you planting?"
+                placeholder="Select the current phase"
+                value={currentStage}
+                options={stageOptions}
+                onSelect={handlePhaseChange}
+              />
+              {selectedStage?.guidance ? (
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  <span className="font-medium text-slate-300">What to do now: </span>
+                  {firstParagraph(selectedStage.guidance)}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-[#1f2a3d] bg-[#111c2d] p-5">
@@ -450,7 +499,7 @@ export const StepCrop = ({ data, onChange }: StepProps) => {
                 </DetailSection>
               ) : null}
 
-              <StageList defaults={selection.defaults} />
+              <StageList defaults={selection.defaults} selectedStageId={currentStage} />
               </div>
             </div>
           ) : null}

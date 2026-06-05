@@ -142,7 +142,8 @@ const WizardViewport = () => {
       plantType: state.selection.variety,
       cropId: state.selection.cropId,
       variety: state.selection.variety,
-      growthStage: defaults.stages[0]?.id ?? 'germination',
+      growthStage:
+        state.selection.stage ?? defaults.defaultStage ?? defaults.stages[0]?.id ?? 'germination',
       language: defaults.lang === 'bg' ? 'bg' : 'en',
       timelapse: {
         enabled: true,

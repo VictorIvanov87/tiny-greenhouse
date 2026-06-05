@@ -264,6 +264,10 @@ const projectPayload = (raw: unknown, cropId: string, variety: string): CropDefa
 
   const safety_bounds = mapSafetyBounds(raw.safety_bounds);
   const stages = mapStages(raw.stages);
+  const defaultStage =
+    typeof crop.defaultStage === 'string' && stages.some((s) => s.id === crop.defaultStage)
+      ? crop.defaultStage
+      : stages[0]?.id ?? null;
 
   return CropDefaultsPayloadSchema.parse({
     cropId,
@@ -274,6 +278,7 @@ const projectPayload = (raw: unknown, cropId: string, variety: string): CropDefa
     defaults,
     safety_bounds,
     stages,
+    defaultStage,
   });
 };
 
