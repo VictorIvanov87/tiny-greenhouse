@@ -1,0 +1,137 @@
+crop:
+  id: chillies
+  variety: bolivian-rainbow
+  lang: en
+  displayName: "Bolivian Rainbow"
+  version: 1
+  defaultStage: germination
+
+overview: |
+  Compact, ornamental chilli (Capsicum annuum) from Bolivia, prized for fruits that ripen through
+  purple, cream, yellow, orange and finally red—often all colours present on the plant at once.
+  Naturally bushy with dark green to purple-tinged foliage and small purple flowers. Reaches
+  45–60 cm indoors, making it well suited to small controlled environments and containers.
+  Tolerates dry, warm conditions well. Medium heat (10,000–30,000 SHU), edible and decorative.
+
+growth_timing:
+  germination_days: "7–21 (faster at 24–29°C)"
+  days_to_first_true_leaves: "10–14 after sprout"
+  days_to_first_flower: "45–70 from transplant"
+  days_to_maturity: "70–90 from transplant; up to 120 from sowing in cooler rooms"
+  notes: "Indicative windows; cooler temperatures or low light delay all milestones."
+
+stages:
+  - id: germination
+    label: "Germination"
+    cues:
+      - "Seeds sown about 6 mm deep in a light, well-draining mix"
+      - "Medium warmed to 24–29°C; evenly moist, not waterlogged"
+    guidance: |
+      Use a heat mat if room temperature is below 22°C. Germination can take up to three weeks,
+      so be patient. Provide low-intensity light once the seeds crack to prevent legginess.
+
+  - id: seedling
+    label: "Seedling"
+    cues:
+      - "First true leaves present; short internodes under adequate light"
+    guidance: |
+      14–16 h light with the lamp close (without scorching leaves). Gentle airflow strengthens
+      stems. Water when the top 1–2 cm of substrate are dry. Begin very light weekly feeding after
+      true leaves appear. Avoid overwatering—seedlings are prone to damping-off.
+
+  - id: vegetative
+    label: "Vegetative"
+    cues:
+      - "4–6 leaf sets; branching and a naturally compact, bushy habit"
+      - "Foliage may show characteristic purple tinge"
+    guidance: |
+      12–16 h light; even moisture with dry-back between waterings. Step up pot size gradually.
+      Feed with balanced nutrients. Light pinching of the growing tip can encourage bushiness,
+      but avoid heavy pruning right before flowering.
+
+  - id: flowering
+    label: "Flowering/Fruiting"
+    cues:
+      - "Small purple star-shaped flowers; first fruit set"
+      - "Fruits begin purple, then shift through cream, yellow, orange to red"
+    guidance: |
+      Aim for 12–14 h light with steady warm day temperatures. Reduce nitrogen and increase
+      potassium to support fruit set and ripening. Allow slight dry-back—chronic overwatering
+      causes blossom drop and root rot. Plant is self-fertile; gentle airflow aids pollination
+      in still indoor air.
+
+defaults:
+  environment:
+    temperature_day_c: [21, 28]
+    temperature_night_c: [16, 21]
+    humidity_pct: [40, 65]
+    light_hours: 14
+    co2_ppm: 400
+  irrigation:
+    method: "Top watering or simple drip"
+    soil_mix: "Universal:Perlite = 70:30 (free-draining)"
+    watering_rule: "Water when top 1–2 cm are dry; the variety tolerates dry-back and dislikes constantly wet soil"
+  nutrition:
+    ec_mS_cm: [1.0, 1.6]
+    ph: [6.0, 6.8]
+    feed_note: "Balanced mild feed in seedling/vegetative; lower nitrogen and higher potassium at flowering for better fruit set"
+  container:
+    pot_volume_l: [3.0, 10.0]
+    spacing_cm: [45, 60]
+  operations:
+    timelapse_hour_local: 9
+    airflow_note: "Gentle, consistent airflow lowers disease pressure and strengthens stems"
+
+safety_bounds:
+  temperature_c: [10, 35]
+  light_hours: [6, 18]
+  humidity_pct: [25, 80]
+  ec_mS_cm: [0.6, 2.0]
+
+warnings:
+  - stage: germination
+    text: "Room-temperature germination is slow; a heat mat at 24–29°C speeds and evens emergence. Allow up to 3 weeks."
+  - stage: seedling
+    text: "Insufficient light causes stretch; keep photoperiod 14–16 h and reduce lamp distance. Avoid overwatering—damping-off risk."
+  - stage: flowering
+    text: "Overwatering and sudden temperature swings cause blossom drop; allow slight dry-back, keep day temperatures steady."
+  - stage: any
+    text: "Sensitive to wet soil and root rot; ensure free drainage. Never recommend beyond safety bounds; clamp to safe min/max and change gradually."
+
+faq:
+  - q: "What heat level is Bolivian Rainbow?"
+    a: "Medium, approximately 10,000–30,000 SHU—comparable to a cayenne or tabasco. Edible but mainly grown as ornamental."
+
+  - q: "How much light is needed indoors?"
+    a: "Seedlings 14–16 h/day; vegetative 12–16 h; flowering 12–14 h. Keep LEDs close enough to prevent stretch while avoiding leaf scorch."
+
+  - q: "Does it need high humidity?"
+    a: "No. As a Capsicum annuum it tolerates dry air well and does not require added humidity. Aim for 40–65% RH; avoid sustained high humidity that favors fungal disease."
+
+  - q: "What pot size and spacing work for a compact bushy plant?"
+    a: "3–10 L per plant and 45–60 cm spacing suit its bushy habit and allow good airflow. Avoid overpotting, which keeps the substrate wet too long."
+
+  - q: "What soil mix should I use?"
+    a: "A free-draining mix such as 70% universal potting soil + 30% perlite. The variety is sensitive to soggy soil and root rot."
+
+  - q: "Why are all my peppers different colors at once?"
+    a: "That is the defining ornamental trait. Fruits ripen at different times, passing through purple, cream, yellow, orange and red, so all colours appear on the plant simultaneously."
+
+  - q: "How do I avoid blossom drop?"
+    a: "Keep day temperatures steady, avoid chronic overwatering, allow slight dry-back, and keep nitrogen moderate while raising potassium during flowering."
+
+  - q: "Can I grow it in a container indoors under LED?"
+    a: "Yes. Its compact 45–60 cm size and tolerance of dry warm conditions make it well suited to indoor LED setups, provided light is strong and drainage is good."
+
+  - q: "What pests should I watch for?"
+    a: "Spider mites (fine webbing, stippled leaves) and fungus gnats are most common indoors. Use sticky traps for monitoring, let the top layer dry more, and keep airflow gentle and consistent."
+
+aliases:
+  - "bolivian rainbow"
+  - "ornamental hot pepper"
+  - "capsicum annuum (bolivian rainbow)"
+  - "боливийска дъга"
+
+sources:
+  - "chillies-bolivian-rainbow-notes"
+  - "soil-mix-basics"
