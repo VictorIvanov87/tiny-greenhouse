@@ -25,12 +25,6 @@ import {
 const sanitizeCropId = (value?: string | null) => (value && value.trim() ? value.trim() : 'unknown');
 const sanitizeOptional = (value?: string | null) => (value && value.trim() ? value.trim() : undefined);
 
-const numberFromEnv = (raw: string | undefined, fallback: number) => {
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const MIN_QUERY_LENGTH = Math.max(1, numberFromEnv(process.env.ASSIST_MIN_QUERY_LEN, 8));
 const DEFAULT_TOP_K = 6;
 const DEFAULT_TEMPERATURE = 0.2;
 const HISTORY_TURN_LIMIT = 12;
@@ -75,43 +69,6 @@ const turnsToChatMessages = (turns: ChatTurn[]): ChatMessage[] =>
       ? { role: 'user', content: t.content }
       : { role: 'assistant', content: t.content },
   );
-
-const classifyIntent = async (
-  message: string,
-  history: ChatTurn[],
-): Promise<'gardening' | 'general'> => {
-  if (message.trim().length < MIN_QUERY_LENGTH) return 'general';
-
-  const llm = getChatProvider();
-  const historyTail = history.slice(-4);
-  const transcript = historyTail
-    .map((t) => `${t.role.toUpperCase()}: ${t.content}`)
-    .join('\n');
-
-  const systemPrompt = [
-    'You are a strict binary classifier for a greenhouse assistant.',
-    'Output EXACTLY one token: GARDENING or GENERAL.',
-    '',
-    'GARDENING covers: plants, watering, light, soil, pests, growth, nutrition, harvest,',
-    'the user\'s greenhouse, the sensors, the camera, the hardware/prototype itself,',
-    'and follow-up answers to a previous gardening question.',
-    '',
-    'GENERAL covers everything else: small talk, world knowledge, code, math, jokes,',
-    'celebrity questions, definitions of unrelated terms.',
-    '',
-    'When in doubt, prefer GARDENING only if the message clearly relates to the greenhouse.',
-  ].join('\n');
-
-  const userPrompt = [
-    transcript ? `Recent conversation:\n${transcript}\n` : '',
-    `Latest user message:\n${message.trim()}`,
-    '',
-    'Classify the latest user message. Output exactly GARDENING or GENERAL.',
-  ].filter(Boolean).join('\n');
-
-  const raw = await llm.complete({ system: systemPrompt, user: userPrompt, temperature: 0 });
-  return /^gardening/i.test(raw.trim()) ? 'gardening' : 'general';
-};
 
 // ── Tool: get_telemetry_aggregates ────────────────────────────────────────
 
@@ -233,11 +190,10 @@ export const buildAssistantAnswer = async (
   const threadId = await ensureThread(uid, options.threadId);
   const history = await getTurns(threadId, HISTORY_TURN_LIMIT);
 
-  const buildMeta = (intent: 'gardening' | 'general', imageAttached: boolean) => ({
+  const buildMeta = (imageAttached: boolean) => ({
     cropId: effectiveCropId,
     lang,
     stage,
-    intent,
     imageAttached,
     ...(SHOULD_INCLUDE_OPTIONS_IN_META
       ? {
@@ -254,36 +210,9 @@ export const buildAssistantAnswer = async (
   // Persist the user turn early so it appears in subsequent fetches.
   await appendTurn(threadId, { role: 'user', content: trimmedMessage });
 
-  // ── Intent gating ────────────────────────────────────────────────────
-  const intent = await classifyIntent(trimmedMessage, history);
   const llm = getChatProvider();
 
-  if (intent === 'general') {
-    const systemPrompt = [
-      'You are a friendly general-purpose assistant.',
-      'Answer the user concisely and accurately.',
-      `Respond in ${lang.toUpperCase()}.`,
-      'After your answer, add ONE short sentence noting that you are built for greenhouse questions and offering to talk about their plants or sensors.',
-    ].join('\n');
-
-    const messages: ChatMessage[] = [
-      { role: 'system', content: systemPrompt },
-      ...turnsToChatMessages(history),
-      { role: 'user', content: trimmedMessage },
-    ];
-
-    const completion = await llm.complete({ messages, temperature });
-    await appendTurn(threadId, { role: 'assistant', content: completion });
-
-    return AssistantAnswerSchema.parse({
-      message: completion,
-      sources: [],
-      threadId,
-      meta: buildMeta('general', false),
-    });
-  }
-
-  // ── Gardening branch ────────────────────────────────────────────────
+  // ── Assemble context for every prompt ────────────────────────────────
   const nowMs = Date.now();
   const last24hFrom = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
   const last14dFrom = new Date(nowMs - 14 * 24 * 60 * 60 * 1000).toISOString();
@@ -333,7 +262,8 @@ export const buildAssistantAnswer = async (
     'get_telemetry_aggregates(from, to, metrics?) for other windows. The current time is ' +
       new Date().toISOString() + '.',
     '',
-    'Diagnostic rules — DO NOT skip these:',
+    'When the user asks about their greenhouse, plants, or sensors, follow these diagnostic',
+    'rules — DO NOT skip them:',
     '1. Identify the target ranges for the user\'s crop and stage from SOURCES (temperature, humidity,',
     '   soil moisture, light, watering frequency). Quote the numbers, citing "Source N".',
     '2. Compare those targets to the actual SNAPSHOT values AND the last-24h / last-14d aggregates.',
@@ -350,6 +280,9 @@ export const buildAssistantAnswer = async (
     '- If the camera image is unclear or you need a detail you cannot see, ASK ONE focused',
     '  clarifying question instead of guessing. One question per turn, max.',
     '- Be concise. Lead with the diagnosis, then evidence, then actions.',
+    '- If the user\'s message is unrelated to the greenhouse (small talk, general knowledge,',
+    '  jokes), just answer it briefly and accurately, then offer to return to their plants or',
+    '  sensors. Do not force the diagnostic framing and never invent readings.',
     `Respond in ${lang.toUpperCase()}.`,
   ].join('\n');
 
@@ -385,6 +318,6 @@ export const buildAssistantAnswer = async (
     message: completion,
     sources: chunks,
     threadId,
-    meta: buildMeta('gardening', Boolean(latestImage)),
+    meta: buildMeta(Boolean(latestImage)),
   });
 };
