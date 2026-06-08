@@ -48,9 +48,6 @@ const titleCase = (value: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 
-const SMALL_TALK_REPLY =
-  'Ask me about light-hour targets, watering cadence, temperature bands, or growth-stage routines and I will cite the right greenhouse docs.';
-
 const formatMessageTime = (iso: string): string => {
   const date = new Date(iso);
   const now = new Date();
@@ -414,8 +411,8 @@ const AssistantPage = () => {
                   <div
                     className={`max-w-full [overflow-wrap:anywhere] sm:max-w-[78%] ${
                       isUser
-                        ? 'rounded-2xl rounded-br-sm bg-[#1d3a5c] px-4 py-3 text-slate-50'
-                        : 'rounded-2xl rounded-bl-sm bg-[#1a2740] px-4 py-3 text-slate-100'
+                        ? 'rounded-2xl rounded-br-sm border border-[#2a4a72] bg-[#1d3a5c] px-4 py-3 text-slate-50'
+                        : 'rounded-2xl rounded-bl-sm border border-[#22324a] bg-[#162236] px-4 py-3 text-slate-100'
                     }`}
                   >
                     <div className="min-w-0">
@@ -438,15 +435,6 @@ const AssistantPage = () => {
                     {message.role === 'assistant' && message.status === 'ready'
                       ? renderCitations(message.sources)
                       : null}
-
-                    {message.role === 'assistant' &&
-                    message.status === 'ready' &&
-                    !message.sources.length &&
-                    message.content.trim() !== SMALL_TALK_REPLY ? (
-                      <p className="mt-2 text-xs text-slate-400">
-                        I don't have docs for this crop yet.
-                      </p>
-                    ) : null}
 
                     {message.role === 'assistant' && message.status === 'error' ? (
                       <div className="mt-2">
@@ -499,10 +487,10 @@ const AssistantPage = () => {
         </div>
 
         <div className="shrink-0 border-t border-[#1f2a3d] pt-4">
-          <div className="relative">
+          <div className="flex items-end gap-2">
             <Textarea
               rows={3}
-              className="resize-none pb-10"
+              className="flex-1 resize-none"
               placeholder={
                 greenhouseLoading
                   ? 'Loading greenhouse context...'
@@ -514,7 +502,7 @@ const AssistantPage = () => {
               disabled={isSending || greenhouseLoading}
             />
             <button
-              className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white transition-colors hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white transition-colors hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={!canSend}
               onClick={handleSend}
               aria-label="Send"
