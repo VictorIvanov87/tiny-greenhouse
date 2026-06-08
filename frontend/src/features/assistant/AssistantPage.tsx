@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Alert, Badge, Button, Card, Spinner, Textarea, Toast, ToastToggle } from 'flowbite-react';
+import { Alert, Badge, Card, Spinner, Textarea, Toast, ToastToggle } from 'flowbite-react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../auth/hooks/useAuth';
 import type { SetupProfile } from '../setup/state';
@@ -50,6 +50,17 @@ const titleCase = (value: string) =>
 
 const SMALL_TALK_REPLY =
   'Ask me about light-hour targets, watering cadence, temperature bands, or growth-stage routines and I will cite the right greenhouse docs.';
+
+const formatMessageTime = (iso: string): string => {
+  const date = new Date(iso);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (date.toDateString() === now.toDateString()) return time;
+  if (date.toDateString() === yesterday.toDateString()) return `Yesterday · ${time}`;
+  return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
+};
 
 const AssistantPage = () => {
   const { profile } = useOutletContext<AssistantContext>();
@@ -263,14 +274,6 @@ const AssistantPage = () => {
     [greenhouse?.cropId, greenhouse?.plantType, greenhouse?.variety, threadId, storageKey]
   );
 
-  const handleNewChat = useCallback(() => {
-    if (isSending) return;
-    setMessages([]);
-    setThreadId(null);
-    saveThreadId(storageKey, null);
-    saveTranscript(storageKey, []);
-  }, [isSending, storageKey]);
-
   const handleSend = async () => {
     if (isSending) {
       return;
@@ -357,8 +360,8 @@ const AssistantPage = () => {
   const canSend = Boolean(input.trim()) && !isSending;
 
   return (
-    <div className="space-y-6 text-slate-200">
-      <div>
+    <div className="flex flex-col h-full text-slate-200">
+      <div className="shrink-0 mb-4">
         <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">Assistant</h1>
         <p className="text-sm text-slate-400">
           Chat with your greenhouse co-pilot for quick tips, routines, and sensor explanations.
@@ -366,42 +369,33 @@ const AssistantPage = () => {
       </div>
 
       {greenhouseError ? (
-        <Alert color="failure">
-          <span className="font-semibold">Failed to load greenhouse</span>
-          <div className="text-sm text-slate-100">{greenhouseError}</div>
-        </Alert>
+        <div className="shrink-0 mb-4">
+          <Alert color="failure">
+            <span className="font-semibold">Failed to load greenhouse</span>
+            <div className="text-sm text-slate-100">{greenhouseError}</div>
+          </Alert>
+        </div>
       ) : null}
 
-      <Card className="flex flex-col rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)] overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b border-[#1f2a3d] pb-3">
+      <Card className="flex flex-col flex-1 min-h-0 rounded-3xl border border-[#1f2a3d] bg-[#111c2d] text-slate-200 shadow-[0_24px_60px_rgba(8,20,38,0.35)] overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-[#1f2a3d] pb-3 shrink-0">
           <div>
             <h2 className="text-base font-semibold text-slate-100">Greenhouse Assistant</h2>
             <p className="text-xs text-slate-400">
               Answers grounded in your crop plan, docs, and latest telemetry.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              color="gray"
-              outline={true}
-              size="xs"
-              onClick={handleNewChat}
-              disabled={isSending || messages.length === 0}
-            >
-              New chat
-            </Button>
-            <Badge className="rounded-full border text-sm border-green-500 text-green-500">
-              Live
-            </Badge>
-          </div>
+          <Badge className="rounded-full border text-sm border-green-500 text-green-500">
+            Live
+          </Badge>
         </div>
 
-        <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4 pr-1">
+        <div ref={scrollRef} className="flex-1 min-h-0 space-y-3 overflow-y-auto py-4 px-1">
           {messages.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#1f2a3d] bg-[#0f1729] p-6 text-sm text-slate-400">
-              {greenhouseLoading
-                ? 'Loading your greenhouse context...'
-                : 'Ask about routines, schedules, or telemetry trends. I will cite the seed files powering each answer.'}
+            <div className="flex h-full items-center justify-center">
+              <p className="text-sm text-slate-500">
+                {greenhouseLoading ? 'Loading greenhouse context...' : 'Ask me anything about your greenhouse.'}
+              </p>
             </div>
           ) : (
             messages.map((message) => {
@@ -409,23 +403,27 @@ const AssistantPage = () => {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${
-                    isUser ? 'justify-end' : 'justify-start'
-                  } text-sm leading-relaxed`}
+                  className={`flex gap-2.5 text-sm leading-relaxed ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
+                  {!isUser && (
+                    <div className="h-7 w-7 rounded-full bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[10px] font-semibold text-emerald-300">AI</span>
+                    </div>
+                  )}
+
                   <div
-                    className={`max-w-full rounded-md border px-4 py-3 [overflow-wrap:anywhere] sm:max-w-[80%] ${
+                    className={`max-w-full [overflow-wrap:anywhere] sm:max-w-[78%] ${
                       isUser
-                        ? 'border-[#1f2a3d] bg-[#0f1729] text-slate-50 shadow-[0_16px_36px_rgba(8,20,38,0.35)] text-right'
-                        : 'border-[#22324a] bg-[#1a2740] text-slate-100'
+                        ? 'rounded-2xl rounded-br-sm bg-[#1d3a5c] px-4 py-3 text-slate-50'
+                        : 'rounded-2xl rounded-bl-sm bg-[#1a2740] px-4 py-3 text-slate-100'
                     }`}
                   >
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      {isUser ? 'You' : 'Assistant'}
-                    </p>
-                    <div className="mt-2 min-w-0 text-slate-100">
+                    <div className="min-w-0">
                       {message.role === 'assistant' && message.status === 'pending' ? (
-                        <span className="whitespace-pre-line">Thinking...</span>
+                        <div className="flex items-center gap-2 text-slate-300">
+                          <Spinner size="sm" />
+                          <span>Thinking...</span>
+                        </div>
                       ) : message.role === 'assistant' && message.status === 'error' ? (
                         <span className="whitespace-pre-line [overflow-wrap:anywhere]">
                           {message.errorMessage ?? 'Assistant failed to reply.'}
@@ -437,13 +435,6 @@ const AssistantPage = () => {
                       )}
                     </div>
 
-                    {message.role === 'assistant' && message.status === 'pending' ? (
-                      <div className="mt-2 flex items-center gap-2 text-xs text-slate-300">
-                        <Spinner size="sm" />
-                        <span>Generating answer…</span>
-                      </div>
-                    ) : null}
-
                     {message.role === 'assistant' && message.status === 'ready'
                       ? renderCitations(message.sources)
                       : null}
@@ -452,42 +443,33 @@ const AssistantPage = () => {
                     message.status === 'ready' &&
                     !message.sources.length &&
                     message.content.trim() !== SMALL_TALK_REPLY ? (
-                      <p className="mt-3 text-xs text-slate-300">
-                        I don’t have docs for this crop yet.
+                      <p className="mt-2 text-xs text-slate-400">
+                        I don't have docs for this crop yet.
                       </p>
                     ) : null}
 
-                    <span className="text-right text-xs text-gray-500 mt-3 block">
-                      {new Date(message.createdAt).toLocaleString()}
-                    </span>
-
                     {message.role === 'assistant' && message.status === 'error' ? (
-                      <div className="mt-3 flex items-center gap-3 text-xs text-slate-300">
-                        <Button
-                          size="xs"
-                          color="gray"
-                          outline={true}
+                      <div className="mt-2">
+                        <button
+                          className="text-xs text-emerald-300 underline underline-offset-2 hover:text-emerald-200 disabled:opacity-50"
                           onClick={() => handleRetry(message.id)}
                           disabled={isSending}
                         >
                           Retry
-                        </Button>
+                        </button>
                       </div>
                     ) : null}
 
                     {message.role === 'assistant' &&
                     message.retrieval &&
                     message.retrieval.length > 0 ? (
-                      <div className="mt-4 space-y-2 border-t border-[#22324a] pt-4">
-                        <Button
-                          color="gray"
-                          outline={true}
-                          size="xs"
-                          className="!border-none !bg-transparent !p-0 !text-xs !font-medium !text-emerald-200 !shadow-none !underline !underline-offset-4"
+                      <div className="mt-3 space-y-2 border-t border-[#22324a] pt-3">
+                        <button
+                          className="text-xs font-medium text-emerald-200 underline underline-offset-4 hover:text-emerald-100"
                           onClick={() => toggleRetrieval(message.id)}
                         >
                           {expandedRetrieval.has(message.id) ? 'Hide retrieval' : 'Show retrieval'}
-                        </Button>
+                        </button>
                         {expandedRetrieval.has(message.id) ? (
                           <div className="space-y-3 rounded-2xl border border-[#22324a] bg-[#0f1729] p-3 text-xs text-slate-200">
                             {message.retrieval.map((chunk) => (
@@ -505,6 +487,10 @@ const AssistantPage = () => {
                         ) : null}
                       </div>
                     ) : null}
+
+                    <span className={`text-xs text-slate-500 mt-2 block ${isUser ? 'text-right' : ''}`}>
+                      {formatMessageTime(message.createdAt)}
+                    </span>
                   </div>
                 </div>
               );
@@ -512,28 +498,33 @@ const AssistantPage = () => {
           )}
         </div>
 
-        <div className="mt-auto space-y-3 border-t border-[#1f2a3d] pt-4">
-          <Textarea
-            rows={3}
-            placeholder={
-              greenhouseLoading
-                ? 'Loading greenhouse context...'
-                : 'Describe what you need and I will cite the docs that apply'
-            }
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isSending || greenhouseLoading}
-          />
-          <Button
-            color="green"
-            outline={true}
-            disabled={!canSend}
-            onClick={handleSend}
-            className="w-full md:w-auto"
-          >
-            {isSending ? 'Sending…' : 'Send'}
-          </Button>
+        <div className="shrink-0 border-t border-[#1f2a3d] pt-4">
+          <div className="relative">
+            <Textarea
+              rows={3}
+              className="resize-none pb-10"
+              placeholder={
+                greenhouseLoading
+                  ? 'Loading greenhouse context...'
+                  : 'Ask about your greenhouse...'
+              }
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isSending || greenhouseLoading}
+            />
+            <button
+              className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white transition-colors hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={!canSend}
+              onClick={handleSend}
+              aria-label="Send"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 2L11 13" />
+                <path d="M22 2L15 22 11 13 2 9l20-7z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </Card>
 
