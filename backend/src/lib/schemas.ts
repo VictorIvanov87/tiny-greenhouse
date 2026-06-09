@@ -464,33 +464,58 @@ export const TelemetryIngestResponseSchema = okResponse(TelemetryIngestResult);
 
 // --- Control settings (UI source of truth + IoT Hub device twin desired) ---
 
-export const ControlSettings = z.object({
-  version: z.number().int().nonnegative(),
-  thresholds: z.object({
-    tempMinC: z.number().default(18),
-    tempMaxC: z.number(),
-    humidityMinPct: z.number().min(0).max(100).default(40),
-    humidityMaxPct: z.number().min(0).max(100),
-    soilMoisturePctMin: z.number().min(0).max(100),
-    soilMoisturePctMax: z.number().min(0).max(100),
-  }),
-  lights: z.object({
-    startHour: z.number().int().min(0).max(23),
-    endHour: z.number().int().min(0).max(23),
-  }),
-  fan: z.object({
-    periodicEverySec: z.number().int().nonnegative(),
-    periodicDurationSec: z.number().int().nonnegative(),
-    humidityOverridePct: z.number().min(0).max(100),
-  }),
-  pump: z.object({
-    triggerPct: z.number().min(0).max(100),
-    delayAfterMeasurementSec: z.number().int().nonnegative(),
-    pulseDurationSec: z.number().int().positive(),
-    settleWindowSec: z.number().int().nonnegative(),
-    maxPulsesPerDay: z.number().int().positive(),
-  }),
-});
+export const ControlSettings = z
+  .object({
+    version: z.number().int().nonnegative(),
+    thresholds: z
+      .object({
+        tempMinC: z.number().min(-10).max(60).default(18),
+        tempMaxC: z.number().min(-10).max(60),
+        humidityMinPct: z.number().min(0).max(100).default(40),
+        humidityMaxPct: z.number().min(0).max(100),
+        soilMoisturePctMin: z.number().min(0).max(100),
+        soilMoisturePctMax: z.number().min(0).max(100),
+      })
+      .superRefine((t, ctx) => {
+        if (t.tempMinC > t.tempMaxC) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'tempMinC must be ≤ tempMaxC',
+            path: ['tempMinC'],
+          });
+        }
+        if (t.humidityMinPct > t.humidityMaxPct) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'humidityMinPct must be ≤ humidityMaxPct',
+            path: ['humidityMinPct'],
+          });
+        }
+        if (t.soilMoisturePctMin > t.soilMoisturePctMax) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'soilMoisturePctMin must be ≤ soilMoisturePctMax',
+            path: ['soilMoisturePctMin'],
+          });
+        }
+      }),
+    lights: z.object({
+      startHour: z.number().int().min(0).max(23),
+      endHour: z.number().int().min(0).max(23),
+    }),
+    fan: z.object({
+      periodicEverySec: z.number().int().nonnegative(),
+      periodicDurationSec: z.number().int().nonnegative(),
+      humidityOverridePct: z.number().min(0).max(100),
+    }),
+    pump: z.object({
+      triggerPct: z.number().min(0).max(100),
+      delayAfterMeasurementSec: z.number().int().nonnegative(),
+      pulseDurationSec: z.number().int().positive(),
+      settleWindowSec: z.number().int().nonnegative(),
+      maxPulsesPerDay: z.number().int().positive(),
+    }),
+  });
 export type ControlSettingsType = z.infer<typeof ControlSettings>;
 export const ControlSettingsResponseSchema = okResponse(ControlSettings);
 

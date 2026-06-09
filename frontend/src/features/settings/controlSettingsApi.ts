@@ -40,12 +40,13 @@ export const getControlSettings = async (): Promise<ControlSettings> => {
 }
 
 export const putControlSettings = async (settings: ControlSettings): Promise<ControlSettings> => {
-  const { data } = await api.put<{ ok: boolean; data: ControlSettings }>(
-    '/control-settings',
-    settings,
-  )
+  const { data } = await api.put<{
+    ok: boolean
+    data: ControlSettings
+    error?: { code: string; message: string }
+  }>('/control-settings', settings)
   if (!data?.ok) {
-    throw new Error('Failed to save control settings')
+    throw new Error(data?.error?.message ?? 'Failed to save control settings')
   }
   return data.data
 }

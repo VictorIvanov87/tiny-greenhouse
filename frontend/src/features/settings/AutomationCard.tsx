@@ -11,6 +11,17 @@ const num = (v: string): number => {
   return Number.isFinite(n) ? n : 0
 }
 
+const validate = (d: ControlSettings): string[] => {
+  const errors: string[] = []
+  const t = d.thresholds
+  if (t.tempMinC < -10 || t.tempMinC > 60) errors.push('Min temperature must be between -10°C and 60°C.')
+  if (t.tempMaxC < -10 || t.tempMaxC > 60) errors.push('Max temperature must be between -10°C and 60°C.')
+  if (t.tempMinC > t.tempMaxC) errors.push('Min temperature must be ≤ max temperature.')
+  if (t.humidityMinPct > t.humidityMaxPct) errors.push('Min humidity must be ≤ max humidity.')
+  if (t.soilMoisturePctMin > t.soilMoisturePctMax) errors.push('Soil moisture min must be ≤ max.')
+  return errors
+}
+
 type FieldProps = {
   id: string
   label: string
@@ -101,6 +112,7 @@ export const AutomationCard = () => {
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(query.data)
   const saving = mutation.isPending
+  const validationErrors = validate(draft)
   const saveError =
     mutation.error instanceof Error ? mutation.error.message : mutation.error ? String(mutation.error) : null
 
@@ -127,6 +139,15 @@ export const AutomationCard = () => {
 
         {savedFlash && !dirty && (
           <Alert color="success">Settings saved and synced to device twin.</Alert>
+        )}
+        {validationErrors.length > 0 && (
+          <Alert color="warning">
+            <ul className="list-disc pl-4 space-y-0.5">
+              {validationErrors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          </Alert>
         )}
         {saveError && (
           <Alert color="failure">
@@ -304,7 +325,7 @@ export const AutomationCard = () => {
         </Section>
 
         <div className="flex flex-wrap gap-3 pt-2">
-          <Button color="green" outline={true} onClick={handleSave} disabled={saving || !dirty}>
+          <Button color="green" outline={true} onClick={handleSave} disabled={saving || !dirty || validationErrors.length > 0}>
             {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
           </Button>
           <Button color="gray" outline={true} onClick={handleReset} disabled={saving || !dirty}>
