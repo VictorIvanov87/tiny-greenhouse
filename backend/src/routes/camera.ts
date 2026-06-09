@@ -69,14 +69,15 @@ const cameraRoutes: FastifyPluginAsync = async (app) => {
 
       const capturedAt = new Date().toISOString();
       const dateSegment = capturedAt.slice(0, 10); // yyyy-mm-dd
+      const timeSegment = capturedAt.slice(0, 19).replace(/:/g, '-'); // yyyy-mm-ddTHH-MM-SS
       const safeId = sanitize(deviceId);
-      const blobPath = `camera/${safeId}/${dateSegment}.jpg`;
+      const blobPath = `camera/${safeId}/${dateSegment}/${timeSegment}.jpg`;
 
       // ── Mock mode: write to disk, return fabricated blob metadata ──
       if (STORAGE_MODE !== 'firestore') {
         try {
           await mkdir(UPLOADS_DIR, { recursive: true });
-          await writeFile(join(UPLOADS_DIR, `${safeId}_${dateSegment}.jpg`), body);
+          await writeFile(join(UPLOADS_DIR, `${safeId}_${timeSegment}.jpg`), body);
         } catch (err) {
           req.log.error(err, 'Failed to save camera upload to disk');
           return reply.status(500).send(
