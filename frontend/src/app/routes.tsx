@@ -1,18 +1,32 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom'
-import LoginPage from '../features/auth/LoginPage'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import { useUserProfile } from '../features/setup/hooks/useUserProfile'
 import { AppShell } from './AppShell'
-import DashboardPage from '../features/dashboard/DashboardPage'
-import NotificationsPage from '../features/notifications/NotificationsPage'
-import SensorDataPage from '../features/telemetry/SensorDataPage'
-import AlertsPage from '../features/alerts/AlertsPage'
-import SettingsPage from '../features/settings/SettingsPage'
-import AssistantPage from '../features/assistant/AssistantPage'
-import Logout from '../features/auth/Logout'
 import type { SetupProfile } from '../features/setup/state'
-import TimelapsePage from '../features/timelapse/TimelapsePage'
-import SetupWizard from '../features/setup/wizard/SetupWizard'
+
+const LoginPage = lazy(() => import('../features/auth/LoginPage'))
+const SetupWizard = lazy(() => import('../features/setup/wizard/SetupWizard'))
+const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage'))
+const NotificationsPage = lazy(() => import('../features/notifications/NotificationsPage'))
+const AlertsPage = lazy(() => import('../features/alerts/AlertsPage'))
+const TimelapsePage = lazy(() => import('../features/timelapse/TimelapsePage'))
+const SensorDataPage = lazy(() => import('../features/telemetry/SensorDataPage'))
+const SettingsPage = lazy(() => import('../features/settings/SettingsPage'))
+const AssistantPage = lazy(() => import('../features/assistant/AssistantPage'))
+const Logout = lazy(() => import('../features/auth/Logout'))
+
+const PageFallback = () => (
+  <div className="flex h-full items-center justify-center">
+    <span className="text-sm text-slate-400">Loading...</span>
+  </div>
+)
+
+const FullPageFallback = () => (
+  <div className="flex min-h-[100dvh] items-center justify-center">
+    <span className="text-sm text-slate-400">Loading...</span>
+  </div>
+)
 
 type ProtectedOutletContext = {
   profile: SetupProfile
@@ -42,7 +56,9 @@ const ProtectedRoute = () => {
 
   return (
     <AppShell profile={profile}>
-      <Outlet context={{ profile } satisfies ProtectedOutletContext} />
+      <Suspense fallback={<PageFallback />}>
+        <Outlet context={{ profile } satisfies ProtectedOutletContext} />
+      </Suspense>
     </AppShell>
   )
 }
@@ -50,11 +66,19 @@ const ProtectedRoute = () => {
 export const router = createBrowserRouter([
   {
     path: '/login',
-    element: <LoginPage />,
+    element: (
+      <Suspense fallback={<FullPageFallback />}>
+        <LoginPage />
+      </Suspense>
+    ),
   },
   {
     path: '/setup',
-    element: <SetupWizard />,
+    element: (
+      <Suspense fallback={<FullPageFallback />}>
+        <SetupWizard />
+      </Suspense>
+    ),
   },
   {
     element: <ProtectedRoute />,
