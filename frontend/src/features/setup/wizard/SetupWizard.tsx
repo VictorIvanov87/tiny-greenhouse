@@ -130,11 +130,10 @@ const WizardViewport = () => {
       quietHours: quietHoursPayload,
     };
 
-    const enabledRules = state.alarmRules.filter((r) => r.enabled);
     const notificationPrefsPayload: NotificationPrefs = {
       email: state.prefs.notifications.email,
       push: state.prefs.notifications.push,
-      rules: enabledRules,
+      rules: state.alarmRules,
     };
 
     const greenhousePayload: GreenhouseConfig = {
