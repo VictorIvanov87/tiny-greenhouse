@@ -70,7 +70,7 @@ const getBoundsForMetric = (
     case 'humidity':
       return bounds.humidity_pct ?? null;
     case 'lightLux':
-      return bounds.light_hours ?? null;
+      return null;
     default:
       return null;
   }
