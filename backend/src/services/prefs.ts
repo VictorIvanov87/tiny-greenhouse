@@ -28,6 +28,10 @@ const db = (): Firestore => {
 const HARDCODED_DEFAULTS: NotificationPrefsType = {
   email: true,
   push: false,
+  immediate: true,
+  digestDaily: false,
+  digestHour: 9,
+  quietHours: null,
   rules: [
     { id: 'default-soil', metric: 'soilMoisture', condition: 'below', value: 25, enabled: true },
     { id: 'default-temp', metric: 'temperature', condition: 'above', value: 32, enabled: true },

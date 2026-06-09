@@ -119,6 +119,16 @@ export const NotificationPrefs = z.object({
   email: z.boolean(),
   push: z.boolean(),
   rules: z.array(AlertRule),
+  immediate: z.boolean().default(true),
+  digestDaily: z.boolean().default(false),
+  digestHour: z.number().int().min(0).max(23).default(9),
+  quietHours: z
+    .object({
+      start: z.string().regex(/^\d{2}:\d{2}$/),
+      end: z.string().regex(/^\d{2}:\d{2}$/),
+    })
+    .nullable()
+    .default(null),
 });
 export type NotificationPrefsType = z.infer<typeof NotificationPrefs>;
 export const NotificationPrefsResponseSchema = okResponse(NotificationPrefs);

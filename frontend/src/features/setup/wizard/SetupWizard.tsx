@@ -134,6 +134,10 @@ const WizardViewport = () => {
       email: state.prefs.notifications.email,
       push: state.prefs.notifications.push,
       rules: state.alarmRules,
+      immediate: state.prefs.notifications.immediate,
+      digestDaily: state.prefs.notifications.digestDaily,
+      digestHour: state.prefs.digestHour,
+      quietHours: quietHoursPayload,
     };
 
     const greenhousePayload: GreenhouseConfig = {

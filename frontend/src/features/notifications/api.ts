@@ -15,6 +15,10 @@ export type NotificationPrefs = {
   email: boolean
   push: boolean
   rules: AlertRule[]
+  immediate: boolean
+  digestDaily: boolean
+  digestHour: number
+  quietHours: { start: string; end: string } | null
 }
 
 type SuccessEnvelope<T> = {

@@ -116,6 +116,26 @@ const getSensorValue = (
 };
 
 // ---------------------------------------------------------------------------
+// Quiet-hours helper
+// ---------------------------------------------------------------------------
+
+const isInQuietHours = (
+  quietHours: { start: string; end: string } | null,
+  now: Date,
+): boolean => {
+  if (!quietHours) return false;
+  const [startH = 0, startM = 0] = quietHours.start.split(':').map(Number);
+  const [endH = 0, endM = 0] = quietHours.end.split(':').map(Number);
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const startMin = startH * 60 + startM;
+  const endMin = endH * 60 + endM;
+  // Handle window that spans midnight (e.g. 22:00–07:00)
+  return startMin <= endMin
+    ? nowMin >= startMin && nowMin < endMin
+    : nowMin >= startMin || nowMin < endMin;
+};
+
+// ---------------------------------------------------------------------------
 // Main recompute
 // ---------------------------------------------------------------------------
 
@@ -123,6 +143,7 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
   const prefs = await getUserPrefs(uid);
   const latest = await getLatestTelemetry(uid);
   const now = timestamp;
+  const quietNow = isInQuietHours(prefs.quietHours ?? null, now);
 
   if (!latest) {
     upsertAlert(uid, {
@@ -148,15 +169,18 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
   if (!inWarmup) {
     if (minutesSince >= STALE_WARN_MINUTES) {
       const severity: AlertSeverity = minutesSince >= STALE_CRITICAL_MINUTES ? 'critical' : 'warn';
-      upsertAlert(uid, {
-        type: 'SENSOR_STALE',
-        severity,
-        message:
-          severity === 'critical'
-            ? 'Sensor data is stale for over an hour'
-            : 'Sensor data is stale',
-        startedAt: latest.timestamp,
-      });
+      // Critical staleness always fires; warn-level staleness is suppressed during quiet hours
+      if (severity === 'critical' || !quietNow) {
+        upsertAlert(uid, {
+          type: 'SENSOR_STALE',
+          severity,
+          message:
+            severity === 'critical'
+              ? 'Sensor data is stale for over an hour'
+              : 'Sensor data is stale',
+          startedAt: latest.timestamp,
+        });
+      }
     } else {
       resolveAlert(uid, 'SENSOR_STALE');
     }
@@ -223,15 +247,18 @@ export const recomputeAlerts = async (uid: string, timestamp = new Date()) => {
 
     if (isTriggered) {
       activeRuleTypes.add(alertType);
-      const direction = rule.condition === 'above' ? 'high' : 'low';
-      upsertAlert(uid, {
-        type: alertType,
-        severity: 'warn',
-        message: `${label} ${direction}: ${sensorValue}${unit} ${rule.condition === 'above' ? '>' : '<'} ${rule.value}${unit}`,
-        startedAt: latest.timestamp,
-        value: sensorValue,
-        threshold: rule.value,
-      });
+      // Rule-based alerts are always severity 'warn'; suppress during quiet hours
+      if (!quietNow) {
+        const direction = rule.condition === 'above' ? 'high' : 'low';
+        upsertAlert(uid, {
+          type: alertType,
+          severity: 'warn',
+          message: `${label} ${direction}: ${sensorValue}${unit} ${rule.condition === 'above' ? '>' : '<'} ${rule.value}${unit}`,
+          startedAt: latest.timestamp,
+          value: sensorValue,
+          threshold: rule.value,
+        });
+      }
     } else if (isResolved) {
       resolveAlert(uid, alertType);
     }
