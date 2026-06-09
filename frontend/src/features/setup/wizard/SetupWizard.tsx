@@ -94,6 +94,8 @@ const WizardViewport = () => {
     setError(null);
 
     const defaults = state.selection.defaults;
+    const growthStage =
+      state.selection.stage ?? defaults.defaultStage ?? defaults.stages[0]?.id ?? 'germination';
     const quietHoursPayload =
       state.prefs.quietHours?.start && state.prefs.quietHours?.end ? state.prefs.quietHours : null;
     const lightHours = state.prefs.lightHours ?? 12;
@@ -142,8 +144,7 @@ const WizardViewport = () => {
       plantType: state.selection.variety,
       cropId: state.selection.cropId,
       variety: state.selection.variety,
-      growthStage:
-        state.selection.stage ?? defaults.defaultStage ?? defaults.stages[0]?.id ?? 'germination',
+      growthStage,
       language: defaults.lang === 'bg' ? 'bg' : 'en',
       timelapse: {
         enabled: true,
@@ -162,6 +163,7 @@ const WizardViewport = () => {
         language: greenhousePayload.language,
         notifications: state.prefs.notifications,
         greenhouseId: updated.id,
+        growthStage,
         light: preferencesPayload.light,
         climate: preferencesPayload.climate,
         soil: preferencesPayload.soil,

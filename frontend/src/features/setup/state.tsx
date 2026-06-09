@@ -28,6 +28,7 @@ export type SetupProfile = {
   cropId?: string;
   variety?: string;
   plantType?: string;
+  growthStage?: string;
   notifications?: NotificationSettings;
   currentGreenhouseId?: string;
 };

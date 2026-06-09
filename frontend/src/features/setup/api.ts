@@ -91,6 +91,7 @@ type SettingsPayload = {
   language: LanguageOption;
   notifications: NotificationChannels;
   greenhouseId: string;
+  growthStage: string;
   light: {
     hours: number;
     startHour: number;
@@ -118,6 +119,7 @@ export const saveUserSettings = async (uid: string, payload: SettingsPayload) =>
         cropId: payload.cropId,
         variety: payload.variety,
         plantType: payload.variety,
+        growthStage: payload.growthStage,
         notifications: payload.notifications,
         currentGreenhouseId: payload.greenhouseId,
         updatedAt: serverTimestamp(),
@@ -130,6 +132,7 @@ export const saveUserSettings = async (uid: string, payload: SettingsPayload) =>
         cropId: payload.cropId,
         variety: payload.variety,
         language: payload.language,
+        growthStage: payload.growthStage,
         notifications: payload.notifications,
         light: payload.light,
         climate: payload.climate,
