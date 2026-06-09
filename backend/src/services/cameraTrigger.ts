@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { updateDeviceTwinDesired } from '../lib/iothub';
 import { listDevicesForUser } from './devices';
-import { registerPending, type CaptureKind } from './cameraTestStore';
+import { registerPending, storeImage, type CaptureKind } from './cameraTestStore';
+import { MOCK_CAPTURE_SVG } from '../routes/mockImages';
+
+const STORAGE_MODE = process.env.STORAGE_MODE ?? 'mock';
+const MOCK_CAPTURE_DELAY_MS = 2_000;
 
 const LIGHTS_OFF_DURATION_SEC = 25;     // Override window on the main controller.
 const LIGHTS_OFF_TO_CAPTURE_DELAY_MS = 10_000;
@@ -86,6 +90,17 @@ export const triggerCapture = async (
       expiresAtMs,
     },
   });
+
+  // In mock mode there is no physical camera, so simulate the capture response
+  // after a short delay so the UI can exercise the full pending→ready flow.
+  if (STORAGE_MODE !== 'firestore' && opts.kind === 'test_capture') {
+    const delayMs = lightsOffApplied
+      ? LIGHTS_OFF_TO_CAPTURE_DELAY_MS + MOCK_CAPTURE_DELAY_MS
+      : MOCK_CAPTURE_DELAY_MS;
+    setTimeout(() => {
+      storeImage(requestId, Buffer.from(MOCK_CAPTURE_SVG), 'image/svg+xml');
+    }, delayMs);
+  }
 
   return {
     requestId,

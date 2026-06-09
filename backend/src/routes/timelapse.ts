@@ -34,7 +34,7 @@ const timelapseRoutes: FastifyPluginAsync = async (app) => {
         return ok({ items, total: items.length });
       }
 
-      // Mock mode: read from JSON, filter by from/to, add synthetic id
+      // Mock mode: read from JSON, filter by from/to, build absolute URLs
       const raw = TimelapseFrame.omit({ id: true }).array().parse(
         await readMock<unknown>('timelapse.json'),
       );
@@ -47,7 +47,12 @@ const timelapseRoutes: FastifyPluginAsync = async (app) => {
         return t >= fromMs && t <= toMs;
       });
 
-      const items = filtered.map((f, i) => ({ id: String(i), ...f }));
+      const backendBase = `${req.protocol}://${req.headers.host}`;
+      const items = filtered.map((f, i) => ({
+        id: String(i),
+        timestamp: f.timestamp,
+        url: `${backendBase}/api/mock/timelapse-frame?n=${i}&ts=${encodeURIComponent(f.timestamp)}`,
+      }));
       return ok({ items, total: items.length });
     },
   );

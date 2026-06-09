@@ -193,7 +193,7 @@ const TestCaptureSection = ({ cams }: { cams: DeviceRecord[] }) => {
     }
   }
 
-  const captureInFlight = !!requestId && status !== 'ready' && status !== 'expired'
+  const captureInFlight = !!requestId && status !== 'ready' && status !== 'expired' && !statusQuery.isError
 
   return (
     <div className="space-y-3 rounded-2xl border border-[#1f2a3d] bg-[#0b1220] p-4">
@@ -261,7 +261,7 @@ const TestCaptureSection = ({ cams }: { cams: DeviceRecord[] }) => {
               </span>
             </div>
           )}
-          {status === 'expired' && (
+          {(status === 'expired' || statusQuery.isError) && (
             <Alert color="warning">
               <div className="space-y-2">
                 <div>

@@ -43,6 +43,7 @@ export const useTestCaptureStatusQuery = (requestId: string | null) =>
     },
     enabled: !!requestId,
     refetchInterval: (q) => {
+      if (q.state.status === 'error') return false
       const s = q.state.data?.status
       return s === 'ready' || s === 'expired' ? false : 2000
     },
