@@ -27,6 +27,7 @@ import controlSettingsRoutes from './routes/controlSettings';
 import cameraSettingsRoutes from './routes/cameraSettings';
 import cameraTestRoutes from './routes/cameraTest';
 import mockImagesRoutes from './routes/mockImages';
+import setupRoutes from './routes/setup';
 import { startSweeper, stopSweeper } from './services/cameraTestStore';
 import {
   startTimelapseScheduler,
@@ -83,6 +84,7 @@ export function buildServer() {
   if ((process.env.STORAGE_MODE ?? 'mock') !== 'firestore') {
     app.register(mockImagesRoutes);
   }
+  app.register(setupRoutes);
   app.register(ragRoutes);
   app.register(assistRoutes);
 

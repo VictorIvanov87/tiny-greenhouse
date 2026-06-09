@@ -494,6 +494,16 @@ export const ControlSettings = z.object({
 export type ControlSettingsType = z.infer<typeof ControlSettings>;
 export const ControlSettingsResponseSchema = okResponse(ControlSettings);
 
+// --- Setup completion (POST /api/setup/complete) ---
+
+export const SetupCompleteBody = z
+  .object({
+    greenhouse: GreenhouseConfig,
+    notifications: NotificationPrefs,
+  })
+  .strict();
+export type SetupCompleteBody = z.infer<typeof SetupCompleteBody>;
+
 export const CameraUploadResultSchema = z.object({
   deviceId: z.string(),
   uptimeMs: z.number(),

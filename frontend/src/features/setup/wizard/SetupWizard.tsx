@@ -17,7 +17,7 @@ import StepAlarms from './steps/StepAlarms';
 import StepFinish from './steps/StepFinish';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { saveUserSettings, updateGreenhouse, updateNotificationPrefs } from '../api';
+import { completeSetup, saveUserSettings } from '../api';
 import type { GreenhouseConfig } from '../../greenhouse/types';
 import type { NotificationPrefs } from '../../notifications/api';
 import { useDocumentTitle } from '../../../shared/hooks/useDocumentTitle';
@@ -54,7 +54,6 @@ const WizardViewport = () => {
   const step = state.step ?? 0;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notificationWarning, setNotificationWarning] = useState(false);
 
   const canProceed = isStepValid(state, step as WizardStep);
   const isWelcome = step === 0;
@@ -157,15 +156,16 @@ const WizardViewport = () => {
     };
 
     try {
-      const updated = await updateGreenhouse(greenhousePayload);
-      const notificationsSaved = await updateNotificationPrefs(notificationPrefsPayload);
-      setNotificationWarning(!notificationsSaved);
+      const saved = await completeSetup({
+        greenhouse: greenhousePayload,
+        notifications: notificationPrefsPayload,
+      });
       await saveUserSettings(user.uid, {
         cropId: state.selection.cropId,
         variety: state.selection.variety,
         language: greenhousePayload.language,
         notifications: state.prefs.notifications,
-        greenhouseId: updated.id,
+        greenhouseId: saved.id,
         growthStage,
         light: preferencesPayload.light,
         climate: preferencesPayload.climate,
@@ -217,12 +217,6 @@ const WizardViewport = () => {
             <div className="rounded-3xl border border-[#1f2a3d] bg-[#111c2d] p-6 shadow-[0_24px_60px_rgba(8,20,38,0.35)] sm:p-8">
               <div className="space-y-6">
                 {error ? <Alert color="failure">{error}</Alert> : null}
-                {notificationWarning ? (
-                  <Alert color="warning">
-                    Notifications not connected — preferences saved locally. You can retry later from
-                    Settings.
-                  </Alert>
-                ) : null}
                 <StepContent step={step as WizardStep} data={state} onChange={setState} />
                 <footer className="flex flex-col gap-4 border-t border-[#1f2a3d] pt-6 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-sm text-slate-400">{stepLabel}</div>

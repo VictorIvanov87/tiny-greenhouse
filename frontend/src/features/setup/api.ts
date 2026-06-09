@@ -43,21 +43,12 @@ export const getCropDefaults = async (cropId: string, variety: string): Promise<
   return ensureOk(data);
 };
 
-export const updateGreenhouse = async (
-  payload: GreenhouseConfig,
-): Promise<GreenhouseConfig> => {
-  const { data } = await api.put<Envelope<GreenhouseConfig>>('/greenhouses/current', payload);
+export const completeSetup = async (payload: {
+  greenhouse: GreenhouseConfig;
+  notifications: NotificationPrefs;
+}): Promise<GreenhouseConfig> => {
+  const { data } = await api.post<Envelope<GreenhouseConfig>>('/setup/complete', payload);
   return ensureOk(data);
-};
-
-export const updateNotificationPrefs = async (payload: NotificationPrefs) => {
-  try {
-    await api.put('/notifications', payload);
-    return true;
-  } catch (error) {
-    console.warn('Failed to persist notification prefs', error);
-    return false;
-  }
 };
 
 export const getUserProfile = async (uid: string): Promise<SetupProfile | null> => {
