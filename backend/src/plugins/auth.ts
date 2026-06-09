@@ -3,8 +3,38 @@ import fp from 'fastify-plugin';
 import { ensureFirebase } from '../lib/firebase';
 import { errorBody } from '../lib/respond';
 
+const VALID_AUTH_MODES = ['mock', 'firebase'] as const;
+type AuthMode = (typeof VALID_AUTH_MODES)[number];
+
+function resolveAuthMode(): AuthMode {
+  const raw = process.env.AUTH_MODE?.toLowerCase();
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (!raw) {
+    if (isProduction) {
+      throw new Error(
+        'AUTH_MODE is not set. Production requires AUTH_MODE=firebase. ' +
+          'Set AUTH_MODE=mock only for local development.',
+      );
+    }
+    return 'mock';
+  }
+
+  if (!VALID_AUTH_MODES.includes(raw as AuthMode)) {
+    throw new Error(
+      `AUTH_MODE="${raw}" is not a valid auth mode. Allowed values: ${VALID_AUTH_MODES.join(', ')}.`,
+    );
+  }
+
+  if (raw === 'mock' && isProduction) {
+    throw new Error('AUTH_MODE=mock is not allowed in production. Set AUTH_MODE=firebase.');
+  }
+
+  return raw as AuthMode;
+}
+
 const authPlugin: FastifyPluginAsync = async (app) => {
-  const mode = (process.env.AUTH_MODE ?? 'mock').toLowerCase();
+  const mode = resolveAuthMode();
 
   async function mockAuth(req: FastifyRequest) {
     const headerUid = req.headers['x-user-id'];
