@@ -14,7 +14,6 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return
           if (id.includes('/firebase/')) return 'vendor-firebase'
-          if (id.includes('/flowbite')) return 'vendor-flowbite'
           if (
             id.includes('/react-dom/') ||
             id.includes('/react-router') ||
