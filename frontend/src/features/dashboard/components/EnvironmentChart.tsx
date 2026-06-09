@@ -97,7 +97,7 @@ export const EnvironmentChart = ({ thresholds }: EnvironmentChartProps) => {
     const temp = bucketByMinute(samples, (s) => s.temperature)
     const humidity = bucketByMinute(samples, (s) => s.humidity)
     const soil = bucketByMinute(samples, (s) => s.soilMoisture)
-    const light = bucketByMinute(samples, (s) => s.lightLux ?? 0)
+    const light = bucketByMinute(samples, (s) => s.lightLux)
     return { temp, humidity, soil, light }
   }, [samples])
 
