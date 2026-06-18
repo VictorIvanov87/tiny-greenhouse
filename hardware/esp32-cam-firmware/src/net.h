@@ -7,7 +7,6 @@
 
 extern WiFiClientSecure wifiClient;
 extern PubSubClient mqttClient;
-extern bool ntpSynced;
 extern const char* DEVICE_ID;
 
 void connectWifi();

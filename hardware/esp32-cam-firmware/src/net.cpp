@@ -8,7 +8,6 @@
 
 WiFiClientSecure wifiClient;
 PubSubClient mqttClient(wifiClient);
-bool ntpSynced = false;
 
 const char* DEVICE_ID = IOT_HUB_DEVICE_ID;
 
@@ -71,15 +70,15 @@ void initTime() {
     Serial.print(".");
   }
   Serial.println();
-  ntpSynced = true;
   time_t now = time(nullptr);
   Serial.print("Local time: ");
   Serial.print(ctime(&now));
 }
 
 uint64_t nowEpochMs() {
-  if (!ntpSynced) return 0;
   time_t now = time(nullptr);
+  // Treat anything before 2023-11-01 as "not synced" — catches the default
+  // epoch (0) and any plausible factory-reset clock value.
   if (now < 1700000000) return 0;
   return (uint64_t)now * 1000ULL;
 }
