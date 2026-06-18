@@ -17,4 +17,5 @@ uint64_t nowEpochMs();
 
 void connectMqtt();
 void ensureMqttConnected();
+void maybeResyncTwin();
 void mqttCallback(char* topic, byte* payload, unsigned int length);

@@ -23,6 +23,14 @@ static const char* TWIN_TOPIC_GET = "$iothub/twin/GET/?$rid=1";
 static const char* TWIN_TOPIC_RES_SUB = "$iothub/twin/res/#";
 static const char* TWIN_TOPIC_PATCH_SUB = "$iothub/twin/PATCH/properties/desired/#";
 
+// Loop-driven reconnect cadence. Non-blocking: at most one attempt per interval
+// so the safety control loop keeps running while the broker is unreachable.
+static const unsigned long MQTT_RECONNECT_INTERVAL_MS = 3000;
+// Re-request the full twin periodically so a missed desired-property PATCH
+// (manual pump/fan/light test pushed while briefly disconnected) is still
+// picked up promptly rather than waiting for the next 5-min telemetry cycle.
+static const unsigned long TWIN_RESYNC_INTERVAL_MS = 20000;
+
 // ---------------------------------------------------------------------------
 // Diagnostics
 // ---------------------------------------------------------------------------
@@ -97,6 +105,10 @@ void connectWifi() {
   Serial.println(WIFI_SSID);
 
   WiFi.mode(WIFI_STA);
+  // Recover from Wi-Fi drops in the background so the loop never has to block in
+  // connectWifi() (which would stall the safety control loop) just to get MQTT
+  // back. The 5-min telemetry path still calls ensureWifiConnected() as a backstop.
+  WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   unsigned long startMs = millis();
@@ -208,53 +220,94 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 // MQTT
 // ---------------------------------------------------------------------------
 
+// Single connection attempt. On success: subscribe to twin responses + future
+// PATCHes, request the full twin (so we apply the latest settings/overrides on
+// every connect), and publish an online status. Returns the connection result.
+static bool mqttConnectAttempt() {
+  esp_task_wdt_reset();
+  Serial.print("Connecting to IoT Hub MQTT...");
+
+  if (mqttClient.connect(DEVICE_ID, IOT_HUB_MQTT_USERNAME, IOT_HUB_MQTT_PASSWORD)) {
+    Serial.println(" connected");
+
+    mqttClient.subscribe(TWIN_TOPIC_RES_SUB);
+    mqttClient.subscribe(TWIN_TOPIC_PATCH_SUB);
+    mqttClient.publish(TWIN_TOPIC_GET, "");
+
+    String status = "{\"status\":\"online\",\"uptime_ms\":";
+    status += String(millis());
+    status += ",\"free_heap\":";
+    status += String(ESP.getFreeHeap());
+    status += ",\"bme280_healthy\":";
+    status += bme280Healthy ? "true" : "false";
+    status += ",\"bh1750_healthy\":";
+    status += bh1750Healthy ? "true" : "false";
+    status += ",\"ads1115_ok\":";
+    status += adsOk ? "true" : "false";
+    status += "}";
+    mqttClient.publish(STATUS_TOPIC, status.c_str());
+    return true;
+  }
+
+  int state = mqttClient.state();
+  Serial.print(" failed, rc=");
+  Serial.print(state);
+  Serial.print(" (");
+  Serial.print(mqttStateName(state));
+  Serial.print(")");
+  Serial.println();
+  printTlsLastError();
+  printConnectionDiagnostics();
+  return false;
+}
+
+// Blocking connect used once at boot — wait for the first connection before the
+// watchdog is armed so a slow first DHCP/NTP/TLS bring-up isn't punished.
 void connectMqtt() {
   mqttClient.setServer(IOT_HUB_HOST, 8883);
 
   while (!mqttClient.connected()) {
     esp_task_wdt_reset();
-    Serial.print("Connecting to IoT Hub MQTT...");
-
-    if (mqttClient.connect(DEVICE_ID, IOT_HUB_MQTT_USERNAME, IOT_HUB_MQTT_PASSWORD)) {
-      Serial.println(" connected");
-
-      // Twin: subscribe to responses + future PATCHes, then request the
-      // current full twin so we apply the latest settings on every connect.
-      mqttClient.subscribe(TWIN_TOPIC_RES_SUB);
-      mqttClient.subscribe(TWIN_TOPIC_PATCH_SUB);
-      mqttClient.publish(TWIN_TOPIC_GET, "");
-
-      String status = "{\"status\":\"online\",\"uptime_ms\":";
-      status += String(millis());
-      status += ",\"free_heap\":";
-      status += String(ESP.getFreeHeap());
-      status += ",\"bme280_healthy\":";
-      status += bme280Healthy ? "true" : "false";
-      status += ",\"bh1750_healthy\":";
-      status += bh1750Healthy ? "true" : "false";
-      status += ",\"ads1115_ok\":";
-      status += adsOk ? "true" : "false";
-      status += "}";
-      mqttClient.publish(STATUS_TOPIC, status.c_str());
-    } else {
-      int state = mqttClient.state();
-      Serial.print(" failed, rc=");
-      Serial.print(state);
-      Serial.print(" (");
-      Serial.print(mqttStateName(state));
-      Serial.print(")");
-      Serial.println();
-      printTlsLastError();
-      printConnectionDiagnostics();
-      Serial.println(", retrying in 5s...");
-      delay(5000);
-    }
+    if (mqttConnectAttempt()) break;
+    Serial.println("Retrying in 5s...");
+    delay(5000);
   }
 }
 
+// Non-blocking reconnect for the main loop. Tries at most once per
+// MQTT_RECONNECT_INTERVAL_MS and returns immediately either way, so the safety
+// control loop (evalPump/evalFan/evalLights + wall-clock override expiry) keeps
+// running even while the broker is unreachable.
+//
+// Previously the loop never called this — MQTT was only reconnected inside
+// publishTelemetry(), i.e. once every READ_INTERVAL_MS (5 min). A session that
+// dropped after the first command left the device deaf to twin commands
+// (manual pump/fan/light tests) until the next telemetry cycle or a reboot,
+// which is why a test "worked only the first time" after a reboot.
 void ensureMqttConnected() {
   if (mqttClient.connected()) return;
 
-  Serial.println("MQTT disconnected, reconnecting...");
-  connectMqtt();
+  static unsigned long lastAttemptMs = 0;
+  unsigned long nowMs = millis();
+  if (lastAttemptMs != 0 && (nowMs - lastAttemptMs) < MQTT_RECONNECT_INTERVAL_MS) return;
+  lastAttemptMs = nowMs;
+
+  Serial.println("MQTT disconnected — attempting reconnect...");
+  mqttConnectAttempt();
+}
+
+// Periodically re-request the full twin as a safety net against a missed
+// desired-property PATCH. applySettings() is idempotent (missing fields keep
+// current values; overrides re-evaluate their own wall-clock expiry), so
+// re-applying the current desired state is harmless.
+void maybeResyncTwin() {
+  if (!mqttClient.connected()) return;
+
+  static unsigned long lastResyncMs = 0;
+  unsigned long nowMs = millis();
+  if (lastResyncMs == 0) { lastResyncMs = nowMs; return; }  // skip first tick; connect already GET'd
+  if ((nowMs - lastResyncMs) < TWIN_RESYNC_INTERVAL_MS) return;
+  lastResyncMs = nowMs;
+
+  mqttClient.publish(TWIN_TOPIC_GET, "");
 }

@@ -24,6 +24,7 @@ uint64_t nowEpochMs();
 
 void connectMqtt();
 void ensureMqttConnected();
+void maybeResyncTwin();
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 
 // Publish the firmware's current interpretation of a device override to the

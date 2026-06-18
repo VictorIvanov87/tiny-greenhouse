@@ -22,6 +22,14 @@ void setup() {
 
   // TLS: skip cert verification (personal project).
   wifiClient.setInsecure();
+  // Capturing + uploading a full-resolution JPEG blocks the loop (and therefore
+  // mqttClient.loop()) for several seconds. With the 15s PubSubClient default,
+  // IoT Hub would drop the MQTT session mid-upload and the cam would stop
+  // receiving capture commands until a reboot. A long keepalive lets a single
+  // blocking upload finish without tripping it.
+  mqttClient.setKeepAlive(120);
+  // Bound a stalled TLS handshake so a wedged reconnect can't hang capture forever.
+  wifiClient.setHandshakeTimeout(15);
   mqttClient.setBufferSize(2048);
   mqttClient.setCallback(mqttCallback);
 
@@ -32,6 +40,7 @@ void loop() {
   ensureWifiConnected();
   ensureMqttConnected();
   mqttClient.loop();
+  maybeResyncTwin();
   runQueuedCommand();
   delay(50);
 }

@@ -51,6 +51,9 @@ void setup() {
 
   // TLS: skip certificate verification (personal project).
   wifiClient.setInsecure();
+  // Bound a stalled TLS handshake so a failed loop-driven reconnect attempt
+  // can't starve the safety control loop for long.
+  wifiClient.setHandshakeTimeout(10);
   mqttClient.setBufferSize(2048);
   mqttClient.setCallback(mqttCallback);
 
@@ -71,7 +74,12 @@ void setup() {
 void loop() {
   esp_task_wdt_reset();
 
+  // Keep the command channel alive every iteration (non-blocking). Without this
+  // MQTT was only reconnected during the 5-min telemetry cycle, so a dropped
+  // session left manual pump/fan/light tests unreachable until a reboot.
+  ensureMqttConnected();
   mqttClient.loop();
+  maybeResyncTwin();
 
   // NTP recovery: initTime() gives up after 15s at boot, but the LwIP SNTP
   // client keeps polling. Promote ntpSynced as soon as time() becomes sane,

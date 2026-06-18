@@ -16,6 +16,11 @@ static const char* TWIN_TOPIC_GET = "$iothub/twin/GET/?$rid=1";
 static const char* TWIN_TOPIC_RES_SUB = "$iothub/twin/res/#";
 static const char* TWIN_TOPIC_PATCH_SUB = "$iothub/twin/PATCH/properties/desired/#";
 
+// How often to re-request the full twin as a safety net against a missed
+// desired-property PATCH. Must be well under the backend command validity
+// (COMMAND_VALIDITY_MS = 60s) so a capture command is still picked up.
+static const unsigned long TWIN_RESYNC_INTERVAL_MS = 20000;
+
 // ---------------------------------------------------------------------------
 // Wi-Fi
 // ---------------------------------------------------------------------------
@@ -137,4 +142,22 @@ void ensureMqttConnected() {
   if (mqttClient.connected()) return;
   Serial.println("MQTT disconnected, reconnecting...");
   connectMqtt();
+}
+
+// Periodically re-request the full twin. The desired-property PATCH push is the
+// primary delivery path, but if a patch is ever missed (brief disconnect, a
+// blocking upload that stalled the loop past a keepalive), this pulls the
+// current `command` so the capture still happens within its validity window.
+// queueCommandFromTwin() dedupes via lastExecutedRequestId, so re-applying an
+// already-executed command is a no-op.
+void maybeResyncTwin() {
+  if (!mqttClient.connected()) return;
+
+  static unsigned long lastResyncMs = 0;
+  unsigned long nowMs = millis();
+  if (lastResyncMs == 0) { lastResyncMs = nowMs; return; }  // skip the first tick; connect already GET'd
+  if ((nowMs - lastResyncMs) < TWIN_RESYNC_INTERVAL_MS) return;
+  lastResyncMs = nowMs;
+
+  mqttClient.publish(TWIN_TOPIC_GET, "");
 }
