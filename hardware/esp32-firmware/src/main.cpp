@@ -46,7 +46,7 @@ void setup() {
 
   updateSensorErrorFlag();
 
-  connectWifi();
+  bringUpWifi();
   initTime();
 
   // TLS: skip certificate verification (personal project).
@@ -80,6 +80,7 @@ void loop() {
   ensureMqttConnected();
   mqttClient.loop();
   maybeResyncTwin();
+  maybeWifiReboot();
 
   // NTP recovery: initTime() gives up after 15s at boot, but the LwIP SNTP
   // client keeps polling. Promote ntpSynced as soon as time() becomes sane,

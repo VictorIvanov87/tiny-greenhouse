@@ -519,6 +519,33 @@ export const ControlSettings = z
 export type ControlSettingsType = z.infer<typeof ControlSettings>;
 export const ControlSettingsResponseSchema = okResponse(ControlSettings);
 
+// --- Wi-Fi settings (UI source of truth + IoT Hub device twin desired) ---
+// Delivered to both boards via the twin `desired.wifi` object. The firmware
+// trials the new credentials on reboot and reverts to the last-known-good
+// network if they fail. The password is write-only: stored + pushed to the
+// twin, but never returned to the browser (see WiFiSettingsPublic).
+
+// Stored / twin representation. ssid may be '' before the user ever configures
+// Wi-Fi (devices then run on their compiled secrets.h default).
+export const WiFiSettings = z.object({
+  version: z.number().int().nonnegative(),
+  ssid: z.string().max(32),
+  password: z.string().max(63), // may be empty (open network)
+});
+export type WiFiSettingsType = z.infer<typeof WiFiSettings>;
+
+// GET response — never includes the password.
+export const WiFiSettingsPublic = WiFiSettings.omit({ password: true });
+export type WiFiSettingsPublicType = z.infer<typeof WiFiSettingsPublic>;
+export const WiFiSettingsResponseSchema = okResponse(WiFiSettingsPublic);
+
+// PUT body — a real SSID is required; version is server-assigned.
+export const WiFiSettingsInput = z.object({
+  ssid: z.string().min(1).max(32),
+  password: z.string().max(63),
+});
+export type WiFiSettingsInputType = z.infer<typeof WiFiSettingsInput>;
+
 // --- Setup completion (POST /api/setup/complete) ---
 
 export const SetupCompleteBody = z

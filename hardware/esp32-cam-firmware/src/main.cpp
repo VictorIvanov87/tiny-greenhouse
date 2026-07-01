@@ -17,7 +17,7 @@ void setup() {
   }
   Serial.println("Camera init OK");
 
-  connectWifi();
+  bringUpWifi();
   initTime();
 
   // TLS: skip cert verification (personal project).
@@ -41,6 +41,7 @@ void loop() {
   ensureMqttConnected();
   mqttClient.loop();
   maybeResyncTwin();
+  maybeWifiReboot();
   runQueuedCommand();
   delay(50);
 }

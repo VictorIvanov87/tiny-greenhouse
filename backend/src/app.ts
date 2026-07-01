@@ -25,6 +25,7 @@ import devicesRoutes from './routes/devices';
 import deviceTestRoutes from './routes/deviceTest';
 import controlSettingsRoutes from './routes/controlSettings';
 import cameraSettingsRoutes from './routes/cameraSettings';
+import wifiSettingsRoutes from './routes/wifiSettings';
 import cameraTestRoutes from './routes/cameraTest';
 import mockImagesRoutes from './routes/mockImages';
 import setupRoutes from './routes/setup';
@@ -80,6 +81,7 @@ export function buildServer() {
   app.register(deviceTestRoutes);
   app.register(controlSettingsRoutes);
   app.register(cameraSettingsRoutes);
+  app.register(wifiSettingsRoutes);
   app.register(cameraTestRoutes);
   if ((process.env.STORAGE_MODE ?? 'mock') !== 'firestore') {
     app.register(mockImagesRoutes);

@@ -7,6 +7,7 @@
 #include "control.h"
 #include "secrets.h"
 #include "sensors.h"
+#include "wifi_store.h"
 
 WiFiClientSecure wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -100,16 +101,28 @@ void printConnectionDiagnostics() {
 // Wi-Fi
 // ---------------------------------------------------------------------------
 
-void connectWifi() {
+// Current Wi-Fi provisioning state, published to the twin reported properties:
+//   "ok"       — running on the applied credentials (normal)
+//   "reverted" — last trial failed; back on the previous known-good network
+//   "applying" — a new credential set is being trialed (set just before reboot)
+static const char* wifiStatus = "ok";
+
+// Deferred reboot so the "applying" reported property can flush over MQTT first.
+static bool wifiRebootPending = false;
+static unsigned long wifiRebootAtMs = 0;
+static const unsigned long WIFI_REBOOT_DELAY_MS = 2500;
+
+// Single blocking connect attempt with the given credentials. Returns true if
+// connected within the 20s window. WiFi.setAutoReconnect keeps recovering drops
+// in the background so the loop never has to block here again.
+static bool connectWifi(const char* ssid, const char* password) {
   Serial.print("Connecting to Wi-Fi: ");
-  Serial.println(WIFI_SSID);
+  Serial.println(ssid);
 
   WiFi.mode(WIFI_STA);
-  // Recover from Wi-Fi drops in the background so the loop never has to block in
-  // connectWifi() (which would stall the safety control loop) just to get MQTT
-  // back. The 5-min telemetry path still calls ensureWifiConnected() as a backstop.
+  WiFi.disconnect();  // drop any prior AP config (matters on the revert path)
   WiFi.setAutoReconnect(true);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  WiFi.begin(ssid, password);
 
   unsigned long startMs = millis();
   while (WiFi.status() != WL_CONNECTED) {
@@ -118,13 +131,36 @@ void connectWifi() {
     if (millis() - startMs > 20000) {
       Serial.println();
       Serial.println("Wi-Fi connect timeout");
-      return;
+      return false;
     }
   }
 
   Serial.println();
   Serial.print("Wi-Fi connected. IP: ");
   Serial.println(WiFi.localIP());
+  return true;
+}
+
+void bringUpWifi() {
+  // secrets.h WIFI_SSID/WIFI_PASSWORD seed the store on a fresh flash.
+  wifiStoreBegin(WIFI_SSID, WIFI_PASSWORD);
+
+  WifiCreds creds = wifiStoreConnectCreds();
+  bool connected = connectWifi(creds.ssid.c_str(), creds.password.c_str());
+
+  if (!wifiStoreInTrial()) return;
+
+  if (connected) {
+    Serial.println("Wi-Fi trial SUCCESS — promoting new credentials.");
+    wifiStorePromote();
+    wifiStatus = "ok";
+  } else {
+    Serial.println("Wi-Fi trial FAILED — reverting to last-known-good network.");
+    wifiStoreRevert();
+    WifiCreds good = wifiStoreConnectCreds();  // now the known-good creds
+    connectWifi(good.ssid.c_str(), good.password.c_str());
+    wifiStatus = "reverted";
+  }
 }
 
 void ensureWifiConnected() {
@@ -132,7 +168,28 @@ void ensureWifiConnected() {
 
   Serial.println("Wi-Fi disconnected, reconnecting...");
   WiFi.disconnect();
-  connectWifi();
+  WifiCreds creds = wifiStoreConnectCreds();
+  connectWifi(creds.ssid.c_str(), creds.password.c_str());
+}
+
+void applyWifiCreds(uint32_t version, const char* ssid, const char* password) {
+  if (!wifiStoreArmTrial(version, ssid, password)) return;
+
+  Serial.printf("New Wi-Fi credentials received (v%u, ssid=%s) — rebooting to apply.\n",
+    version, ssid ? ssid : "");
+  wifiStatus = "applying";
+  publishWifiReport();
+
+  wifiRebootPending = true;
+  wifiRebootAtMs = millis() + WIFI_REBOOT_DELAY_MS;
+}
+
+void maybeWifiReboot() {
+  if (!wifiRebootPending) return;
+  if ((long)(millis() - wifiRebootAtMs) < 0) return;
+  Serial.println("Rebooting now to trial new Wi-Fi credentials...");
+  Serial.flush();
+  ESP.restart();
 }
 
 // ---------------------------------------------------------------------------
@@ -182,6 +239,20 @@ void publishOverrideReport(const char* label, const DeviceOverride& slot) {
     slot.desiredState ? "true" : "false",
     (unsigned long long)slot.expiresAtMs,
     (unsigned long long)nowEpochMs());
+  mqttClient.publish(topic, payload);
+}
+
+void publishWifiReport() {
+  if (!mqttClient.connected()) return;
+  static int wifiRid = 200;
+  char topic[80];
+  snprintf(topic, sizeof(topic),
+    "$iothub/twin/PATCH/properties/reported/?$rid=%d", ++wifiRid);
+  String ssid = wifiStoreActiveSsid();
+  char payload[256];
+  snprintf(payload, sizeof(payload),
+    "{\"wifi\":{\"activeSsid\":\"%s\",\"appliedVersion\":%u,\"status\":\"%s\",\"rssi\":%d}}",
+    ssid.c_str(), (unsigned)wifiStoreAppliedVersion(), wifiStatus, (int)WiFi.RSSI());
   mqttClient.publish(topic, payload);
 }
 
@@ -246,6 +317,7 @@ static bool mqttConnectAttempt() {
     status += adsOk ? "true" : "false";
     status += "}";
     mqttClient.publish(STATUS_TOPIC, status.c_str());
+    publishWifiReport();
     return true;
   }
 

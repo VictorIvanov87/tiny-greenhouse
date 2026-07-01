@@ -143,6 +143,15 @@ void applySettings(JsonObjectConst obj) {
     applyOverride(ov["pump"],   pumpOverride,   "pump");
   }
 
+  // Wi-Fi credentials pushed from the dashboard. applyWifiCreds() trials them on
+  // a reboot and reverts to the last-known-good network if they fail.
+  JsonObjectConst w = obj["wifi"];
+  if (!w.isNull() && !w["ssid"].isNull()) {
+    applyWifiCreds(w["version"] | (uint32_t)0,
+                   w["ssid"].as<const char*>(),
+                   w["password"] | "");
+  }
+
   Serial.printf("Settings v%u applied: tempMax=%.1f humMax=%.1f lights=%u-%u pumpTrigger=%.1f%%\n",
     settings.version,
     settings.thresholds.tempMaxC, settings.thresholds.humidityMaxPct,

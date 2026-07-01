@@ -204,6 +204,15 @@ void applyCameraTwin(JsonObjectConst obj) {
 
   JsonObjectConst cmd = obj["command"];
   if (!cmd.isNull()) queueCommandFromTwin(cmd);
+
+  // Wi-Fi credentials pushed from the dashboard. applyWifiCreds() trials them on
+  // a reboot and reverts to the last-known-good network if they fail.
+  JsonObjectConst w = obj["wifi"];
+  if (!w.isNull() && !w["ssid"].isNull()) {
+    applyWifiCreds(w["version"] | (uint32_t)0,
+                   w["ssid"].as<const char*>(),
+                   w["password"] | "");
+  }
 }
 
 static bool postJpeg(const char* fullUrl, const uint8_t* buf, size_t len, const char* requestId) {
