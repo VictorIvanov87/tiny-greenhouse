@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# Tiny Greenhouse — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 single-page dashboard for the [Tiny Greenhouse](../README.md) system. Shows live telemetry charts, a timelapse viewer, alerts/notifications, an AI growing assistant, and a setup wizard. Talks to the [backend REST API](../backend/README.md) and uses Firebase for authentication and the user profile.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** + **React Router 7**
+- **Vite 7** — dev server (port `5173`, `strictPort`)
+- **TanStack Query v5** — all server state
+- **Tailwind CSS 4** + **Flowbite React** — dark-theme-first UI
+- **Recharts 3** — time-series charts
+- **Firebase Web SDK** — Auth (Email/Password + Google) and client Firestore (user profile)
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 22+ (see [`../.nvmrc`](../.nvmrc))
+- A running backend (see [../backend/README.md](../backend/README.md)) — defaults to `http://localhost:3000`
+- A Firebase project (free tier) with Authentication and Firestore enabled
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env.local
+# Fill in the Firebase web config (Firebase Console → Project Settings → Your apps → Web app)
+npm install
+npm run dev            # → http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+> The app **requires** a Firebase project: it gates on login and reads/writes the signed-in user's
+> profile via the client Firestore SDK. Without valid `VITE_FIREBASE_*` values it throws at startup.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Environment variables
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+All are `VITE_`-prefixed and embedded into the client bundle at build time (see `.env.example`):
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_API_BASE_URL` | Backend origin; `/api` is appended in code. Default `http://localhost:3000` |
+| `VITE_APP_NAME` | Display name |
+| `VITE_FIREBASE_API_KEY` | Firebase web config (public, but keep out of git) |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase web config |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase web config |
+| `VITE_FIREBASE_APP_ID` | Firebase web config |
+
+There are **no secrets** in the frontend — Firebase web keys are public by design.
+
+## Scripts
+
+```bash
+npm run dev        # Vite dev server on :5173
+npm run build      # tsc -b && vite build → dist/
+npm run preview    # serve the production build locally
+npm run lint       # ESLint (flat config)
 ```
+
+## Project structure
+
+```
+src/
+  app/         providers, routes, AppShell
+  features/    one folder per page (auth, setup, dashboard, telemetry,
+               timelapse, alerts, notifications, assistant, settings, ...)
+  shared/      ui components, hooks, utils, config (API base URL)
+  theme/       design tokens
+  styles/      global CSS
+```
+
+See [`CLAUDE.md`](CLAUDE.md) in this folder for detailed UI/component conventions (button patterns, Flowbite usage, dark-theme rules, data-fetching patterns).

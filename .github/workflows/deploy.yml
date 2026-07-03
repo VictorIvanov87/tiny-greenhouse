@@ -1,5 +1,16 @@
 name: Deploy
 
+# Builds the backend and frontend on every push to main and deploys them to
+# Azure App Service (backend) and Firebase Hosting (frontend).
+#
+# Before this works on your own fork, set these in Settings → Secrets and
+# variables → Actions, and replace the placeholders below:
+#   Secrets:  AZURE_CREDENTIALS, FIREBASE_SERVICE_ACCOUNT,
+#             VITE_API_BASE_URL, VITE_FIREBASE_API_KEY,
+#             VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
+#             VITE_FIREBASE_APP_ID
+#   Placeholders below:  YOUR_AZURE_WEBAPP_NAME, YOUR_FIREBASE_PROJECT_ID
+
 on:
   push:
     branches: [main]
@@ -46,7 +57,7 @@ jobs:
 
       - uses: azure/webapps-deploy@v3
         with:
-          app-name: tiny-greenhouse-api
+          app-name: YOUR_AZURE_WEBAPP_NAME
           package: backend/deploy.zip
 
   deploy-frontend:
@@ -79,4 +90,4 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: live
-          projectId: tiny-greenhouse-b38fd
+          projectId: YOUR_FIREBASE_PROJECT_ID

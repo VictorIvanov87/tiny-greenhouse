@@ -5,6 +5,7 @@
     "rewrites": [{ "source": "**", "destination": "/index.html" }]
   },
   "firestore": {
+    "rules": "firestore.rules",
     "indexes": "backend/firestore.indexes.json"
   }
 }

@@ -1,106 +1,142 @@
-# tiny-greenhouse
+# Tiny Greenhouse
 
-**An autonomous home mini-greenhouse with a web interface**
+**An autonomous home mini-greenhouse with a web dashboard, an AI growing assistant, and ESP32 IoT hardware.**
 
-## Overview
+Tiny Greenhouse monitors a small indoor growing environment (temperature, humidity, soil moisture, light), captures a timelapse of plant growth, applies simple control rules, and explains its readings and decisions in natural language. It was built as a thesis prototype and is shared here for educational use under the [MIT License](LICENSE).
 
-_tiny-greenhouse_ is an educational project that combines web engineering, ready-made computer vision, and (later) IoT control to maintain a small indoor growing environment. The goal is a compact, winter-friendly setup that monitors conditions, explains its own decisions, and produces clear visual evidence of plant growth (timelapse).
+---
 
-This repository starts with the **coursework scope** (architecture + frontend + mock backend + CV integration). The **thesis stage** will add real sensors/actuators and control logic on microcontrollers.
+## What's in the box
 
-## Problem & Idea
-
-Indoor growing in small spaces is noisy and error-prone: inconsistent light/irrigation, no historical context, and hard-to-interpret sensor data. The project aims to:
-
--   **Monitor** temperature, humidity and substrate moisture, and collect timelapse images.
--   **Decide** simple actions via rules (e.g., light hours, irrigation pulses).
--   **Explain** decisions in natural language (LLM) using measured metrics and explicit rules.
--   **Demonstrate** improvements with graphs and side-by-side timelapse evidence.
-
-## Coursework MVP (this repo)
-
--   **Web dashboard (React SPA):** live (simulated) telemetry charts, timelapse viewer, modes (seedling/growth), and basic alerts.
--   **Ready-made CV metric:** extract a simple signal from images (e.g., green-area ratio) via a pre-trained model/service; no custom training.
--   **LLM explanations:** short, template-guided summaries that translate metrics/rules into human-readable guidance.
--   **Data contracts:** JSON Schema for telemetry and an OpenAPI draft for the backend.
--   **Security basics:** JWT (admin/viewer), security headers.
-
-## Thesis
-
--   **IoT prototype:** ESP32 firmware for sensors (e.g., SHT31, soil moisture) and relays (light, pump, fan/humidifier), publishing via MQTT/HTTPS.
--   **Control loops:** from hysteresis rules to tuned intervals; optional PID for humidity/soil moisture.
--   **Reliability & security:** device auth/TLS, signed configs/updates (if used), segmented network.
--   **Experiments:** compare modes/lighting/irrigation and quantify stability, growth rate, and resource use.
-
-## Architecture (high level)
-
--   **Frontend (React SPA):** dashboard, alerts, timelapse, settings.
--   **Backend (Node):** REST/WebSocket API, image handling, CV/LLM integrations, simple storage.
--   **IoT (thesis):** ESP32 + sensors/relays → MQTT/HTTPS → backend; camera uploads frames on a schedule.
-
-## Tech Stack (initial)
-
--   **Frontend:** React + Vite, React Router, React Query, Recharts.
--   **Backend:** Node.js (Fastify/Express), OpenAPI spec, JSON Schema validation.
--   **CV & AI:** ready-made model/service for image metrics; LLM for concise explanations.
--   **IoT (later):** ESP32, MQTT (Mosquitto), common I²C sensors; simple relays.
-
-## Repository Layout
+| Layer | Tech | Port | Directory |
+|-------|------|------|-----------|
+| **Frontend** | React 19 + Vite + Tailwind (SPA dashboard) | `5173` | [`frontend/`](frontend/) |
+| **Backend** | Node.js + TypeScript + Fastify (REST API + OpenAPI) | `3000` | [`backend/`](backend/) |
+| **Firmware** | ESP32 (PlatformIO / Arduino) — sensors + camera | — | [`hardware/`](hardware/) |
 
 ```
-data/       # sample telemetry and timelapse frames for development
-docs/       # ADRs, diagrams, design notes
-hardware/   # schematics, wiring, BOM (thesis stage)
-frontend/   # React SPA (dashboard, timelapse, alerts, settings)
-backend/    # Node API (mock now; device API later)
+backend/    Fastify REST API + AI assistant (RAG)   → see backend/README.md
+frontend/   React SPA dashboard                     → see frontend/README.md
+hardware/   ESP32 sensor + camera firmware          → see hardware/README.md
+docs/       Architecture, diagrams, task tickets    → see docs/ARCHITECTURE.md
+data/       Shared RAG knowledge base + mock data
+scripts/    Dev utilities (secret-scanning hook)
 ```
 
-## Secrets & Environment
+**Data flow:** ESP32 sensors → **MQTT/TLS → Azure IoT Hub** → backend consumer → storage → REST API → React dashboard. The ESP32-CAM uploads JPEG snapshots to the backend for the timelapse. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
 
-Both `backend/.env` and `frontend/.env.local` are **git-ignored** and must never be committed.
+---
 
-### Setup
+## Prerequisites
+
+- **Node.js 22+** and npm (see [`.nvmrc`](.nvmrc) — run `nvm use` if you use nvm)
+- **A Firebase project** (free tier) — required to run the frontend, which gates on login and stores the user profile in Firestore
+- **PlatformIO** — only if you want to build/flash the ESP32 firmware
+- *Optional, per feature:*
+  - **OpenAI API key** + **Postgres w/ pgvector** (e.g. Supabase) — for the AI assistant / RAG endpoints
+  - **Azure IoT Hub** + **Azure Blob Storage** — for real hardware telemetry & camera uploads in production
+
+The **backend runs fully in mock mode with zero credentials** — the core dashboard, telemetry, timelapse, and notifications work out of the box. Cloud accounts are only needed for the features listed above.
+
+---
+
+## Quick start (local dev)
+
+Start the **backend first**, then the frontend.
+
+### 1. Backend (mock mode — no credentials needed)
 
 ```bash
-# Backend
-cp backend/.env.example backend/.env
-# Then fill in the SECRET values (see comments in the file):
-#   FIREBASE_PRIVATE_KEY  — Firebase Console → Project Settings → Service accounts
-#   DATABASE_URL          — Supabase dashboard → Settings → Database → Connection string
-#   OPENAI_API_KEY        — OpenAI platform → API keys
-
-# Frontend
-cp frontend/.env.example frontend/.env.local
-# Then fill in the Firebase client config:
-#   VITE_FIREBASE_*       — Firebase Console → Project Settings → Your apps → Web app
+cd backend
+cp .env.example .env      # defaults are AUTH_MODE=mock, STORAGE_MODE=mock
+npm install
+npm run dev               # → http://localhost:3000
 ```
 
-Variables marked `# SECRET` in `.env.example` contain credentials — use real values only in your local `.env` file, never in committed code.
+- API base: `http://localhost:3000/api`
+- Interactive API docs (Swagger UI): `http://localhost:3000/docs`
+- Health check: `http://localhost:3000/api/health`
 
-### Pre-commit secret scan
+Mock mode serves telemetry/timelapse/greenhouse/notifications from JSON fixtures in `backend/data/mock/` — no database or cloud services required.
 
-A lightweight script at `scripts/check-secrets.sh` scans staged files for credential patterns (private keys, API key prefixes, connection strings). To activate it as a git hook:
+### 2. Frontend
+
+The frontend requires a Firebase project because login and the user profile use Firebase Auth + client Firestore.
 
 ```bash
-ln -sf ../../scripts/check-secrets.sh .git/hooks/pre-commit
+cd frontend
+cp .env.example .env.local
+# Fill in VITE_FIREBASE_* from Firebase Console → Project Settings → Your apps → Web app.
+# Leave VITE_API_BASE_URL=http://localhost:3000 to talk to your local backend.
+npm install
+npm run dev               # → http://localhost:5173
 ```
 
-## Getting Started (dev)
+To get the Firebase values: create a free project at the [Firebase Console](https://console.firebase.google.com/), enable **Authentication** (Email/Password and Google), enable **Firestore**, then register a **Web app** and copy its config into `.env.local`. Update [`.firebaserc`](.firebaserc) with your project ID if you plan to deploy.
 
-```bash
-# Frontend
-cd frontend && npm i && npm run dev
+### 3. Firmware (optional)
 
-# Backend (mock)
-cd backend && npm i && npm run dev
-# Frontend dev server should proxy /api → backend; adjust .env/proxy as needed.
-```
+See [hardware/README.md](hardware/README.md) for wiring, IoT Hub device provisioning, and flashing. In short: copy `secrets.example.h → secrets.h` in each firmware folder, fill in Wi-Fi + Azure IoT Hub values, then `pio run -t upload`.
 
-## Roadmap
+---
 
--   Coursework: architecture, SPA, mock API, CV metric, LLM explanations, demo package.
--   Thesis: IoT prototype, control logic, hardening, experiments, final write-up & live demo.
+## Configuration
+
+Each app is configured entirely through environment variables; the committed `*.example` files document the full schema.
+
+| App | Copy from → to | Notes |
+|-----|----------------|-------|
+| Backend | `backend/.env.example` → `backend/.env` | Secrets marked `# SECRET`; only needed for non-mock modes |
+| Frontend | `frontend/.env.example` → `frontend/.env.local` | `VITE_*` values are baked into the client bundle at build time |
+| Firmware | `hardware/*/src/secrets.example.h` → `secrets.h` | Wi-Fi + Azure IoT Hub credentials |
+
+**Backend mode switches** (both default to `mock` for local dev):
+
+| Var | Values | Effect |
+|-----|--------|--------|
+| `AUTH_MODE` | `mock` / `firebase` | `mock` skips JWT (identity from `x-user-id` header); `firebase` verifies Firebase ID tokens |
+| `STORAGE_MODE` | `mock` / `firestore` | `mock` uses in-memory + JSON files; `firestore` persists to Firebase |
+
+The AI assistant endpoints (`/api/assist`) additionally need `OPENAI_API_KEY` and a pgvector `DATABASE_URL`; run `npm run rag:seed` once to populate the vector store. See [backend/README.md](backend/README.md) for the full endpoint reference.
+
+---
+
+## Secrets & safety
+
+- `backend/.env`, `frontend/.env.local`, and `hardware/**/secrets.h` are **git-ignored** and must never be committed. The `.example` templates are the only versions in git.
+- A lightweight scanner at [`scripts/check-secrets.sh`](scripts/check-secrets.sh) blocks common credential patterns (private keys, API-key prefixes, DB connection strings). **Install it as a pre-commit hook after cloning** (git hooks are local and don't travel with the repo):
+
+  ```bash
+  ln -sf ../../scripts/check-secrets.sh .git/hooks/pre-commit
+  ```
+
+---
+
+## Deployment
+
+CI in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) deploys the backend to **Azure App Service** and the frontend to **Firebase Hosting** on every push to `main`. To run it on your own infrastructure, replace the placeholders and set the referenced secrets:
+
+| Placeholder / secret | Where | What to set it to |
+|----------------------|-------|-------------------|
+| `YOUR_FIREBASE_PROJECT_ID` | `.firebaserc`, `deploy.yml` | Your Firebase project ID |
+| `YOUR_AZURE_WEBAPP_NAME` | `deploy.yml` | Your Azure Web App name |
+| `AZURE_CREDENTIALS`, `FIREBASE_SERVICE_ACCOUNT` | GitHub repo secrets | Service-principal / service-account JSON |
+| `VITE_*` | GitHub repo secrets | Frontend build-time Firebase config |
+| `BACKEND_URL` (repo *variable*) | used by `keepalive.yml` | Your deployed backend origin (optional; keepalive can be deleted) |
+
+Manual Firebase deploy: `firebase deploy --only hosting` (build the frontend first with `npm run build`).
+
+---
+
+## Documentation map
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — end-to-end system overview
+- [backend/README.md](backend/README.md) — API reference, modes, AI/RAG config
+- [frontend/README.md](frontend/README.md) — SPA structure and dev workflow
+- [hardware/README.md](hardware/README.md) — firmware, wiring, IoT Hub provisioning
+- [docs/tasks/](docs/tasks/) — `TG-NNN.md` task tickets (the project's design history)
+- `CLAUDE.md` files in each area — conventions and coding patterns
 
 ## License
 
-TBD
+[MIT](LICENSE) © 2026 Victor Hristov

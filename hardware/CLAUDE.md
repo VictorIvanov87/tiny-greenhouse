@@ -1,104 +1,76 @@
 # CLAUDE.md — Hardware / Firmware
 
-Two ESP32 boards running PlatformIO + Arduino framework. Both send data to the backend REST API over Wi-Fi.
+Two ESP32 boards running PlatformIO + Arduino. Both connect over Wi-Fi and talk to **Azure IoT Hub over MQTT (TLS 8883)** using device twins. Full setup lives in [README.md](README.md) — this file is the conventions/quick-reference for working in the firmware.
 
-## Board overview
+## Boards
 
 | Directory | Board | Role |
 |-----------|-------|------|
-| `esp32-firmware/` | ESP32 DevKit | Reads sensors every 5 min → POST `/api/telemetry` |
-| `esp32-cam-firmware/` | ESP32-CAM | Captures JPEG snapshot every 1 h → POST `/api/camera/upload` |
+| `esp32-firmware/` | `esp32dev` (8 MB) | Sensors + actuators; publishes telemetry to IoT Hub every 5 min |
+| `esp32-cam-firmware/` | `esp32cam` | Captures JPEG on twin command, HTTP-uploads to backend |
 
-## ESP32-Main (sensor telemetry)
+## Architecture (important — earlier docs were wrong)
 
-**Sensors:**
-- **BME280** (Adafruit library) — temperature °C, humidity %, pressure hPa — I2C
-- **BH1750FVI** — ambient light lux — I2C at address `0x23`
+- Telemetry is **published to Azure IoT Hub via MQTT**, not HTTP-POSTed to `/api/telemetry`.
+- Device twins carry desired/reported properties (config down, status up). See `net.cpp`.
+- Only the camera JPEG is uploaded over HTTP, to a URL delivered through its twin.
+- Credentials come from a git-ignored `secrets.h` (copy from `secrets.example.h`), **not** hardcoded in `main.cpp`. Wi-Fi may also be provisioned at runtime via `wifi_store` (NVS).
 
-**Payload sent to `/api/telemetry`:**
-```json
-{
-  "device_id": "esp32-main-01",
-  "uptime_ms": 12345678,
-  "temperature_c": 24.5,
-  "humidity_pct": 65.2,
-  "pressure_hpa": 1013.0,
-  "light_lux": 300.0,
-  "soil_moisture_raw": 1850
-}
-```
+## Source map (`esp32-firmware/src/`)
 
-**Key source functions** (`src/main.cpp`):
-- `initBme280()` / `initBh1750()` — sensor init with Serial error reporting
-- `readLightLux()` — manual 2-byte I2C read
-- `connectWifi()` / `ensureWifiConnected()` — reconnect on drop
-- `buildTelemetryJson()` — constructs the JSON payload
-- `READ_INTERVAL_MS` — set to 5 minutes (300 000 ms)
+| File | Responsibility |
+|------|----------------|
+| `main.cpp` | setup + loop, watchdog, scheduling |
+| `sensors.cpp/.h` | BME280/BMP280 + BH1750 + ADS1115 soil; health/staleness checks |
+| `control.cpp/.h` | actuator rules (light schedule, pump on soil %, fan) |
+| `telemetry.cpp/.h` | build JSON payload + publish to IoT Hub |
+| `net.cpp/.h` | Wi-Fi + MQTT/TLS client + twin sync |
+| `wifi_store.cpp/.h` | runtime Wi-Fi provisioning in NVS |
+| `config.h` | pins, timing, soil calibration, `TZ_RULE` (Bulgaria EET) |
+| `secrets.example.h` → `secrets.h` | Wi-Fi + IoT Hub credentials (git-ignored) |
 
-## ESP32-CAM (camera / timelapse)
+The cam mirrors this with `camera_control.*`, `net.*`, `wifi_store.*`.
 
-**Camera:** OV2640, VGA resolution, JPEG quality 8, auto-WB/AE/AGC enabled.
+## Soil calibration
 
-**Headers sent with the upload:**
-```
-Content-Type: image/jpeg
-X-Device-Id: esp32-cam-01
-X-Uptime-Ms: <uptime in ms>
-```
-
-**GPIO pin mapping** (`esp32-cam-firmware/src/main.cpp`):
-Camera data (D0–D7), XCLK, PCLK, VSYNC, HREF, I2C SDA/SCL, power pin — all defined in `camera_config.pin_*` constants at the top of the file.
+`SOIL_RAW_DRY` / `SOIL_RAW_WET` in `config.h` **must stay in sync** with `backend/src/services/telemetry.ts` (and `backend/.env` `SOIL_RAW_DRY`/`SOIL_RAW_WET`), or the dashboard % won't match the pump trigger point.
 
 ## Build & flash
 
 ```bash
-# Install PlatformIO CLI (once)
-pip install platformio
-
-# Build
-cd hardware/esp32-firmware
-pio run
-
-# Flash
-pio run -t upload
-
-# Serial monitor
-pio device monitor -b 115200
+pip install platformio           # once
+cd hardware/esp32-firmware        # or esp32-cam-firmware
+pio run                           # build
+pio run -t upload                 # flash over USB
+pio device monitor -b 115200      # serial monitor
 ```
 
-Same commands apply for `esp32-cam-firmware/`.
+PlatformIO auto-detects the serial port; set `upload_port`/`monitor_port` only if you have multiple devices.
 
-## Configuration before flashing
-
-Both firmwares have hardcoded Wi-Fi and backend URL constants near the top of `src/main.cpp`. Update these before building:
-
-```cpp
-const char* WIFI_SSID     = "your-ssid";
-const char* WIFI_PASSWORD = "your-password";
-const char* BACKEND_URL   = "http://192.168.x.x:3000";
-```
-
-Do not commit real credentials — add a `secrets.h` pattern if needed.
-
-## platformio.ini
+## platformio.ini (sensor board, abridged)
 
 ```ini
 [env:esp32dev]
-platform  = espressif32
-board     = esp32dev
+platform = espressif32
+board = esp32dev
+board_build.partitions = default_8MB.csv
+board_upload.flash_size = 8MB
 framework = arduino
 monitor_speed = 115200
+build_flags = -D MQTT_MAX_PACKET_SIZE=2048
+lib_deps =
+  adafruit/Adafruit BME280 Library
+  adafruit/Adafruit BMP280 Library
+  adafruit/Adafruit Unified Sensor
+  adafruit/Adafruit ADS1X15
+  knolleary/PubSubClient
+  bblanchon/ArduinoJson@^7.0.0
 ```
-
-## Wiring reference
-
-See `Wiring (Power & Signal).png` in the `hardware/` root for the full schematic. Summary:
-- BME280 + BH1750 share I2C bus (SDA/SCL)
-- Soil moisture sensor is analog input
-- ESP32-CAM is self-contained (camera pins are internal to the module)
 
 ## Development tips
 
-- Use `pio device monitor` to read Serial output — all sensor reads and HTTP responses are logged at 115200 baud
-- If BME280 init fails, check I2C pull-ups (4.7 kΩ to 3.3 V)
-- OTA updates are not implemented yet — must physically connect USB for each flash
+- `MQTT_MAX_PACKET_SIZE=2048` is required — IoT Hub twin payloads exceed the PubSubClient default.
+- Use `pio device monitor` for Serial logs (sensor reads, MQTT state) at 115200 baud.
+- If BME280 init fails, check I2C pull-ups (4.7 kΩ to 3.3 V).
+- No OTA — flashing requires a USB connection.
+- Never commit `secrets.h` (it's git-ignored via `**/secrets.h`).

@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Firestore security rules for tiny-greenhouse.
+//
+// Scope: these rules govern CLIENT (web SDK) access only. The backend uses the
+// Firebase Admin SDK, which bypasses these rules entirely — so collections that
+// are only ever touched by the backend (devices, telemetry, conversations,
+// camera_images) are intentionally denied to clients here.
+//
+// The frontend only ever reads/writes the signed-in user's own document under
+// users/{uid} and its subcollections (see frontend/src/features/setup/api.ts).
+//
+// NOTE FOR MAINTAINERS: verify this against your actual client access patterns
+// before deploying. Anything not matched below is denied by default.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A signed-in user may read and write only their own profile document and
+    // any nested subcollections (e.g. settings/preferences).
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Deny everything else to clients. Backend Admin SDK access is unaffected.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

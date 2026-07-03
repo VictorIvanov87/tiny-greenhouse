@@ -37,6 +37,17 @@ Thumbs.db
 **/secrets.h
 !**/secrets.example.h
 
+# Credential files — never track these (Firebase admin keys, certs, private keys)
+serviceAccount*.json
+firebase-adminsdk*.json
+*.pem
+*.key
+*.p12
+id_rsa
+
+# Firebase CLI hosting/deploy cache
+.firebase/
+
 # Local data & uploads (keep repo light)
 data/timelapse/
 data/raw/
